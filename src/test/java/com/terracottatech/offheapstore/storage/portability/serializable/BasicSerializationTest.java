@@ -1,0 +1,125 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package com.terracottatech.offheapstore.storage.portability.serializable;
+
+import com.terracottatech.offheapstore.storage.portability.Portability;
+
+import java.io.Serializable;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.util.HashMap;
+import java.util.Random;
+
+import org.hamcrest.core.Is;
+import org.hamcrest.core.IsEqual;
+import org.hamcrest.core.IsNot;
+import org.hamcrest.core.IsSame;
+import org.junit.Assert;
+import org.junit.Test;
+
+/**
+ *
+ * @author cdennis
+ */
+public class BasicSerializationTest extends AbstractSerializablePortabilityTest {
+  
+  @Test
+  public void testSimpleObject() {
+    Portability<Serializable> test = createPortability();
+
+    String input = "";
+    String result = (String) test.decode(test.encode(input));
+    Assert.assertNotNull(result);
+    Assert.assertNotSame(input, result);
+    Assert.assertEquals(input, result);
+  }
+
+  @Test
+  public void testComplexObject() {
+    Portability<Serializable> test = createPortability();
+
+    HashMap<Integer, String> input = new HashMap<Integer, String>();
+    input.put(1, "one");
+    input.put(2, "two");
+    input.put(3, "three");
+
+    HashMap<?, ?> result = (HashMap<?, ?>) test.decode(test.encode(input));
+    Assert.assertNotNull(result);
+    Assert.assertNotSame(input, result);
+    Assert.assertEquals(input, result);
+
+  }
+  
+  private static final Class[] PRIMITIVE_CLASSES = new Class[] {
+     boolean.class, byte.class, char.class, short.class, 
+     int.class, long.class, float.class, double.class, void.class
+  };
+  
+  @Test
+  public void testPrimitiveClasses() {
+    Portability<Serializable> p = createPortability();
+
+    Class[] out = (Class[]) p.decode(p.encode(PRIMITIVE_CLASSES));
+
+    Assert.assertThat(out, IsNot.not(IsSame.sameInstance(PRIMITIVE_CLASSES)));
+    Assert.assertThat(out, IsEqual.equalTo(PRIMITIVE_CLASSES));
+  }
+
+  @Test
+  public void testProxyInstance() {
+    Random rand = new Random();
+    int foo = rand.nextInt();
+    float bar = rand.nextFloat();
+
+    Portability<Serializable> p = createPortability();
+
+    Object proxy = p.decode(p.encode((Serializable) Proxy.newProxyInstance(BasicSerializationTest.class.getClassLoader(), new Class[]{Foo.class, Bar.class}, new Handler(foo, bar))));
+
+    Assert.assertThat(((Foo) proxy).foo(), Is.is(foo));
+    Assert.assertThat(((Bar) proxy).bar(), Is.is(bar));
+  }
+
+  interface Foo {
+    int foo();
+  }
+
+  interface Bar {
+    float bar();
+  }
+
+  static class Handler implements InvocationHandler, Serializable {
+
+    static Method fooMethod, barMethod;
+
+    static {
+      try {
+        fooMethod = Foo.class.getDeclaredMethod("foo", new Class[0]);
+        barMethod = Bar.class.getDeclaredMethod("bar", new Class[0]);
+      } catch (NoSuchMethodException ex) {
+        throw new Error();
+      }
+    }
+    int foo;
+    float bar;
+
+    Handler(int foo, float bar) {
+      this.foo = foo;
+      this.bar = bar;
+    }
+
+    @Override
+    public Object invoke(Object proxy, Method method, Object[] args)
+            throws Throwable {
+      if (method.equals(fooMethod)) {
+        return Integer.valueOf(foo);
+      } else if (method.equals(barMethod)) {
+        return Float.valueOf(bar);
+      } else {
+        throw new UnsupportedOperationException();
+      }
+    }
+  }
+}

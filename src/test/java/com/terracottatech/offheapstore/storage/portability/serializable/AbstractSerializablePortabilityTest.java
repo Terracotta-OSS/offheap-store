@@ -1,0 +1,161 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package com.terracottatech.offheapstore.storage.portability.serializable;
+
+import com.terracottatech.frs.RestartStore;
+import com.terracottatech.frs.RestartStoreFactory;
+import com.terracottatech.frs.object.RegisterableObjectManager;
+import com.terracottatech.offheapstore.storage.portability.Portability;
+import com.terracottatech.offheapstore.storage.portability.SerializablePortability;
+import com.terracottatech.offheapstore.storage.restartable.RestartabilityTestUtilities;
+import com.terracottatech.offheapstore.storage.restartable.portability.RestartableSerializablePortability;
+import com.terracottatech.offheapstore.util.ParallelParameterized;
+
+import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+import org.junit.runner.RunWith;
+
+import static com.terracottatech.offheapstore.util.MemoryUnit.MEGABYTES;
+
+/**
+ *
+ * @author cdennis
+ */
+@RunWith(ParallelParameterized.class)
+public abstract class AbstractSerializablePortabilityTest {
+
+  public enum PortabilityType {
+    REGULAR {
+      @Override
+      Portability<Serializable> createPortability() {
+        return new SerializablePortability();
+      }
+    }, RESTARTABLE {
+      @Override
+      Portability<Serializable> createPortability() {
+        try {
+          return new ContinuallyRestartingPortability(RestartabilityTestUtilities.createTempDirectory("AbstractSerializablePortabilityTest"));
+        } catch (IOException ex) {
+          throw new AssertionError(ex);
+        }
+      }
+    };
+    
+    abstract Portability<Serializable> createPortability();
+  }
+
+  @ParallelParameterized.Parameters(name = "{0}")
+  public static Iterable<Object[]> parameters() {
+    List<Object[]> parameters = new ArrayList<Object[]>();
+    for (PortabilityType t : PortabilityType.values()) {
+      parameters.add(new Object[] { t });
+    }
+    return parameters;
+  }
+  
+  @ParallelParameterized.Parameter
+  public PortabilityType type;
+  
+  protected final Portability<Serializable> createPortability() {
+    return type.createPortability();
+  }
+
+  private static class ContinuallyRestartingPortability implements Portability<Serializable> {
+    
+    private final File storage;
+
+    private Instance startup() throws Exception {
+      ByteBuffer id = ByteBuffer.wrap("ContinuallyRestartingPortability".getBytes("US-ASCII"));
+      RegisterableObjectManager<ByteBuffer, ByteBuffer, ByteBuffer> objectMgr = RestartabilityTestUtilities.createObjectManager();
+      RestartStore<ByteBuffer, ByteBuffer, ByteBuffer> persistence = RestartStoreFactory.createStore(objectMgr, storage, MEGABYTES.toBytes(1));
+      RestartableSerializablePortability<ByteBuffer> subject = new RestartableSerializablePortability<ByteBuffer>(id, persistence, true);
+
+      objectMgr.registerObject(subject);
+      persistence.startup().get();
+      
+      return new Instance(persistence, subject);
+    }
+    
+    public ContinuallyRestartingPortability(File storage) {
+      this.storage = storage;
+    }
+
+    @Override
+    public ByteBuffer encode(Serializable object) {
+      try {
+        Instance instance = startup();
+        try {
+          return instance.getPortability().encode(object);
+        } finally {
+          instance.close();
+        }
+      } catch (Exception e) {
+        throw new AssertionError(e);
+      }
+    }
+
+    @Override
+    public Serializable decode(ByteBuffer buffer) {
+      try {
+        Instance instance = startup();
+        try {
+          return instance.getPortability().decode(buffer);
+        } finally {
+          instance.close();
+        }
+      } catch (RuntimeException e) {
+        throw e;
+      } catch (Exception e) {
+        throw new AssertionError(e);
+      }
+    }
+
+    @Override
+    public boolean equals(Object object, ByteBuffer buffer) {
+      try {
+        Instance instance = startup();
+        try {
+          return instance.getPortability().equals(object, buffer);
+        } finally {
+          instance.close();
+        }
+      } catch (RuntimeException e) {
+        throw e;
+      } catch (Exception e) {
+        throw new AssertionError(e);
+      }
+    }
+    
+    static class Instance implements Closeable {
+      
+      private final RestartStore<?, ?, ?> persistence;
+      private final Portability<Serializable> portability;
+
+      public Instance(RestartStore<?, ?, ?> persistence, Portability<Serializable> portability) {
+        this.persistence = persistence;
+        this.portability = portability;
+      }
+
+      @Override
+      public void close() throws IOException {
+        try {
+          persistence.shutdown();
+        } catch (InterruptedException ex) {
+          throw new IOException(ex);
+        }
+      }
+      
+      Portability<Serializable> getPortability() {
+        return portability;
+      }
+    }
+  }
+  
+}
