@@ -24,6 +24,11 @@
     </dependency>
     <dependency>
       <groupId>com.terracottatech</groupId>
+      <artifactId>offheap-store</artifactId>
+      <version>1.2.12-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>com.terracottatech</groupId>
       <artifactId>fast-restartable-store</artifactId>
       <version>1.1.16</version>
     </dependency>
@@ -62,16 +67,12 @@
       <groupId>asm</groupId>
       <artifactId>asm</artifactId>
       <version>3.3.1</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>asm</groupId>
       <artifactId>asm-commons</artifactId>
       <version>3.3.1</version>
-    </dependency>
-    <dependency>
-      <groupId>jfree</groupId>
-      <artifactId>jfreechart</artifactId>
-      <version>1.0.13</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -115,8 +116,8 @@
         </executions>
         <configuration>
           <parallel>methods</parallel>
-	  <threadCount>4</threadCount>
-	  <perCoreThreadCount>false</perCoreThreadCount>
+          <threadCount>4</threadCount>
+          <perCoreThreadCount>false</perCoreThreadCount>
         </configuration>
       </plugin>
       <plugin>
@@ -131,9 +132,6 @@
             </goals>
             <configuration>
               <propertyName>jacocoArgs</propertyName>
-              <excludes>
-                <exclude>com.terracottatech.offheapstore.struct.statics.StaticStructDefinitionTest$*</exclude>
-              </excludes>
             </configuration>
           </execution>
           <execution>
@@ -167,37 +165,37 @@
       </plugin>
     </plugins>
     <pluginManagement>
-    	<plugins>
-    		<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
-    		<plugin>
-    			<groupId>org.eclipse.m2e</groupId>
-    			<artifactId>lifecycle-mapping</artifactId>
-    			<version>1.0.0</version>
-    			<configuration>
-    				<lifecycleMappingMetadata>
-    					<pluginExecutions>
-    						<pluginExecution>
-    							<pluginExecutionFilter>
-    								<groupId>org.jacoco</groupId>
-    								<artifactId>
-    									jacoco-maven-plugin
-    								</artifactId>
-    								<versionRange>
-    									[0.6.3.201306030806,)
-    								</versionRange>
-    								<goals>
-    									<goal>prepare-agent</goal>
-    								</goals>
-    							</pluginExecutionFilter>
-    							<action>
-    								<ignore/>
-    							</action>
-    						</pluginExecution>
-    					</pluginExecutions>
-    				</lifecycleMappingMetadata>
-    			</configuration>
-    		</plugin>
-    	</plugins>
+      <plugins>
+        <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+        <plugin>
+          <groupId>org.eclipse.m2e</groupId>
+          <artifactId>lifecycle-mapping</artifactId>
+          <version>1.0.0</version>
+          <configuration>
+            <lifecycleMappingMetadata>
+              <pluginExecutions>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>
+                      jacoco-maven-plugin
+                    </artifactId>
+                    <versionRange>
+                      [0.6.3.201306030806,)
+                    </versionRange>
+                    <goals>
+                      <goal>prepare-agent</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <ignore/>
+                  </action>
+                </pluginExecution>
+              </pluginExecutions>
+            </lifecycleMappingMetadata>
+          </configuration>
+        </plugin>
+      </plugins>
     </pluginManagement>
   </build>
   
@@ -209,9 +207,9 @@
     </repository>
     <snapshotRepository>
       <id>terracotta-ee-snapshots</id>
-       <uniqueVersion>false</uniqueVersion>
-       <name>Terracotta EE Snapshots Repository</name>
-       <url>${terracotta-ee-snapshots-url}</url>
+      <uniqueVersion>false</uniqueVersion>
+      <name>Terracotta EE Snapshots Repository</name>
+      <url>${terracotta-ee-snapshots-url}</url>
     </snapshotRepository>
   </distributionManagement>
 
