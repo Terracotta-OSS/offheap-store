@@ -7,11 +7,11 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.terracottatech</groupId>
-  <artifactId>offheap-store</artifactId>
+  <artifactId>offheap-restartable-store</artifactId>
   <version>1.2.12-SNAPSHOT</version>
   <packaging>jar</packaging>
 
-  <name>Terracotta Off-Heap Store</name>
+  <name>Terracotta Off-Heap Restartable Store</name>
 
   <properties>
   </properties>
