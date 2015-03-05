@@ -33,6 +33,16 @@
       <artifactId>fast-restartable-store</artifactId>
       <version>1.1.16</version>
     </dependency>
+    <dependency>
+      <groupId>asm</groupId>
+      <artifactId>asm</artifactId>
+      <version>3.3.1</version>
+    </dependency>
+    <dependency>
+      <groupId>asm</groupId>
+      <artifactId>asm-commons</artifactId>
+      <version>3.3.1</version>
+    </dependency>
     
     <dependency>
       <groupId>junit</groupId>
@@ -62,18 +72,6 @@
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-jdk14</artifactId>
       <version>${slf4j.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>asm</groupId>
-      <artifactId>asm</artifactId>
-      <version>3.3.1</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>asm</groupId>
-      <artifactId>asm-commons</artifactId>
-      <version>3.3.1</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -133,6 +131,9 @@
             </goals>
             <configuration>
               <propertyName>jacocoArgs</propertyName>
+              <excludes>
+                <exclude>com.terracottatech.offheapstore.struct.statics.StaticStructDefinitionTest$*</exclude>
+              </excludes>
             </configuration>
           </execution>
           <execution>
