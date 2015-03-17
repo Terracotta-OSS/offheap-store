@@ -1,6 +1,6 @@
 package com.terracottatech.offheapstore.storage.restartable;
 
-import static com.terracottatech.offheapstore.util.MemoryUnit.MEGABYTES;
+import static org.terracotta.offheapstore.util.MemoryUnit.MEGABYTES;
 
 import java.io.File;
 import java.nio.ByteBuffer;
@@ -16,10 +16,10 @@ import org.junit.Test;
 import com.terracottatech.frs.RestartStore;
 import com.terracottatech.frs.RestartStoreFactory;
 import com.terracottatech.frs.object.RegisterableObjectManager;
-import com.terracottatech.offheapstore.pinning.PinnableCache;
-import com.terracottatech.offheapstore.storage.portability.Portability;
-import com.terracottatech.offheapstore.storage.portability.StringPortability;
-import com.terracottatech.offheapstore.util.MemoryUnit;
+import org.terracotta.offheapstore.pinning.PinnableCache;
+import org.terracotta.offheapstore.storage.portability.Portability;
+import org.terracotta.offheapstore.storage.portability.StringPortability;
+import org.terracotta.offheapstore.util.MemoryUnit;
 
 public abstract class AbstractPinnableRestartabilityCacheIT extends AbstractRestartabilityCacheIT {
 

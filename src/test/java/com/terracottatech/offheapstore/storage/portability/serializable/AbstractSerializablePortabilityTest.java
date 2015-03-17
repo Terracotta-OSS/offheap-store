@@ -7,7 +7,7 @@ package com.terracottatech.offheapstore.storage.portability.serializable;
 import com.terracottatech.frs.RestartStore;
 import com.terracottatech.frs.RestartStoreFactory;
 import com.terracottatech.frs.object.RegisterableObjectManager;
-import com.terracottatech.offheapstore.storage.portability.Portability;
+import org.terracotta.offheapstore.storage.portability.Portability;
 import com.terracottatech.offheapstore.storage.restartable.RestartabilityTestUtilities;
 import com.terracottatech.offheapstore.storage.restartable.portability.RestartableSerializablePortability;
 
@@ -17,7 +17,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 
-import static com.terracottatech.offheapstore.util.MemoryUnit.MEGABYTES;
+import static org.terracotta.offheapstore.util.MemoryUnit.MEGABYTES;
 
 /**
  *

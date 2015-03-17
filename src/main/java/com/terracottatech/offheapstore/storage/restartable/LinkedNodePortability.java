@@ -5,10 +5,10 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 
-import com.terracottatech.offheapstore.disk.persistent.PersistentPortability;
-import com.terracottatech.offheapstore.storage.portability.Portability;
-import com.terracottatech.offheapstore.storage.portability.WriteBackPortability;
-import com.terracottatech.offheapstore.storage.portability.WriteContext;
+import org.terracotta.offheapstore.disk.persistent.PersistentPortability;
+import org.terracotta.offheapstore.storage.portability.Portability;
+import org.terracotta.offheapstore.storage.portability.WriteBackPortability;
+import org.terracotta.offheapstore.storage.portability.WriteContext;
 
 public class LinkedNodePortability<T> implements WriteBackPortability<LinkedNode<T>>, PersistentPortability<LinkedNode<T>>{
 

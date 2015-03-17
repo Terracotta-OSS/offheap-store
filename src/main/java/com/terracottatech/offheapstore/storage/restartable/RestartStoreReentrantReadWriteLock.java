@@ -8,7 +8,7 @@ import com.terracottatech.frs.Transaction;
 import com.terracottatech.frs.TransactionException;
 import com.terracottatech.frs.Tuple;
 import com.terracottatech.frs.recovery.RecoveryException;
-import com.terracottatech.offheapstore.util.FindbugsSuppressWarnings;
+import org.terracotta.offheapstore.util.FindbugsSuppressWarnings;
 
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantReadWriteLock;

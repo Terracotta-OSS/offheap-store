@@ -10,11 +10,11 @@ import com.terracottatech.frs.object.AbstractObjectManagerStripe;
 import com.terracottatech.frs.object.ObjectManagerSegment;
 import com.terracottatech.frs.object.ObjectManagerStripe;
 import com.terracottatech.frs.object.RestartableObject;
-import com.terracottatech.offheapstore.OffHeapHashMap;
-import com.terracottatech.offheapstore.Segment;
-import com.terracottatech.offheapstore.concurrent.AbstractConcurrentOffHeapCache;
-import com.terracottatech.offheapstore.concurrent.AbstractConcurrentOffHeapMap;
-import com.terracottatech.offheapstore.exceptions.OversizeMappingException;
+import org.terracotta.offheapstore.OffHeapHashMap;
+import org.terracotta.offheapstore.Segment;
+import org.terracotta.offheapstore.concurrent.AbstractConcurrentOffHeapCache;
+import org.terracotta.offheapstore.concurrent.AbstractConcurrentOffHeapMap;
+import org.terracotta.offheapstore.exceptions.OversizeMappingException;
 
 public class OffHeapObjectManagerStripe<I> extends AbstractObjectManagerStripe<I, ByteBuffer, ByteBuffer> implements RestartableObject<I, ByteBuffer, ByteBuffer> {
 

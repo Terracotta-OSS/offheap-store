@@ -10,19 +10,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.terracottatech.offheapstore.concurrent.ConcurrentOffHeapHashMap;
+import org.terracotta.offheapstore.concurrent.ConcurrentOffHeapHashMap;
 import com.terracottatech.offheapstore.filesystem.File;
 import com.terracottatech.offheapstore.filesystem.SeekableInputStream;
 import com.terracottatech.offheapstore.filesystem.SeekableOutputStream;
-import com.terracottatech.offheapstore.paging.PageSource;
-import com.terracottatech.offheapstore.storage.IntegerStorageEngine;
-import com.terracottatech.offheapstore.storage.OffHeapBufferHalfStorageEngine;
-import com.terracottatech.offheapstore.storage.SplitStorageEngine;
-import com.terracottatech.offheapstore.storage.portability.Portability;
-import com.terracottatech.offheapstore.util.Factory;
-
-import static com.terracottatech.offheapstore.util.Validation.shouldValidate;
-import static com.terracottatech.offheapstore.util.Validation.validate;
+import org.terracotta.offheapstore.paging.PageSource;
+import org.terracotta.offheapstore.storage.IntegerStorageEngine;
+import org.terracotta.offheapstore.storage.OffHeapBufferHalfStorageEngine;
+import org.terracotta.offheapstore.storage.SplitStorageEngine;
+import org.terracotta.offheapstore.storage.portability.Portability;
+import org.terracotta.offheapstore.util.Factory;
+import static org.terracotta.offheapstore.util.Validation.shouldValidate;
+import static org.terracotta.offheapstore.util.Validation.validate;
 
 public class OffheapFile implements File {
 

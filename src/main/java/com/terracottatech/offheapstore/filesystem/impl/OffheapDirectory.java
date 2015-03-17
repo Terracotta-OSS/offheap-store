@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import com.terracottatech.offheapstore.filesystem.Directory;
 import com.terracottatech.offheapstore.filesystem.File;
-import com.terracottatech.offheapstore.paging.PageSource;
+import org.terracotta.offheapstore.paging.PageSource;
 
 public class OffheapDirectory implements Directory {
   private final String                   name;

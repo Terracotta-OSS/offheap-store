@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.terracottatech.offheapstore.paging.OffHeapStorageArea;
+import org.terracotta.offheapstore.paging.OffHeapStorageArea;
 import com.terracottatech.offheapstore.struct.Field;
 import com.terracottatech.offheapstore.struct.Field.BooleanField;
 import com.terracottatech.offheapstore.struct.Field.BytesField;

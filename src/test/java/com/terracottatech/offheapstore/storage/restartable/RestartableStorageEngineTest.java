@@ -8,9 +8,9 @@ import com.terracottatech.frs.RestartStore;
 import com.terracottatech.frs.Transaction;
 import com.terracottatech.frs.TransactionException;
 import com.terracottatech.frs.object.ObjectManagerEntry;
-import com.terracottatech.offheapstore.storage.BinaryStorageEngine;
-import com.terracottatech.offheapstore.storage.StorageEngine;
-import com.terracottatech.offheapstore.storage.listener.RuntimeStorageEngineListener;
+import org.terracotta.offheapstore.storage.BinaryStorageEngine;
+import org.terracotta.offheapstore.storage.StorageEngine;
+import org.terracotta.offheapstore.storage.listener.RuntimeStorageEngineListener;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.locks.Lock;

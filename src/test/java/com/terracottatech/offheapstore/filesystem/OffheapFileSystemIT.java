@@ -9,9 +9,9 @@ import java.util.Set;
 
 import org.junit.Test;
 
-import com.terracottatech.offheapstore.buffersource.HeapBufferSource;
+import org.terracotta.offheapstore.buffersource.HeapBufferSource;
 import com.terracottatech.offheapstore.filesystem.impl.OffheapFileSystem;
-import com.terracottatech.offheapstore.paging.UnlimitedPageSource;
+import org.terracotta.offheapstore.paging.UnlimitedPageSource;
 
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
