@@ -9,8 +9,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.terracottatech.offheapstore.filesystem.Directory;
 import com.terracottatech.offheapstore.filesystem.FileSystem;
-import com.terracottatech.offheapstore.paging.PageSource;
-import com.terracottatech.offheapstore.util.MemoryUnit;
+import org.terracotta.offheapstore.paging.PageSource;
+import org.terracotta.offheapstore.util.MemoryUnit;
 
 public class OffheapFileSystem implements FileSystem {
 

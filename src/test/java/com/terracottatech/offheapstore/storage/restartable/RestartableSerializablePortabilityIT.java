@@ -1,6 +1,6 @@
 package com.terracottatech.offheapstore.storage.restartable;
 
-import static com.terracottatech.offheapstore.util.MemoryUnit.MEGABYTES;
+import static org.terracotta.offheapstore.util.MemoryUnit.MEGABYTES;
 
 import java.io.File;
 import java.io.Serializable;

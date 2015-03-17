@@ -1,6 +1,6 @@
 package com.terracottatech.offheapstore.storage.restartable;
 
-import static com.terracottatech.offheapstore.util.MemoryUnit.MEGABYTES;
+import static org.terracotta.offheapstore.util.MemoryUnit.MEGABYTES;
 
 import java.io.File;
 import java.nio.ByteBuffer;
@@ -13,17 +13,17 @@ import org.junit.Test;
 import com.terracottatech.frs.RestartStore;
 import com.terracottatech.frs.RestartStoreFactory;
 import com.terracottatech.frs.object.RegisterableObjectManager;
-import com.terracottatech.offheapstore.buffersource.OffHeapBufferSource;
-import com.terracottatech.offheapstore.concurrent.ConcurrentOffHeapHashMap;
-import com.terracottatech.offheapstore.exceptions.OversizeMappingException;
-import com.terracottatech.offheapstore.paging.PageSource;
-import com.terracottatech.offheapstore.paging.UpfrontAllocatingPageSource;
-import com.terracottatech.offheapstore.storage.OffHeapBufferStorageEngine;
-import com.terracottatech.offheapstore.storage.PointerSize;
-import com.terracottatech.offheapstore.storage.portability.ByteArrayPortability;
-import com.terracottatech.offheapstore.storage.portability.StringPortability;
-import com.terracottatech.offheapstore.util.DebuggingUtils;
-import com.terracottatech.offheapstore.util.Factory;
+import org.terracotta.offheapstore.buffersource.OffHeapBufferSource;
+import org.terracotta.offheapstore.concurrent.ConcurrentOffHeapHashMap;
+import org.terracotta.offheapstore.exceptions.OversizeMappingException;
+import org.terracotta.offheapstore.paging.PageSource;
+import org.terracotta.offheapstore.paging.UpfrontAllocatingPageSource;
+import org.terracotta.offheapstore.storage.OffHeapBufferStorageEngine;
+import org.terracotta.offheapstore.storage.PointerSize;
+import org.terracotta.offheapstore.storage.portability.ByteArrayPortability;
+import org.terracotta.offheapstore.storage.portability.StringPortability;
+import org.terracotta.offheapstore.util.DebuggingUtils;
+import org.terracotta.offheapstore.util.Factory;
 
 public class EndToEndPerformanceIT {
 

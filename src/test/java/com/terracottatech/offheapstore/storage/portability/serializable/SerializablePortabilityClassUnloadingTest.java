@@ -1,6 +1,6 @@
 package com.terracottatech.offheapstore.storage.portability.serializable;
 
-import com.terracottatech.offheapstore.storage.portability.SerializablePortability;
+import org.terracotta.offheapstore.storage.portability.SerializablePortability;
 import java.io.Serializable;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;

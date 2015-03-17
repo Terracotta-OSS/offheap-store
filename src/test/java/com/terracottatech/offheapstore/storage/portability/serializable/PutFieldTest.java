@@ -4,7 +4,7 @@
  */
 package com.terracottatech.offheapstore.storage.portability.serializable;
 
-import com.terracottatech.offheapstore.storage.portability.Portability;
+import org.terracotta.offheapstore.storage.portability.Portability;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;

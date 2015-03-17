@@ -10,7 +10,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 
-import com.terracottatech.offheapstore.paging.OffHeapStorageArea;
+import org.terracotta.offheapstore.paging.OffHeapStorageArea;
 import com.terracottatech.offheapstore.struct.Field;
 import com.terracottatech.offheapstore.struct.StructType;
 

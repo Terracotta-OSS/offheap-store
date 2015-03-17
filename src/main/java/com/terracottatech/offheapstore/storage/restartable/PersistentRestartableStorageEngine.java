@@ -6,9 +6,9 @@ import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 
 import com.terracottatech.frs.RestartStore;
-import com.terracottatech.offheapstore.disk.persistent.PersistentStorageEngine;
-import com.terracottatech.offheapstore.storage.BinaryStorageEngine;
-import com.terracottatech.offheapstore.util.Factory;
+import org.terracotta.offheapstore.disk.persistent.PersistentStorageEngine;
+import org.terracotta.offheapstore.storage.BinaryStorageEngine;
+import org.terracotta.offheapstore.util.Factory;
 
 public class PersistentRestartableStorageEngine<T extends PersistentStorageEngine<K, LinkedNode<V>> & BinaryStorageEngine, I, K, V> extends RestartableStorageEngine<T, I, K, V> implements PersistentStorageEngine<K, V> {
 

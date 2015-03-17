@@ -7,7 +7,7 @@ package com.terracottatech.offheapstore.struct;
 
 import java.nio.ByteBuffer;
 
-import com.terracottatech.offheapstore.paging.OffHeapStorageArea;
+import org.terracotta.offheapstore.paging.OffHeapStorageArea;
 import com.terracottatech.offheapstore.struct.Field.BooleanField;
 import com.terracottatech.offheapstore.struct.Field.BytesField;
 import com.terracottatech.offheapstore.struct.Field.CharacterField;
