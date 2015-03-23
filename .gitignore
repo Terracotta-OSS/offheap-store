@@ -1,0 +1,10 @@
+# Maven exclusions
+target/
+
+# IntelliJ exclusions
+/.idea/
+*.iml
+
+# Eclipse exclusions
+.settings/
+.classpath/
