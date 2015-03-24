@@ -21,6 +21,13 @@ that store data outside of the normal Java heap.  Additionally it provides a
 bunch of interesting things to support these functions that might be interesting
 in isolation to some people.
 
+Licensed under the Apache License, Version 2.0   
+(C) Terracotta, Inc., a Software AG company.
+
+http://www.terracotta.org
+
+See also: http://www.github.com/ehcache/ehcache3
+
 == What's Available
 On the surface OffHeap Store contains implementations of:
 
