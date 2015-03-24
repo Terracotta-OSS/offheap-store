@@ -57,13 +57,6 @@ public class OffHeapBufferHalfStorageEngine<T> extends PortabilityBasedHalfStora
   private volatile long mask;
   private final OffHeapStorageArea storageArea;
 
-  /**
-   * Creates a storage engine using the given allocator, and portabilities.
-   *
-   * @param allocator allocator used for storage allocation
-   * @param keyPortability key type portability
-   * @param valuePortability value type portability
-   */
   public OffHeapBufferHalfStorageEngine(PageSource source, int pageSize, Portability<? super T> portability) {
     this(source, pageSize, portability, false, false);
   }

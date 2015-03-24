@@ -41,7 +41,7 @@ public class ConcurrentOffHeapClockCache<K, V> extends AbstractConcurrentOffHeap
    * factory.
    *
    * @param segmentFactory the factory to use to build segments
-   * @param concurrency
+   * @param concurrency the number of segments to use
    */
   public ConcurrentOffHeapClockCache(Factory<? extends AbstractOffHeapClockCache<K, V>> segmentFactory, int concurrency) {
     super(segmentFactory, concurrency);

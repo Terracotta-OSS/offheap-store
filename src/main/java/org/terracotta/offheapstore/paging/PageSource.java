@@ -30,11 +30,11 @@ public interface PageSource {
    * returned page can subsequently be stolen or recovered.  This is most likely
    * to be the calling instance.
    *
-   * @param size
-   * @param thief
-   * @param victim
-   * @param owner
-   * @return
+   * @param size size of page to allocate
+   * @param thief {@code true} if the allocation can steal space from victims
+   * @param victim {@code true} if the allocated page should be eligible for stealing
+   * @param owner owner from which subsequent steal should occur
+   * @return an allocated page, or {@code null} in the case of failure
    */
   Page allocate(int size, boolean thief, boolean victim, OffHeapStorageArea owner);
 

@@ -31,8 +31,7 @@ import static org.terracotta.offheapstore.util.ByteBufferUtils.totalLength;
  * <p>
  * This storage engine implementation uses {@link Portability} instances to
  * convert key/value instances in to ByteBuffers.  The content of these
- * ByteBuffers are then stored in slices of a single large data area, whose
- * space allocation is governed by an external {@link Allocator}.
+ * ByteBuffers are then stored in slices of a single large data area.
  *
  * @param <K> key type handled by this engine
  * @param <V> value type handled by this engine
@@ -100,9 +99,11 @@ public class OffHeapBufferStorageEngine<K, V> extends PortabilityBasedStorageEng
   protected volatile Owner owner;
 
   /**
-   * Creates a storage engine using the given allocator, and portabilities.
+   * Creates a storage engine using the given page source, and portabilities.
    * 
-   * @param allocator allocator used for storage allocation
+   * @param width {@code int} or {@code long} based engine
+   * @param source allocator used for storage allocation
+   * @param pageSize internal (constant) page size
    * @param keyPortability key type portability
    * @param valuePortability value type portability
    */

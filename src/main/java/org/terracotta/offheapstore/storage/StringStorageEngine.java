@@ -38,11 +38,6 @@ public class StringStorageEngine extends OffHeapBufferStorageEngine<String, Stri
 
   private static final Portability<String> PORTABILITY = StringPortability.INSTANCE;
 
-  /**
-   * Create an engine using the given allocator.
-   *
-   * @param allocator data region allocator
-   */
   public StringStorageEngine(PointerSize width, PageSource source, int pageSize) {
     super(width, source, pageSize, PORTABILITY, PORTABILITY);
   }

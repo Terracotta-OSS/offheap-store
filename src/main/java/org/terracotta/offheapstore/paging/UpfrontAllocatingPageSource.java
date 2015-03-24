@@ -50,7 +50,7 @@ import static org.terracotta.offheapstore.storage.allocator.PowerOfTwoAllocator.
 
 /**
  * An upfront allocating direct byte buffer source.
- * <p/>
+ * <p>
  * This buffer source implementation allocates all of its required storage
  * up-front in fixed size chunks.  Runtime allocations are then satisfied using
  * slices from these initial chunks.
@@ -143,7 +143,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
 
     /**
      * Allocates a byte buffer of at least the given size.
-     * <p/>
+     * <p>
      * This {@code BufferSource} is limited to allocating regions that are a power
      * of two in size.  Supplied sizes are therefore rounded up to the next
      * largest power of two.
@@ -310,7 +310,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
 
     /**
      * Frees the supplied buffer.
-     * <p/>
+     * <p>
      * If the given buffer was not allocated by this source or has already been
      * freed then an {@code AssertionError} is thrown.
      */

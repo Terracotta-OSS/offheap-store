@@ -48,26 +48,10 @@ public class SerializableStorageEngine extends OffHeapBufferStorageEngine<Serial
     };
   }
 
-  /**
-   * Create an engine using the given allocator, and a unique portability
-   * instance.
-   *
-   * @param allocator data region allocator
-   */
   public SerializableStorageEngine(PointerSize width, PageSource source, int pageSize) {
     super(width, source, pageSize, new SerializablePortability(), new SerializablePortability());
   }
 
-  /**
-   * Create an engine using the given allocator, and a pre-existing portability
-   * instance.
-   * <p>
-   * This constructor may be useful when constructing multiple caches/maps that
-   * need to share a single portability instance.
-   *
-   * @param allocator data region allocator
-   * @param portability existing portability instance
-   */
   protected SerializableStorageEngine(PointerSize width, PageSource source, int pageSize, Portability<Serializable> portability) {
     super(width, source, pageSize, portability, portability);
   }  

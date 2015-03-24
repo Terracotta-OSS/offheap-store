@@ -34,10 +34,13 @@ import java.util.concurrent.locks.ReadWriteLock;
 public interface StorageEngine<K, V> {
 
   /**
-   * Converts the supplied value object into it's encoded form.
+   * Converts the supplied key and value objects into their encoded form.
    *
+   * @param key a key object
    * @param value a value object
-   * @return encoded value
+   * @param hash the key hash
+   * @param metadata the metadata bits
+   * @return the encoded mapping
    */
   Long writeMapping(K key, V value, int hash, int metadata);
 

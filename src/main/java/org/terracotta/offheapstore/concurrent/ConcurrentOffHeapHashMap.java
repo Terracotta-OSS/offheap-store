@@ -49,10 +49,6 @@ public class ConcurrentOffHeapHashMap<K, V> extends AbstractConcurrentOffHeapMap
     super(new ReadWriteLockedOffHeapHashMapFactory<K, V>(tableSource, tableAllocationsSteal, storageEngineFactory));
   }
 
-  public ConcurrentOffHeapHashMap(PageSource tableSource, Factory<? extends StorageEngine<? super K, ? super V>> storageEngineFactory, boolean latencyMonitoring) {
-    super(new ReadWriteLockedOffHeapHashMapFactory<K, V>(tableSource, storageEngineFactory));
-  }
-
   /**
    * Creates a map using the given table buffer source, storage engine
    * factory, initial table size, and concurrency.
