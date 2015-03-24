@@ -24,9 +24,9 @@ in isolation to some people.
 Licensed under the Apache License, Version 2.0   
 (C) Terracotta, Inc., a Software AG company.
 
-<a href="http://www.terracotta.org">http://www.terracotta.org</a>
+http://www.terracotta.org
 
-See also: <a href="http://www.github.com/ehcache/ehcache3">http://www.github.com/ehcache/ehcache3</a>
+See also: http://www.github.com/ehcache/ehcache3
 
 == What's Available
 On the surface OffHeap Store contains implementations of:
