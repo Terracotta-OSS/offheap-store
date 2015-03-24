@@ -28,18 +28,18 @@ import org.terracotta.offheapstore.util.Factory;
 public class PersistentConcurrentOffHeapHashMap<K, V> extends AbstractPersistentConcurrentOffHeapMap<K, V> {
 
   public PersistentConcurrentOffHeapHashMap(MappedPageSource tableSource, Factory<? extends PersistentStorageEngine<? super K, ? super V>> storageEngineFactory) {
-    super(new PersistentReadWriteLockedOffHeapHashMapFactory<K, V>(tableSource, storageEngineFactory), false);
+    super(new PersistentReadWriteLockedOffHeapHashMapFactory<K, V>(tableSource, storageEngineFactory));
   }
 
   public PersistentConcurrentOffHeapHashMap(ObjectInput input, MappedPageSource tableSource, Factory<? extends PersistentStorageEngine<? super K, ? super V>> storageEngineFactory) throws IOException {
-    super(new PersistentReadWriteLockedOffHeapHashMapFactory<K, V>(tableSource, storageEngineFactory, false), readSegmentCount(input), false);
+    super(new PersistentReadWriteLockedOffHeapHashMapFactory<K, V>(tableSource, storageEngineFactory, false), readSegmentCount(input));
   }
 
   public PersistentConcurrentOffHeapHashMap(MappedPageSource tableSource, Factory<? extends PersistentStorageEngine<? super K, ? super V>> storageEngineFactory, long tableSize, int concurrency) {
-    super(new PersistentReadWriteLockedOffHeapHashMapFactory<K, V>(tableSource, storageEngineFactory, (int) (tableSize / concurrency)), concurrency, false);
+    super(new PersistentReadWriteLockedOffHeapHashMapFactory<K, V>(tableSource, storageEngineFactory, (int) (tableSize / concurrency)), concurrency);
   }
   
   public PersistentConcurrentOffHeapHashMap(ObjectInput input, MappedPageSource tableSource, Factory<? extends PersistentStorageEngine<? super K, ? super V>> storageEngineFactory, long tableSize, int concurrency) throws IOException {
-    super(new PersistentReadWriteLockedOffHeapHashMapFactory<K, V>(tableSource, storageEngineFactory, (int) (tableSize / concurrency), false), readSegmentCount(input), false);
+    super(new PersistentReadWriteLockedOffHeapHashMapFactory<K, V>(tableSource, storageEngineFactory, (int) (tableSize / concurrency), false), readSegmentCount(input));
   }
 }

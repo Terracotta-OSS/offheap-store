@@ -28,18 +28,18 @@ import org.terracotta.offheapstore.util.Factory;
 public class PersistentConcurrentOffHeapClockCache<K, V> extends AbstractPersistentConcurrentOffHeapMap<K, V> {
 
   public PersistentConcurrentOffHeapClockCache(MappedPageSource tableSource, Factory<? extends PersistentStorageEngine<? super K, ? super V>> storageEngineFactory) {
-    super(new PersistentReadWriteLockedOffHeapClockCacheFactory<K, V>(tableSource, storageEngineFactory), false);
+    super(new PersistentReadWriteLockedOffHeapClockCacheFactory<K, V>(tableSource, storageEngineFactory));
   }
 
   public PersistentConcurrentOffHeapClockCache(ObjectInput input, MappedPageSource tableSource, Factory<? extends PersistentStorageEngine<? super K, ? super V>> storageEngineFactory) throws IOException {
-    super(new PersistentReadWriteLockedOffHeapClockCacheFactory<K, V>(tableSource, storageEngineFactory, false), readSegmentCount(input), false);
+    super(new PersistentReadWriteLockedOffHeapClockCacheFactory<K, V>(tableSource, storageEngineFactory, false), readSegmentCount(input));
   }
 
   public PersistentConcurrentOffHeapClockCache(MappedPageSource tableSource, Factory<? extends PersistentStorageEngine<? super K, ? super V>> storageEngineFactory, long tableSize, int concurrency) {
-    super(new PersistentReadWriteLockedOffHeapClockCacheFactory<K, V>(tableSource, storageEngineFactory, (int) (tableSize / concurrency)), concurrency, false);
+    super(new PersistentReadWriteLockedOffHeapClockCacheFactory<K, V>(tableSource, storageEngineFactory, (int) (tableSize / concurrency)), concurrency);
   }
   
   public PersistentConcurrentOffHeapClockCache(ObjectInput input, MappedPageSource tableSource, Factory<? extends PersistentStorageEngine<? super K, ? super V>> storageEngineFactory, long tableSize, int concurrency) throws IOException {
-    super(new PersistentReadWriteLockedOffHeapClockCacheFactory<K, V>(tableSource, storageEngineFactory, (int) (tableSize / concurrency), false), readSegmentCount(input), false);
+    super(new PersistentReadWriteLockedOffHeapClockCacheFactory<K, V>(tableSource, storageEngineFactory, (int) (tableSize / concurrency), false), readSegmentCount(input));
   }
 }

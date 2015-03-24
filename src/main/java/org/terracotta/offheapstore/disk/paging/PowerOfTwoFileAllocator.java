@@ -42,16 +42,6 @@ public class PowerOfTwoFileAllocator {
 
   private long occupied;
 
-  /**
-   * Create a power-of-two allocator using the given buffer source and initial
-   * size.
-   * <p>
-   * This initial size will be used to size the buffer returned from the clear
-   * call.
-   *
-   * @param source source of ByteBuffer instances
-   * @param initialSize initial buffer size
-   */
   public PowerOfTwoFileAllocator() {
     this(Long.MAX_VALUE);
   }

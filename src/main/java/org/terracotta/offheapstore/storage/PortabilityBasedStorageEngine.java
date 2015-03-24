@@ -44,9 +44,8 @@ public abstract class PortabilityBasedStorageEngine<K, V> extends AbstractListen
   private CachedEncode<K, V> lastMapping;
 
   /**
-   * Creates a storage engine using the given allocator, and portabilities.
+   * Creates a storage engine using the given portabilities.
    *
-   * @param allocator allocator used for storage allocation
    * @param keyPortability key type portability
    * @param valuePortability value type portability
    */

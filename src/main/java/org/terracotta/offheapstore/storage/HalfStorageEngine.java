@@ -25,7 +25,8 @@ public interface HalfStorageEngine<T> {
   /**
    * Converts the supplied value object into it's encoded form.
    *
-   * @param value a value object
+   * @param object a value object
+   * @param hash the keys hash
    * @return encoded value
    */
   Integer write(T object, int hash);
@@ -57,7 +58,7 @@ public interface HalfStorageEngine<T> {
    * This method is provided to allow implementations to optimize this
    * comparison if possible.
    *
-   * @param value a value object
+   * @param object a value object
    * @param encoding encoded value
    * @return {@code true} if the value and the encoding are equal
    */

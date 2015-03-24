@@ -61,6 +61,7 @@ public class ReadWriteLockedOffHeapHashMapFactory<K, V> implements Factory<ReadW
    * factory, and initial table size.
    *
    * @param tableSource buffer source from which the segment hash tables are allocated
+   * @param tableAllocationsSteal whether table allocations should steal
    * @param storageEngineFactory factory for the segment storage engines
    * @param tableSize initial table size for each segment
    */

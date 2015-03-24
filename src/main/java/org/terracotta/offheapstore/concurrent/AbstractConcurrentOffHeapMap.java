@@ -38,7 +38,7 @@ import org.terracotta.offheapstore.util.Factory;
  * An abstract concurrent (striped) off-heap map.
  * <p>
  * This is an n-way hashcode striped map implementation.  Subclasses must
- * provide a {@link SegmentFactory} instance at construction time from which
+ * provide a {@link Factory} instance at construction time from which
  * the required number of segments are created.
  *
  * @param <K> the type of keys maintained by this map
