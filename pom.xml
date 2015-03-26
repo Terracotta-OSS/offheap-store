@@ -181,6 +181,11 @@ limitations under the License.
             </goals>
           </execution>
         </executions>
+        <configuration>
+          <excludes>
+            <exclude>nb-configuration.xml</exclude>
+          </excludes>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
