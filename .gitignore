@@ -8,3 +8,6 @@ target/
 # Eclipse exclusions
 .settings/
 .classpath/
+
+# Netbeans exclusions
+nb-configuration.xml
