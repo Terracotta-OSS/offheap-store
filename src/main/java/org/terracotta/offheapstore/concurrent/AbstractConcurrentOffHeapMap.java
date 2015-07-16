@@ -269,8 +269,16 @@ public abstract class AbstractConcurrentOffHeapMap<K, V> extends AbstractMap<K, 
     return segmentFor(key).removeNoReturn(key);
   }
 
-  public boolean updateMetadata(K key, int mask, int metadata) {
-    return segmentFor(key).setMetadata(key, mask, metadata);
+  public Integer getMetadata(K key, int mask) throws IllegalArgumentException {
+    return segmentFor(key).getMetadata(key, mask);
+  }
+  
+  public Integer getAndSetMetadata(K key, int mask, int values) throws IllegalArgumentException {
+    return segmentFor(key).getAndSetMetadata(key, mask, values);
+  }
+  
+  public V getValueAndSetMetadata(K key, int mask, int values) {
+    return segmentFor(key).getValueAndSetMetadata(key, mask, values);
   }
   
   @Override

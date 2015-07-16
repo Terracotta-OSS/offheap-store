@@ -57,8 +57,9 @@ public abstract class AbstractConcurrentOffHeapCache<K, V> extends AbstractConcu
     }
   }
   
+  @Override
   public V getAndPin(final K key) {
-    return segmentFor(key).getAndSetMetadata(key, Metadata.PINNED, Metadata.PINNED);
+    return segmentFor(key).getValueAndSetMetadata(key, Metadata.PINNED, Metadata.PINNED);
   }
 
   @Override
@@ -90,18 +91,6 @@ public abstract class AbstractConcurrentOffHeapCache<K, V> extends AbstractConcu
     }
   }
 
-  public boolean pin(final K key) {
-    return setPinned(key, true);
-  }
-
-  public boolean unpin(final K key) {
-    return setPinned(key, false);
-  }
-
-  private boolean setPinned(final K key, boolean pin) {
-    return updateMetadata(key, Metadata.PINNED, pin ? Metadata.PINNED : 0);
-  }
-
   @Override
   public boolean isPinned(Object key) {
     return segmentFor(key).isPinned(key);
@@ -109,33 +98,7 @@ public abstract class AbstractConcurrentOffHeapCache<K, V> extends AbstractConcu
 
   @Override
   public void setPinning(K key, boolean pinned) {
-    try {
-      segmentFor(key).setPinning(key, pinned);
-    } catch (OversizeMappingException e) {
-      if (handleOversizeMappingException(key.hashCode())) {
-        try {
-          segmentFor(key).setPinning(key, pinned);
-          return;
-        } catch (OversizeMappingException ex) {
-          //ignore
-        }
-      }
-
-      writeLockAll();
-      try {
-        do {
-          try {
-            segmentFor(key).setPinning(key, pinned);
-            return;
-          } catch (OversizeMappingException ex) {
-            e = ex;
-          }
-        } while (handleOversizeMappingException(key.hashCode()));
-        throw e;
-      } finally {
-        writeUnlockAll();
-      }
-    }
+    segmentFor(key).setPinning(key, pinned);
   }
 
   @Override

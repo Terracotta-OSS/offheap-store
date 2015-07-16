@@ -42,7 +42,7 @@ import java.nio.IntBuffer;
  * @author Chris Dennis
  * @author Manoj Govindassamy
  */
-public abstract class AbstractOffHeapClockCache<K, V> extends AbstractLockedOffHeapHashMap<K, V> implements PinnableCache<K, V>,PinnableSegment<K, V> {
+public abstract class AbstractOffHeapClockCache<K, V> extends AbstractLockedOffHeapHashMap<K, V> implements PinnableCache<K, V>, PinnableSegment<K, V> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(AbstractOffHeapClockCache.class);
   
@@ -249,32 +249,26 @@ public abstract class AbstractOffHeapClockCache<K, V> extends AbstractLockedOffH
 
   @Override
   public boolean isPinned(Object key) {
-    Lock l = readLock();
-    l.lock();
-    try {
-      return (getMetadata(key) & Metadata.PINNED) == Metadata.PINNED;
-    } finally {
-      l.unlock();
-    }
+    Integer metadata = getMetadata(key, Metadata.PINNED);
+    return metadata != null && metadata != 0;
   }
 
   @Override
   public void setPinning(K key, boolean pinned) {
-    Lock l = writeLock();
-    l.lock();
-    try {
-      if (pinned) {
-        setMetadata(key, Metadata.PINNED, Metadata.PINNED);
-      } else {
-        setMetadata(key, Metadata.PINNED, 0);
-      }
-    } finally {
-      l.unlock();
+    if (pinned) {
+      getAndSetMetadata(key, Metadata.PINNED, Metadata.PINNED);
+    } else {
+      getAndSetMetadata(key, Metadata.PINNED, 0);
     }
   }
 
   @Override
-  public V putPinned(final K key, final V value) {
+  public V putPinned(K key, V value) {
     return put(key, value, Metadata.PINNED);
+  }
+  
+  @Override
+  public V getAndPin(K key) {
+    return getValueAndSetMetadata(key, Metadata.PINNED, Metadata.PINNED);
   }
 }

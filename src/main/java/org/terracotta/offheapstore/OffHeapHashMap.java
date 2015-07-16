@@ -354,7 +354,9 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
     return installMappingForHashAndEncoding(pojoHash, offheapBinaryKey, offheapBinaryValue, metadata);
   }
 
-  public boolean updateMetadata(K key, int writeMask, int metadata) {
+  public Integer getMetadata(Object key, int mask) {
+    int safeMask = mask & ~RESERVED_STATUS_BITS;
+    
     freePendingTables();
 
     int hash = key.hashCode();
@@ -372,16 +374,81 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
 
       long encoding = readLong(entry, ENCODING);
       if (isTerminating(entry)) {
-        return false;
+        return null;
       } else if (isPresent(entry) && keyEquals(key, hash, encoding, entry.get(KEY_HASHCODE))) {
-        entry.put(STATUS, (entry.get(STATUS) & (RESERVED_STATUS_BITS | ~writeMask)) | (metadata & (writeMask & ~RESERVED_STATUS_BITS)));
-        return true;
+        return entry.get(STATUS) & safeMask;
       } else {
         hashtable.position(hashtable.position() + ENTRY_SIZE);
       }
     }
 
-    return false;
+    return null;
+  }
+
+  public Integer getAndSetMetadata(Object key, int mask, int values) {
+    int safeMask = mask & ~RESERVED_STATUS_BITS;
+    
+    freePendingTables();
+
+    int hash = key.hashCode();
+
+    hashtable.position(indexFor(spread(hash)));
+
+    int limit = reprobeLimit();
+
+    for (int i = 0; i < limit; i++) {
+      if (!hashtable.hasRemaining()) {
+        hashtable.rewind();
+      }
+
+      IntBuffer entry = (IntBuffer) hashtable.slice().limit(ENTRY_SIZE);
+
+      long encoding = readLong(entry, ENCODING);
+      if (isTerminating(entry)) {
+        return null;
+      } else if (isPresent(entry) && keyEquals(key, hash, encoding, entry.get(KEY_HASHCODE))) {
+        int previous = entry.get(STATUS);
+        entry.put(STATUS, (previous & ~safeMask) | (values & safeMask));
+        return previous & safeMask;
+      } else {
+        hashtable.position(hashtable.position() + ENTRY_SIZE);
+      }
+    }
+
+    return null;
+  }
+
+  public V getValueAndSetMetadata(Object key, int mask, int values) {
+    int safeMask = mask & ~RESERVED_STATUS_BITS;
+    
+    freePendingTables();
+
+    int hash = key.hashCode();
+
+    hashtable.position(indexFor(spread(hash)));
+
+    int limit = reprobeLimit();
+
+    for (int i = 0; i < limit; i++) {
+      if (!hashtable.hasRemaining()) {
+        hashtable.rewind();
+      }
+
+      IntBuffer entry = (IntBuffer) hashtable.slice().limit(ENTRY_SIZE);
+
+      long encoding = readLong(entry, ENCODING);
+      if (isTerminating(entry)) {
+        return null;
+      } else if (isPresent(entry) && keyEquals(key, hash, encoding, entry.get(KEY_HASHCODE))) {
+        hit(entry);
+        entry.put(STATUS, (entry.get(STATUS) & ~safeMask) | (values & safeMask));
+        return (V) storageEngine.readValue(readLong(entry, ENCODING));
+      } else {
+        hashtable.position(hashtable.position() + ENTRY_SIZE);
+      }
+    }
+
+    return null;
   }
 
   @Override
@@ -463,37 +530,6 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
 
     return put(key, value, metadata);
   }
-
-  public int getMetadata(Object key) {
-    int hash = key.hashCode();
-
-    if (size == 0) {
-      return 0;
-    }
-
-    IntBuffer view = (IntBuffer) hashtable.duplicate().position(indexFor(spread(hash)));
-
-    int limit = reprobeLimit();
-
-    for (int i = 0; i < limit; i++) {
-      if (!view.hasRemaining()) {
-        view.rewind();
-      }
-
-      IntBuffer entry = (IntBuffer) view.slice().limit(ENTRY_SIZE);
-
-      if (isTerminating(entry)) {
-        return 0;
-      } else if (isPresent(entry) && keyEquals(key, hash, readLong(entry, ENCODING), entry.get(KEY_HASHCODE))) {
-        return entry.get(STATUS) & ~RESERVED_STATUS_BITS;
-      } else {
-        view.position(view.position() + ENTRY_SIZE);
-      }
-    }
-    return 0;
-  }
-
-
 
   /**
    * Associates the specified value with the specified key in this map.  If the

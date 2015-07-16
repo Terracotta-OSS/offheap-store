@@ -277,29 +277,33 @@ public abstract class AbstractLockedOffHeapHashMap<K, V> extends OffHeapHashMap<
   }
 
   @Override
-  public boolean setMetadata(K key, int writeMask, int metadata) {
+  public Integer getMetadata(Object key, int mask) {
+    Lock l = readLock();
+    l.lock();
+    try {
+      return super.getMetadata(key, mask);
+    } finally {
+      l.unlock();
+    }
+  }
+  
+  @Override
+  public Integer getAndSetMetadata(Object key, int mask, int values) {
     Lock l = writeLock();
     l.lock();
     try {
-      return super.updateMetadata(key, writeMask, metadata);
+      return super.getAndSetMetadata(key, mask, values);
     } finally {
       l.unlock();
     }
   }
 
   @Override
-  // TODO Make this a real compound op (avoiding multiple lookups) in super class
-  public V getAndSetMetadata(final K key, final int mask, final int metadata) {
+  public V getValueAndSetMetadata(Object key, int mask, int values) {
     Lock l = writeLock();
     l.lock();
     try {
-      final V v = get(key);
-      if(v != null) {
-        if(!updateMetadata(key, mask, metadata)) {
-          return null;
-        }
-      }
-      return v;
+      return super.getValueAndSetMetadata(key, mask, values);
     } finally {
       l.unlock();
     }
