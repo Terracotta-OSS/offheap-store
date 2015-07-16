@@ -25,7 +25,7 @@ import org.terracotta.offheapstore.util.Factory;
  *
  * @author Chris Dennis
  */
-public class PersistentConcurrentOffHeapClockCache<K, V> extends AbstractPersistentConcurrentOffHeapMap<K, V> {
+public class PersistentConcurrentOffHeapClockCache<K, V> extends AbstractPersistentConcurrentOffHeapCache<K, V> {
 
   public PersistentConcurrentOffHeapClockCache(MappedPageSource tableSource, Factory<? extends PersistentStorageEngine<? super K, ? super V>> storageEngineFactory) {
     super(new PersistentReadWriteLockedOffHeapClockCacheFactory<K, V>(tableSource, storageEngineFactory));
