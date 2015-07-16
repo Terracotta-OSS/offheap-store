@@ -49,7 +49,7 @@ public class FileBackedStorageEngineTest extends AbstractDiskTest {
   @Test
   public void testEmptyPayload() throws IOException {
     MappedPageSource source = new MappedPageSource(dataFile);
-    FileBackedStorageEngine<byte[], byte[]> engine = new FileBackedStorageEngine<byte[], byte[]>(source, PersistentByteArrayPortability.INSTANCE, PersistentByteArrayPortability.INSTANCE, 1024);
+    FileBackedStorageEngine<byte[], byte[]> engine = new FileBackedStorageEngine<byte[], byte[]>(source, PersistentByteArrayPortability.INSTANCE, PersistentByteArrayPortability.INSTANCE);
     try {
       long p = engine.writeMapping(new byte[0], new byte[0], 0, 0);
       Assert.assertTrue(p >= 0);
@@ -72,7 +72,7 @@ public class FileBackedStorageEngineTest extends AbstractDiskTest {
   @Test
   public void testSmallPayloads() throws IOException {
     MappedPageSource source = new MappedPageSource(dataFile);
-    FileBackedStorageEngine<byte[], byte[]> engine = new FileBackedStorageEngine<byte[], byte[]>(source, PersistentByteArrayPortability.INSTANCE, PersistentByteArrayPortability.INSTANCE, 1);
+    FileBackedStorageEngine<byte[], byte[]> engine = new FileBackedStorageEngine<byte[], byte[]>(source, PersistentByteArrayPortability.INSTANCE, PersistentByteArrayPortability.INSTANCE);
     try {
       Random rndm = new Random();
 
@@ -105,7 +105,7 @@ public class FileBackedStorageEngineTest extends AbstractDiskTest {
   @Test
   public void testInterruptingReadThreads() throws IOException {
     MappedPageSource source = new MappedPageSource(dataFile);
-    FileBackedStorageEngine<byte[], byte[]> engine = new FileBackedStorageEngine<byte[], byte[]>(source, PersistentByteArrayPortability.INSTANCE, PersistentByteArrayPortability.INSTANCE, 1024);
+    FileBackedStorageEngine<byte[], byte[]> engine = new FileBackedStorageEngine<byte[], byte[]>(source, PersistentByteArrayPortability.INSTANCE, PersistentByteArrayPortability.INSTANCE);
     try {
       long p = engine.writeMapping(new byte[0], new byte[32], 0, 0);
       Assert.assertTrue(p >= 0);
@@ -128,7 +128,7 @@ public class FileBackedStorageEngineTest extends AbstractDiskTest {
   public void testHugeMap() throws IOException, InterruptedException, ExecutionException {
     System.err.println("Using file: " + dataFile.getAbsolutePath());
     MappedPageSource source = new MappedPageSource(dataFile);
-    final ConcurrentOffHeapHashMap<Integer, byte[]> map = new ConcurrentOffHeapHashMap<Integer, byte[]>(source, FileBackedStorageEngine.createFactory(source, 8 * 1024 * 1024, new PersistentSerializablePortability(), PersistentByteArrayPortability.INSTANCE), 4 * 1024 * 1024, 1);
+    final ConcurrentOffHeapHashMap<Integer, byte[]> map = new ConcurrentOffHeapHashMap<Integer, byte[]>(source, FileBackedStorageEngine.createFactory(source, new PersistentSerializablePortability(), PersistentByteArrayPortability.INSTANCE), 4 * 1024 * 1024, 1);
     try {
       ExecutorService executor = Executors.newFixedThreadPool(1);
 
