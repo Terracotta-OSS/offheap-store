@@ -44,9 +44,11 @@ public interface Segment<K, V> extends ConcurrentMap<K, V>, MapInternals, ReadWr
   
   V put(K key, V value, int metadata);
 
-  boolean setMetadata(K key, int mask, int metadata);
+  Integer getMetadata(K key, int mask);
 
-  V getAndSetMetadata(K key, int mask, int metadata);
+  Integer getAndSetMetadata(K key, int mask, int values);
+
+  V getValueAndSetMetadata(K key, int mask, int values);
 
   /**
    * Return the {@code ReentrantReadWriteLock} used by this segment.
