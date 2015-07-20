@@ -76,7 +76,7 @@ public class DiskLoadIT {
             }
           }
         });
-        return new FileBackedStorageEngine<Integer, byte[]>(source, new PersistentSerializablePortability(), PersistentByteArrayPortability.INSTANCE, 1, e);
+        return new FileBackedStorageEngine<Integer, byte[]>(source, new PersistentSerializablePortability(), PersistentByteArrayPortability.INSTANCE, e);
       }
     }, 1, SEGMENTS);
     try {

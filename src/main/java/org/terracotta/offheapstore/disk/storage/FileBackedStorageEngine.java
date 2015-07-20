@@ -22,6 +22,7 @@ import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -69,48 +70,46 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
   private final FileChannel writeChannel;
   private final AtomicReference<FileChannel> readChannelReference;
 
-  private final long initialSize;
-  private final int chunkIndexOffset;
   private final List<FileChunk> chunks = new CopyOnWriteArrayList<FileChunk>();
 
   private volatile Owner owner;
 
-  public static <K, V> Factory<FileBackedStorageEngine<K, V>> createFactory(final MappedPageSource source, final int initialSize, final Portability<? super K> keyPortability, final Portability<? super V> valuePortability) {
-    return createFactory(source, initialSize, keyPortability, valuePortability, true);
+  public static <K, V> Factory<FileBackedStorageEngine<K, V>> createFactory(final MappedPageSource source, final Portability<? super K> keyPortability, final Portability<? super V> valuePortability) {
+    return createFactory(source, keyPortability, valuePortability, true);
   }
 
-  public static <K, V> Factory<FileBackedStorageEngine<K, V>> createFactory(final MappedPageSource source, final int initialSize, final Portability<? super K> keyPortability, final Portability<? super V> valuePortability, final boolean bootstrap) {
+  public static <K, V> Factory<FileBackedStorageEngine<K, V>> createFactory(final MappedPageSource source, final Portability<? super K> keyPortability, final Portability<? super V> valuePortability, final boolean bootstrap) {
     Factory<ThreadPoolExecutor> executorFactory = new Factory<ThreadPoolExecutor>() {
       @Override
       public ThreadPoolExecutor newInstance() {
         return new ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
       }
     };
-    return createFactory(source, initialSize, keyPortability, valuePortability, executorFactory, bootstrap);
+    return createFactory(source, keyPortability, valuePortability, executorFactory, bootstrap);
   }
 
-  public static <K, V> Factory<FileBackedStorageEngine<K, V>> createFactory(final MappedPageSource source, final int initialSize, final Portability<? super K> keyPortability, final Portability<? super V> valuePortability, final Factory<ThreadPoolExecutor> executorFactory, final boolean bootstrap) {
+  public static <K, V> Factory<FileBackedStorageEngine<K, V>> createFactory(final MappedPageSource source, final Portability<? super K> keyPortability, final Portability<? super V> valuePortability, final Factory<ThreadPoolExecutor> executorFactory, final boolean bootstrap) {
     return new Factory<FileBackedStorageEngine<K, V>>() {
       @Override
       public FileBackedStorageEngine<K, V> newInstance() {
-        return new FileBackedStorageEngine<K, V>(source, keyPortability, valuePortability, initialSize, executorFactory.newInstance(), bootstrap);
+        return new FileBackedStorageEngine<K, V>(source, keyPortability, valuePortability, executorFactory.newInstance(), bootstrap);
       }
     };
   }
 
-  public FileBackedStorageEngine(MappedPageSource source, Portability<? super K> keyPortability, Portability<? super V> valuePortability, int initialSize) {
-    this(source, keyPortability, valuePortability, initialSize, true);
+  public FileBackedStorageEngine(MappedPageSource source, Portability<? super K> keyPortability, Portability<? super V> valuePortability) {
+    this(source, keyPortability, valuePortability, true);
   }
 
-  public FileBackedStorageEngine(MappedPageSource source, Portability<? super K> keyPortability, Portability<? super V> valuePortability, int initialSize, ThreadPoolExecutor writer) {
-    this(source, keyPortability, valuePortability, initialSize, writer, true);
+  public FileBackedStorageEngine(MappedPageSource source, Portability<? super K> keyPortability, Portability<? super V> valuePortability, ThreadPoolExecutor writer) {
+    this(source, keyPortability, valuePortability, writer, true);
   }
 
-  public FileBackedStorageEngine(MappedPageSource source, Portability<? super K> keyPortability, Portability<? super V> valuePortability, int initialSize, boolean bootstrap) {
-    this(source, keyPortability, valuePortability, initialSize, new ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>()), bootstrap);
+  public FileBackedStorageEngine(MappedPageSource source, Portability<? super K> keyPortability, Portability<? super V> valuePortability, boolean bootstrap) {
+    this(source, keyPortability, valuePortability, new ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>()), bootstrap);
   }
 
-  public FileBackedStorageEngine(MappedPageSource source, Portability<? super K> keyPortability, Portability<? super V> valuePortability, int initialSize, ThreadPoolExecutor writer, boolean bootstrap) {
+  public FileBackedStorageEngine(MappedPageSource source, Portability<? super K> keyPortability, Portability<? super V> valuePortability, ThreadPoolExecutor writer, boolean bootstrap) {
     super(keyPortability, valuePortability);
 
     if (writer.getMaximumPoolSize() > 1) {
@@ -123,12 +122,6 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
     this.readChannelReference = new AtomicReference<FileChannel>(source.getReadableChannel());
 
     this.source = source;
-    this.initialSize = initialSize;
-    this.chunkIndexOffset = 32 - Integer.numberOfLeadingZeros(initialSize);
-
-    if (bootstrap) {
-      this.chunks.add(new FileChunk(initialSize, 0));
-    }
   }
 
   @Override
@@ -142,7 +135,6 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
     if (!chunks.isEmpty()) {
       throw new AssertionError("Concurrent modification while clearing!");
     }
-    this.chunks.add(new FileChunk(initialSize, 0));
   }
 
   @Override
@@ -313,12 +305,23 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
     }
 
     while (true) {
-      FileChunk last = chunks.get(chunks.size() - 1);
-      long nextChunkSize = last.capacity() << 1;
-      long nextChunkBaseAddress = last.baseAddress() + last.capacity();
+      long nextChunkSize;
+      long nextChunkBaseAddress;
+      if (chunks.isEmpty()) {
+        nextChunkSize = keyBuffer.remaining() + valueBuffer.remaining() + KEY_DATA_OFFSET;
+        if (Long.bitCount(nextChunkSize) != 1) {
+            long rounded = Long.highestOneBit(nextChunkSize) << 1;
+            nextChunkSize = rounded;
+        }
+        nextChunkBaseAddress = 0L;
+      } else {
+        FileChunk last = chunks.get(chunks.size() - 1);
+        nextChunkSize = last.capacity() << 1;
+        nextChunkBaseAddress = last.baseAddress() + last.capacity();
 
-      if (nextChunkSize < 0) {
-        return null;
+        if (nextChunkSize < 0) {
+          return null;
+        }
       }
 
       FileChunk c;
@@ -368,7 +371,8 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
   }
   
   private FileChunk findChunk(long address) {
-    int chunkIndex = Long.SIZE - Long.numberOfLeadingZeros(address + initialSize) - chunkIndexOffset;
+    int initialSize = (int) chunks.get(0).capacity();
+    int chunkIndex = Long.numberOfLeadingZeros(initialSize) - Long.numberOfLeadingZeros(address + initialSize);
     return chunks.get(chunkIndex);
   }
 
@@ -452,8 +456,17 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
 
   @Override
   public boolean shrink() {
-    //TODO May want to support shrink on disk...
-    return false;
+    if (chunks.isEmpty()) {
+      return false;
+    } else {
+      FileChunk candidate = chunks.get(chunks.size() - 1);
+      if (candidate.evictAll()) {
+        chunks.remove(chunks.size() - 1).clear();
+        return true;
+      } else {
+        return false;
+      }
+    }
   }
 
   @Override
@@ -718,6 +731,24 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
 
     synchronized boolean isValid() {
       return valid;
+    }
+
+    boolean evictAll() {
+      List<Long> targetEncodings = new ArrayList<Long>();
+      for (long encoding : owner.encodingSet()) {
+        long address = encoding - baseAddress();
+        if (address >= 0 && address < capacity()) {
+          targetEncodings.add(encoding);
+        }
+      }
+      
+      for (long encoding : targetEncodings) {
+        int slot = owner.getSlotForHashAndEncoding(readPojoHash(encoding - baseAddress()), encoding, ~0L);
+        if (!owner.evict(slot, true)) {
+          return false;
+        }
+      }
+      return true;
     }
   }
 

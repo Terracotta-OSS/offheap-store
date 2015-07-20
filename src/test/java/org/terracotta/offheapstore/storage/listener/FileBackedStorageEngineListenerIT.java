@@ -44,7 +44,7 @@ public class FileBackedStorageEngineListenerIT extends AbstractListenerIT {
   @Override
   protected ListenableStorageEngine<String, String> createStorageEngine() {
     try {
-      return new FileBackedStorageEngine<String, String>(new MappedPageSource(dataFile), StringPortability.INSTANCE, StringPortability.INSTANCE, 1024);
+      return new FileBackedStorageEngine<String, String>(new MappedPageSource(dataFile), StringPortability.INSTANCE, StringPortability.INSTANCE);
     } catch (IOException e) {
       throw new AssertionError(e);
     }
