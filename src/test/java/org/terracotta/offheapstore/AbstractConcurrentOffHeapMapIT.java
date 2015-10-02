@@ -15,6 +15,8 @@
  */
 package org.terracotta.offheapstore;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentMap;
@@ -24,6 +26,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import org.terracotta.offheapstore.buffersource.HeapBufferSource;
+import org.terracotta.offheapstore.concurrent.AbstractConcurrentOffHeapCache;
 import org.terracotta.offheapstore.paging.UnlimitedPageSource;
 import org.terracotta.offheapstore.util.Generator;
 import org.terracotta.offheapstore.util.Generator.SpecialInteger;
@@ -31,13 +34,17 @@ import java.util.Iterator;
 
 import java.util.concurrent.atomic.AtomicReference;
 import static org.hamcrest.core.AnyOf.anyOf;
+import static org.hamcrest.core.CombinableMatcher.either;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
+import static org.hamcrest.core.IsInstanceOf.instanceOf;
+import static org.hamcrest.core.IsNot.not;
 import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeThat;
 
 /**
  *
@@ -445,6 +452,34 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
     }
   }
   
+  @Test
+  public void testConcurrentUpdateOfKeyWhileIterating() {
+    final Map<SpecialInteger, SpecialInteger> m = createMap(generator);
+
+    assumeThat(m, not(either(instanceOf(AbstractConcurrentOffHeapCache.class))
+                    .or(instanceOf(AbstractOffHeapClockCache.class))));
+    
+    m.put(generator.generate(1024), generator.generate(1024));
+    m.put(generator.generate(1), generator.generate(1));
+
+    List<Iterator<SpecialInteger>> iterators = new ArrayList<Iterator<SpecialInteger>>(1024);
+    for (int i = 0; i < 1024; i++) {
+      iterators.add(m.keySet().iterator());
+      m.put(generator.generate(i), generator.generate(i));
+      m.put(generator.generate(1024), generator.generate(i));
+    }
+
+    for (Iterator<SpecialInteger> it : iterators) {
+      boolean foundMagicKey = false;
+      while (it.hasNext()) {
+        if (it.next().equals(generator.generate(1024))) {
+          foundMagicKey = true;
+        }
+      }
+      assertTrue(foundMagicKey);
+    }
+  }
+
   static class SubCollectionTester implements Runnable {
 
     private final Throwable[] failure;
