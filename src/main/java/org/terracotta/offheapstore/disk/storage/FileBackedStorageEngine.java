@@ -79,16 +79,16 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
   }
 
   public static <K, V> Factory<FileBackedStorageEngine<K, V>> createFactory(final MappedPageSource source, final Portability<? super K> keyPortability, final Portability<? super V> valuePortability, final boolean bootstrap) {
-    Factory<ThreadPoolExecutor> executorFactory = new Factory<ThreadPoolExecutor>() {
+    Factory<ExecutorService> executorFactory = new Factory<ExecutorService>() {
       @Override
-      public ThreadPoolExecutor newInstance() {
+      public ExecutorService newInstance() {
         return new ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
       }
     };
     return createFactory(source, keyPortability, valuePortability, executorFactory, bootstrap);
   }
 
-  public static <K, V> Factory<FileBackedStorageEngine<K, V>> createFactory(final MappedPageSource source, final Portability<? super K> keyPortability, final Portability<? super V> valuePortability, final Factory<ThreadPoolExecutor> executorFactory, final boolean bootstrap) {
+  public static <K, V> Factory<FileBackedStorageEngine<K, V>> createFactory(final MappedPageSource source, final Portability<? super K> keyPortability, final Portability<? super V> valuePortability, final Factory<ExecutorService> executorFactory, final boolean bootstrap) {
     return new Factory<FileBackedStorageEngine<K, V>>() {
       @Override
       public FileBackedStorageEngine<K, V> newInstance() {
@@ -101,7 +101,7 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
     this(source, keyPortability, valuePortability, true);
   }
 
-  public FileBackedStorageEngine(MappedPageSource source, Portability<? super K> keyPortability, Portability<? super V> valuePortability, ThreadPoolExecutor writer) {
+  public FileBackedStorageEngine(MappedPageSource source, Portability<? super K> keyPortability, Portability<? super V> valuePortability, ExecutorService writer) {
     this(source, keyPortability, valuePortability, writer, true);
   }
 
@@ -109,15 +109,10 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
     this(source, keyPortability, valuePortability, new ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>()), bootstrap);
   }
 
-  public FileBackedStorageEngine(MappedPageSource source, Portability<? super K> keyPortability, Portability<? super V> valuePortability, ThreadPoolExecutor writer, boolean bootstrap) {
+  public FileBackedStorageEngine(MappedPageSource source, Portability<? super K> keyPortability, Portability<? super V> valuePortability, ExecutorService writer, boolean bootstrap) {
     super(keyPortability, valuePortability);
 
-    if (writer.getMaximumPoolSize() > 1) {
-      throw new AssertionError();
-    } else {
-      this.writeExecutor = writer;
-    }
-
+    this.writeExecutor = writer;
     this.writeChannel = source.getWritableChannel();
     this.readChannelReference = new AtomicReference<FileChannel>(source.getReadableChannel());
 
