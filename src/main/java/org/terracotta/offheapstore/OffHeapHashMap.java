@@ -90,14 +90,14 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
    * Size of a table entry in primitive {@code int} units
    */
   protected static final int ENTRY_SIZE = 4;
-  private static final int ENTRY_BIT_SHIFT = Integer.numberOfTrailingZeros(ENTRY_SIZE);
+  protected static final int ENTRY_BIT_SHIFT = Integer.numberOfTrailingZeros(ENTRY_SIZE);
 
   protected static final int STATUS = 0;
-  private static final int KEY_HASHCODE = 1;
-  private static final int ENCODING = 2;
+  protected static final int KEY_HASHCODE = 1;
+  protected static final int ENCODING = 2;
 
   protected static final int STATUS_USED = 1;
-  private static final int STATUS_REMOVED = 2;
+  protected static final int STATUS_REMOVED = 2;
   public static final int RESERVED_STATUS_BITS = STATUS_USED | STATUS_REMOVED;
 
   protected final StorageEngine<? super K, ? super V> storageEngine;
@@ -917,7 +917,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
     return isTerminating(entry.get(STATUS));
   }
 
-  private static boolean isTerminating(int entryStatus) {
+  protected static boolean isTerminating(int entryStatus) {
     return (entryStatus & (STATUS_USED | STATUS_REMOVED)) == 0;
   }
 
@@ -925,23 +925,23 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
     return isRemoved(entry.get(STATUS));
   }
 
-  private static boolean isRemoved(int entryStatus) {
+  protected static boolean isRemoved(int entryStatus) {
     return (entryStatus & STATUS_REMOVED) != 0;
   }
 
-  private static long readLong(int[] array, int offset) {
+  protected static long readLong(int[] array, int offset) {
     return (((long) array[offset]) << Integer.SIZE) | (0xffffffffL & array[offset + 1]);
   }
 
-  private static long readLong(IntBuffer entry, int offset) {
+  protected static long readLong(IntBuffer entry, int offset) {
     return (((long) entry.get(offset)) << Integer.SIZE) | (0xffffffffL & entry.get(offset + 1));
   }
 
-  private int indexFor(int hash) {
+  protected int indexFor(int hash) {
     return indexFor(hash, hashtable);
   }
 
-  private static int indexFor(int hash, IntBuffer table) {
+  protected static int indexFor(int hash, IntBuffer table) {
     return (hash << ENTRY_BIT_SHIFT) & Math.max(0, table.capacity() - 1);
   }
 
@@ -1069,6 +1069,10 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
       reprobeLimit = newReprobeLimit;
       return true;
     }
+  }
+
+  protected void conditionallyShrink() {
+    shrink();
   }
 
   private void shrink() {
@@ -1387,7 +1391,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
     }
   }
 
-  private void freePendingTables() {
+  protected void freePendingTables() {
     if (hasUsedIterators) {
       pendingTableFrees.reap();
     }
@@ -1448,6 +1452,10 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
       }
     }
   }
+
+  protected K keyForEntry(IntBuffer entry) {
+    return (K) storageEngine.readKey(readLong(entry, ENCODING), entry.get(KEY_HASHCODE));
+  }
   
   class KeyIterator extends HashIterator<K> {
     KeyIterator() {
@@ -1457,7 +1465,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
     @Override
     @SuppressWarnings("unchecked")
     protected K create(IntBuffer entry) {
-      return (K) storageEngine.readKey(readLong(entry, ENCODING), entry.get(KEY_HASHCODE));
+      return keyForEntry(entry);
     }
 
   }
@@ -1491,7 +1499,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
 
     @SuppressWarnings("unchecked")
     DirectEntry(IntBuffer entry) {
-      this.key = (K) storageEngine.readKey(readLong(entry, ENCODING), entry.get(KEY_HASHCODE));
+      this.key = (K) keyForEntry(entry);
       this.value = (V) storageEngine.readValue(readLong(entry, ENCODING));
     }
 
@@ -1680,7 +1688,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
   }
 
   @FindbugsSuppressWarnings("VO_VOLATILE_INCREMENT")
-  private void slotRemoved(IntBuffer entry) {
+  protected void slotRemoved(IntBuffer entry) {
     modCount++;
     removedSlots++;
     size--;
@@ -1689,14 +1697,14 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
   }
 
   @FindbugsSuppressWarnings("VO_VOLATILE_INCREMENT")
-  private void slotAdded(IntBuffer entry) {
+  protected void slotAdded(IntBuffer entry) {
     modCount++;
     size++;
     added(entry);
   }
 
   @FindbugsSuppressWarnings("VO_VOLATILE_INCREMENT")
-  private void slotUpdated(IntBuffer entry, long oldEncoding) {
+  protected void slotUpdated(IntBuffer entry, long oldEncoding) {
     modCount++;
     updatePendingTables(entry.get(KEY_HASHCODE), oldEncoding, entry);
     updated(entry);
