@@ -1071,17 +1071,17 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
     }
   }
 
-  protected void conditionallyShrink() {
+  protected void shrinkTable() {
     shrink();
   }
 
   private void shrink() {
     if (((float) size) / getTableCapacity() <= currentTableShrinkThreshold) {
-      shrinkTable();
+      shrinkTableImpl();
     }
   }
 
-  private void shrinkTable() {
+  private void shrinkTableImpl() {
     if (tableResizing.get()) {
       LOGGER.debug("Shrink request ignored in the context of an in-process expand - likely self stealing");
     } else {
@@ -1089,7 +1089,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
       try {
         float shrinkRatio = (TABLE_RESIZE_THRESHOLD * getTableCapacity()) / size;
         int shrinkShift = Integer.numberOfTrailingZeros(Integer.highestOneBit(Math.max(2, (int) shrinkRatio)));
-        Page newTablePage = shrinkTable(shrinkShift);
+        Page newTablePage = shrinkTableImpl(shrinkShift);
         if (newTablePage == null) {
           currentTableShrinkThreshold = currentTableShrinkThreshold / 2;
         } else {
@@ -1105,14 +1105,14 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
     }
   }
 
-  private Page shrinkTable(int scale) {
+  private Page shrinkTableImpl(int scale) {
     /* Increase the size of the table to accommodate more entries */
     int newsize = hashtable.capacity() >>> scale;
 
     /* Check we're not hitting zero capacity */
     if (newsize < ENTRY_SIZE) {
       if (scale > 1) {
-        return shrinkTable(scale - 1);
+        return shrinkTableImpl(scale - 1);
       } else {
         return null;
       }
@@ -1148,7 +1148,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
         }
         freeTable(newTablePage);
         if (scale > 1) {
-          return shrinkTable(scale - 1);
+          return shrinkTableImpl(scale - 1);
         } else {
           hashtable.clear();
           return null;
@@ -1452,10 +1452,6 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
       }
     }
   }
-
-  protected K keyForEntry(IntBuffer entry) {
-    return (K) storageEngine.readKey(readLong(entry, ENCODING), entry.get(KEY_HASHCODE));
-  }
   
   class KeyIterator extends HashIterator<K> {
     KeyIterator() {
@@ -1465,7 +1461,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
     @Override
     @SuppressWarnings("unchecked")
     protected K create(IntBuffer entry) {
-      return keyForEntry(entry);
+      return (K) storageEngine.readKey(readLong(entry, ENCODING), entry.get(KEY_HASHCODE));
     }
 
   }
@@ -1499,7 +1495,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
 
     @SuppressWarnings("unchecked")
     DirectEntry(IntBuffer entry) {
-      this.key = (K) keyForEntry(entry);
+      this.key = (K) storageEngine.readKey(readLong(entry, ENCODING), entry.get(KEY_HASHCODE));
       this.value = (V) storageEngine.readValue(readLong(entry, ENCODING));
     }
 
@@ -1688,7 +1684,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
   }
 
   @FindbugsSuppressWarnings("VO_VOLATILE_INCREMENT")
-  protected void slotRemoved(IntBuffer entry) {
+  private void slotRemoved(IntBuffer entry) {
     modCount++;
     removedSlots++;
     size--;
@@ -1697,14 +1693,14 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
   }
 
   @FindbugsSuppressWarnings("VO_VOLATILE_INCREMENT")
-  protected void slotAdded(IntBuffer entry) {
+  private void slotAdded(IntBuffer entry) {
     modCount++;
     size++;
     added(entry);
   }
 
   @FindbugsSuppressWarnings("VO_VOLATILE_INCREMENT")
-  protected void slotUpdated(IntBuffer entry, long oldEncoding) {
+  private void slotUpdated(IntBuffer entry, long oldEncoding) {
     modCount++;
     updatePendingTables(entry.get(KEY_HASHCODE), oldEncoding, entry);
     updated(entry);
