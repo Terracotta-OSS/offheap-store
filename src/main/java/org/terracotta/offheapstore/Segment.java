@@ -20,6 +20,8 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.terracotta.offheapstore.concurrent.AbstractConcurrentOffHeapMap;
+import org.terracotta.offheapstore.jdk8.BiFunction;
+import org.terracotta.offheapstore.jdk8.Function;
 
 /**
  * Implemented by maps that can be used as segments in a concurrent map.
@@ -63,4 +65,13 @@ public interface Segment<K, V> extends ConcurrentMap<K, V>, MapInternals, ReadWr
   void destroy();
 
   boolean shrink();
+
+  /*
+   * JDK-8-alike metadata methods
+   */
+  MetadataTuple<V> computeWithMetadata(K key, BiFunction<? super K, ? super MetadataTuple<V>, ? extends MetadataTuple<V>> remappingFunction);
+
+  MetadataTuple<V> computeIfAbsentWithMetadata(K key, Function<? super K,? extends MetadataTuple<V>> mappingFunction);
+
+  MetadataTuple<V> computeIfPresentWithMetadata(K key, BiFunction<? super K,? super MetadataTuple<V>,? extends MetadataTuple<V>> remappingFunction);
 }

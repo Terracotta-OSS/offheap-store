@@ -15,8 +15,6 @@
  */
 package org.terracotta.offheapstore;
 
-import org.terracotta.offheapstore.OffHeapHashMap;
-import org.terracotta.offheapstore.Segment;
 import static org.terracotta.offheapstore.util.MemoryUnit.KILOBYTES;
 import static org.terracotta.offheapstore.util.Generator.*;
 
@@ -34,6 +32,8 @@ import org.terracotta.offheapstore.buffersource.HeapBufferSource;
 import org.terracotta.offheapstore.buffersource.OffHeapBufferSource;
 import org.terracotta.offheapstore.concurrent.AbstractConcurrentOffHeapMap;
 import org.terracotta.offheapstore.exceptions.OversizeMappingException;
+import org.terracotta.offheapstore.jdk8.BiFunction;
+import org.terracotta.offheapstore.jdk8.Function;
 import org.terracotta.offheapstore.paging.PageSource;
 import org.terracotta.offheapstore.paging.UpfrontAllocatingPageSource;
 import org.terracotta.offheapstore.util.Generator;
@@ -55,6 +55,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
+import static org.terracotta.offheapstore.MetadataTuple.metadataTuple;
 
 /**
  *
@@ -586,6 +587,87 @@ public abstract class AbstractOffHeapMapIT {
     }
   }
 
+  @Test
+  public final void testSimpleMutationUsingComputes() {
+    long randomSeed = System.nanoTime();
+    System.err.println(this.getClass() + ".testSimpleMutationUsingCompute random seed = " + randomSeed);
+    Random rndm = new Random(randomSeed);
+
+    Map<SpecialInteger, SpecialInteger> map = createMap(generator);
+    SpecialInteger keyA = generator.generate(rndm.nextInt());
+    final SpecialInteger valueA1 = generator.generate(rndm.nextInt());
+    final SpecialInteger valueA2 = generator.generate(valueA1.value() + 1);
+
+    assertThat(doComputeIfPresentWithMetadata(map, keyA, new BiFunction<SpecialInteger, MetadataTuple<SpecialInteger>, MetadataTuple<SpecialInteger>>() {
+      @Override
+      public MetadataTuple<SpecialInteger> apply(SpecialInteger t, MetadataTuple<SpecialInteger> u) {
+        throw new AssertionError("Unexpected function invocation");
+      }
+    }), nullValue());
+    assertThat(doComputeIfAbsentWithMetadata(map, keyA, new Function<SpecialInteger, MetadataTuple<SpecialInteger>>() {
+      @Override
+      public MetadataTuple<SpecialInteger> apply(SpecialInteger t) {
+        return metadataTuple(valueA1, 0);
+      }
+    }), is(metadataTuple(valueA1, 0)));
+
+    assertThat(doComputeIfPresentWithMetadata(map, keyA, new BiFunction<SpecialInteger, MetadataTuple<SpecialInteger>, MetadataTuple<SpecialInteger>>() {
+      @Override
+      public MetadataTuple<SpecialInteger> apply(SpecialInteger t, MetadataTuple<SpecialInteger> u) {
+        return metadataTuple(generator.generate(u.value().value() + 1), 16);
+      }
+    }), is(metadataTuple(valueA2, 16)));
+    assertThat(map.get(keyA), is(valueA2));
+    assertThat(map.size(), is(1));
+
+    SpecialInteger keyB;
+    do {
+      keyB = generator.generate(rndm.nextInt());
+    } while (keyB.equals(keyA));
+    final SpecialInteger valueB1 = generator.generate(rndm.nextInt());
+    assertThat(doComputeWithMetadata(map, keyB, new BiFunction<SpecialInteger, MetadataTuple<SpecialInteger>, MetadataTuple<SpecialInteger>>() {
+      @Override
+      public MetadataTuple<SpecialInteger> apply(SpecialInteger t, MetadataTuple<SpecialInteger> u) {
+        assertThat(u, nullValue());
+        return metadataTuple(valueB1, 0);
+      }
+    }), is(metadataTuple(valueB1, 0)));
+    assertThat(map.get(keyB), is(valueB1));
+    assertThat(map.get(keyA), is(valueA2));
+    assertThat(map.size(), is(2));
+
+    final SpecialInteger valueB2 = generator.generate(rndm.nextInt());
+    assertThat(doComputeWithMetadata(map, keyB, new BiFunction<SpecialInteger, MetadataTuple<SpecialInteger>, MetadataTuple<SpecialInteger>>() {
+      @Override
+      public MetadataTuple<SpecialInteger> apply(SpecialInteger t, MetadataTuple<SpecialInteger> u) {
+        return metadataTuple(valueB2, 32);
+      }
+    }), is(metadataTuple(valueB2, 32)));
+    assertThat(map.get(keyB), is(valueB2));
+    assertThat(map.get(keyA), is(valueA2));
+    assertThat(map.size(), is(2));
+
+    assertThat(doComputeWithMetadata(map, keyA, new BiFunction<SpecialInteger, MetadataTuple<SpecialInteger>, MetadataTuple<SpecialInteger>>() {
+      @Override
+      public MetadataTuple<SpecialInteger> apply(SpecialInteger t, MetadataTuple<SpecialInteger> u) {
+        return null;
+      }
+    }), nullValue());
+    assertThat(map.get(keyB), is(valueB2));
+    assertThat(map.get(keyA), nullValue());
+    assertThat(map.size(), is(1));
+
+    assertThat(doComputeIfPresentWithMetadata(map, keyB, new BiFunction<SpecialInteger, MetadataTuple<SpecialInteger>, MetadataTuple<SpecialInteger>>() {
+      @Override
+      public MetadataTuple<SpecialInteger> apply(SpecialInteger t, MetadataTuple<SpecialInteger> u) {
+        return null;
+      }
+    }), nullValue());
+    assertThat(map.get(keyB), nullValue());
+    assertThat(map.get(keyA), nullValue());
+    assertThat(map.size(), is(0));
+  }
+
   private static void testEmptyMap(Generator g, Map<SpecialInteger, SpecialInteger> m) {
     assertThat(m.size(), is(0));
     assertThat(m.entrySet().size(), is(0));
@@ -696,6 +778,42 @@ public abstract class AbstractOffHeapMapIT {
       return ((Segment<K, V>) map).fill(key, value);
     } else if (map instanceof AbstractConcurrentOffHeapMap<?, ?>) {
       return ((AbstractConcurrentOffHeapMap<K, V>) map).fill(key, value);
+    } else {
+      throw new AssertionError("Unexpected type : " + map.getClass());
+    }
+  }
+
+  public static <K, V> MetadataTuple<V> doComputeWithMetadata(Map<K, V> map, K key, BiFunction<? super K, ? super MetadataTuple<V>, ? extends MetadataTuple<V>> function) {
+    if (map instanceof OffHeapHashMap<?, ?>) {
+      return ((OffHeapHashMap<K, V>) map).computeWithMetadata(key, function);
+    } else if (map instanceof Segment<?, ?>) {
+      return ((Segment<K, V>) map).computeWithMetadata(key, function);
+    } else if (map instanceof AbstractConcurrentOffHeapMap<?, ?>) {
+      return ((AbstractConcurrentOffHeapMap<K, V>) map).computeWithMetadata(key, function);
+    } else {
+      throw new AssertionError("Unexpected type : " + map.getClass());
+    }
+  }
+
+  public static <K, V> MetadataTuple<V> doComputeIfAbsentWithMetadata(Map<K, V> map, K key, Function<? super K, ? extends MetadataTuple<V>> function) {
+    if (map instanceof OffHeapHashMap<?, ?>) {
+      return ((OffHeapHashMap<K, V>) map).computeIfAbsentWithMetadata(key, function);
+    } else if (map instanceof Segment<?, ?>) {
+      return ((Segment<K, V>) map).computeIfAbsentWithMetadata(key, function);
+    } else if (map instanceof AbstractConcurrentOffHeapMap<?, ?>) {
+      return ((AbstractConcurrentOffHeapMap<K, V>) map).computeIfAbsentWithMetadata(key, function);
+    } else {
+      throw new AssertionError("Unexpected type : " + map.getClass());
+    }
+  }
+
+  public static <K, V> MetadataTuple<V> doComputeIfPresentWithMetadata(Map<K, V> map, K key, BiFunction<? super K, ? super MetadataTuple<V>, ? extends MetadataTuple<V>> function) {
+    if (map instanceof OffHeapHashMap<?, ?>) {
+      return ((OffHeapHashMap<K, V>) map).computeIfPresentWithMetadata(key, function);
+    } else if (map instanceof Segment<?, ?>) {
+      return ((Segment<K, V>) map).computeIfPresentWithMetadata(key, function);
+    } else if (map instanceof AbstractConcurrentOffHeapMap<?, ?>) {
+      return ((AbstractConcurrentOffHeapMap<K, V>) map).computeIfPresentWithMetadata(key, function);
     } else {
       throw new AssertionError("Unexpected type : " + map.getClass());
     }

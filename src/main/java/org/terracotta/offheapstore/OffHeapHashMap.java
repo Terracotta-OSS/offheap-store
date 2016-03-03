@@ -24,12 +24,15 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.terracotta.offheapstore.buffersource.BufferSource;
 import org.terracotta.offheapstore.exceptions.OversizeMappingException;
+import org.terracotta.offheapstore.jdk8.BiFunction;
+import org.terracotta.offheapstore.jdk8.Function;
 import org.terracotta.offheapstore.paging.Page;
 import org.terracotta.offheapstore.paging.PageSource;
 import org.terracotta.offheapstore.storage.BinaryStorageEngine;
@@ -40,7 +43,7 @@ import org.terracotta.offheapstore.util.NoOpLock;
 import org.terracotta.offheapstore.util.WeakIdentityHashMap;
 import org.terracotta.offheapstore.util.WeakIdentityHashMap.ReaperTask;
 
-import java.util.concurrent.locks.Lock;
+import static org.terracotta.offheapstore.MetadataTuple.metadataTuple;
 
 /**
  * A hash-table implementation whose table is stored in an NIO direct buffer.
@@ -1811,4 +1814,266 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
     return storageEngine;
   }
 
+  /*
+   * JDK-8-alike metadata methods
+   */
+  @FindbugsSuppressWarnings("VO_VOLATILE_INCREMENT")
+  public MetadataTuple<V> computeWithMetadata(K key, BiFunction<? super K, ? super MetadataTuple<V>, ? extends MetadataTuple<V>> remappingFunction) {
+    freePendingTables();
+
+    int hash = key.hashCode();
+
+    IntBuffer originalTable = hashtable;
+
+    int start = indexFor(spread(hash));
+    hashtable.position(start);
+
+    int limit = reprobeLimit();
+
+    for (int i = 0; i < limit; i++) {
+      if (!hashtable.hasRemaining()) {
+        hashtable.rewind();
+      }
+
+      IntBuffer entry = (IntBuffer) hashtable.slice().limit(ENTRY_SIZE);
+
+      if (isAvailable(entry)) {
+        for (IntBuffer laterEntry = entry; i < limit; i++) {
+          if (isTerminating(laterEntry)) {
+            break;
+          } else if (isPresent(laterEntry) && keyEquals(key, hash, readLong(laterEntry, ENCODING), laterEntry.get(KEY_HASHCODE))) {
+            long encoding = readLong(laterEntry, ENCODING);
+            MetadataTuple<V> existingValue = metadataTuple(
+                    (V) storageEngine.readValue(encoding),
+                    laterEntry.get(STATUS) & ~RESERVED_STATUS_BITS);
+            MetadataTuple<V> result = remappingFunction.apply(key, existingValue);
+            if (result == null) {
+              storageEngine.freeMapping(readLong(laterEntry, ENCODING), laterEntry.get(KEY_HASHCODE), true);
+              laterEntry.put(STATUS_REMOVED);
+              slotRemoved(laterEntry);
+              shrink();
+            } else if (result == existingValue) {
+              //nop
+            } else if (result.value() == existingValue.value()) {
+              int previous = laterEntry.get(STATUS);
+              laterEntry.put(STATUS, (previous & RESERVED_STATUS_BITS) | (result.metadata() & ~RESERVED_STATUS_BITS));
+            } else {
+              int [] newEntry = writeEntry(key, hash, result.value(), result.metadata());
+              if (hashtable != originalTable || !isPresent(laterEntry)) {
+                storageEngine.freeMapping(readLong(newEntry, ENCODING), newEntry[KEY_HASHCODE], false);
+                return computeWithMetadata(key, remappingFunction);
+              }
+              storageEngine.attachedMapping(readLong(newEntry, ENCODING), hash, result.metadata());
+              storageEngine.invalidateCache();
+              storageEngine.freeMapping(readLong(laterEntry, ENCODING), laterEntry.get(KEY_HASHCODE), false);
+              long oldEncoding = readLong(laterEntry, ENCODING);
+              laterEntry.put(newEntry);
+              slotUpdated((IntBuffer) laterEntry.flip(), oldEncoding);
+              hit(laterEntry);
+            }
+            return result;
+          } else {
+            hashtable.position(hashtable.position() + ENTRY_SIZE);
+          }
+
+          if (!hashtable.hasRemaining()) {
+            hashtable.rewind();
+          }
+
+          laterEntry = (IntBuffer) hashtable.slice().limit(ENTRY_SIZE);
+        }
+        MetadataTuple<V> result = remappingFunction.apply(key, null);
+        if (result != null) {
+          int [] newEntry = writeEntry(key, hash, result.value(), result.metadata());
+          if (hashtable != originalTable) {
+            storageEngine.freeMapping(readLong(newEntry, ENCODING), newEntry[KEY_HASHCODE], false);
+            return computeWithMetadata(key, remappingFunction);
+          } else if (!isAvailable(entry)) {
+            throw new AssertionError();
+          }
+          if (isRemoved(entry)) {
+            removedSlots--;
+          }
+          storageEngine.attachedMapping(readLong(newEntry, ENCODING), hash, result.metadata());
+          storageEngine.invalidateCache();
+          entry.put(newEntry);
+          slotAdded(entry);
+          hit(entry);
+        }
+        return result;
+      } else if (keyEquals(key, hash, readLong(entry, ENCODING), entry.get(KEY_HASHCODE))) {
+        long existingEncoding = readLong(entry, ENCODING);
+        int existingStatus = entry.get(STATUS);
+        MetadataTuple<V> existingTuple = metadataTuple(
+                (V) storageEngine.readValue(existingEncoding),
+                existingStatus & ~RESERVED_STATUS_BITS);
+        MetadataTuple<V> result = remappingFunction.apply(key, existingTuple);
+        if (result == null) {
+          storageEngine.freeMapping(existingEncoding, hash, true);
+          entry.put(STATUS_REMOVED);
+          slotRemoved(entry);
+          shrink();
+        } else if (result == existingTuple) {
+          //nop
+        } else if (result.value() == existingTuple.value()) {
+          entry.put(STATUS, (existingStatus & RESERVED_STATUS_BITS) | (result.metadata() & ~RESERVED_STATUS_BITS));
+        } else {
+          int [] newEntry = writeEntry(key, hash, result.value(), result.metadata());
+          if (hashtable != originalTable || !isPresent(entry)) {
+            storageEngine.freeMapping(readLong(newEntry, ENCODING), newEntry[KEY_HASHCODE], false);
+            return computeWithMetadata(key, remappingFunction);
+          }
+          storageEngine.attachedMapping(readLong(newEntry, ENCODING), hash, result.metadata());
+          storageEngine.invalidateCache();
+          storageEngine.freeMapping(readLong(entry, ENCODING), entry.get(KEY_HASHCODE), false);
+          entry.put(newEntry);
+          slotUpdated((IntBuffer) entry.flip(), existingEncoding);
+          hit(entry);
+        }
+        return result;
+      } else {
+        hashtable.position(hashtable.position() + ENTRY_SIZE);
+      }
+    }
+
+    // hit reprobe limit - must rehash
+    expand(start, limit);
+
+    return computeWithMetadata(key, remappingFunction);
+  }
+
+  @FindbugsSuppressWarnings("VO_VOLATILE_INCREMENT")
+  public MetadataTuple<V> computeIfAbsentWithMetadata(K key, Function<? super K,? extends MetadataTuple<V>> mappingFunction) {
+    freePendingTables();
+
+    int hash = key.hashCode();
+
+    IntBuffer originalTable = hashtable;
+
+    int start = indexFor(spread(hash));
+    hashtable.position(start);
+
+    int limit = reprobeLimit();
+
+    for (int i = 0; i < limit; i++) {
+      if (!hashtable.hasRemaining()) {
+        hashtable.rewind();
+      }
+
+      IntBuffer entry = (IntBuffer) hashtable.slice().limit(ENTRY_SIZE);
+
+      if (isAvailable(entry)) {
+        for (IntBuffer laterEntry = entry; i < limit; i++) {
+          if (isTerminating(laterEntry)) {
+            break;
+          } else if (isPresent(laterEntry) && keyEquals(key, hash, readLong(laterEntry, ENCODING), laterEntry.get(KEY_HASHCODE))) {
+            return metadataTuple(
+                    (V) storageEngine.readValue(readLong(laterEntry, ENCODING)),
+                    laterEntry.get(STATUS) & ~RESERVED_STATUS_BITS);
+          } else {
+            hashtable.position(hashtable.position() + ENTRY_SIZE);
+          }
+
+          if (!hashtable.hasRemaining()) {
+            hashtable.rewind();
+          }
+
+          laterEntry = (IntBuffer) hashtable.slice().limit(ENTRY_SIZE);
+        }
+        MetadataTuple<V> result = mappingFunction.apply(key);
+        if (result != null) {
+          int [] newEntry = writeEntry(key, hash, result.value(), result.metadata());
+          if (hashtable != originalTable) {
+            storageEngine.freeMapping(readLong(newEntry, ENCODING), newEntry[KEY_HASHCODE], false);
+            return computeIfAbsentWithMetadata(key, mappingFunction);
+          } else if (!isAvailable(entry)) {
+            throw new AssertionError();
+          }
+          if (isRemoved(entry)) {
+            removedSlots--;
+          }
+          storageEngine.attachedMapping(readLong(newEntry, ENCODING), hash, result.metadata());
+          storageEngine.invalidateCache();
+          entry.put(newEntry);
+          slotAdded(entry);
+          hit(entry);
+        }
+        return result;
+      } else if (keyEquals(key, hash, readLong(entry, ENCODING), entry.get(KEY_HASHCODE))) {
+        return metadataTuple(
+                (V) storageEngine.readValue(readLong(entry, ENCODING)),
+                entry.get(STATUS) & ~RESERVED_STATUS_BITS);
+      } else {
+        hashtable.position(hashtable.position() + ENTRY_SIZE);
+      }
+    }
+
+    // hit reprobe limit - must rehash
+    expand(start, limit);
+
+    return computeIfAbsentWithMetadata(key, mappingFunction);
+  }
+
+  @FindbugsSuppressWarnings("VO_VOLATILE_INCREMENT")
+  public MetadataTuple<V> computeIfPresentWithMetadata(K key, BiFunction<? super K,? super MetadataTuple<V>,? extends MetadataTuple<V>> remappingFunction) {
+    freePendingTables();
+
+    int hash = key.hashCode();
+
+    IntBuffer originalTable = hashtable;
+
+    int start = indexFor(spread(hash));
+    hashtable.position(start);
+
+    int limit = reprobeLimit();
+
+    for (int i = 0; i < limit; i++) {
+      if (!hashtable.hasRemaining()) {
+        hashtable.rewind();
+      }
+
+      IntBuffer entry = (IntBuffer) hashtable.slice().limit(ENTRY_SIZE);
+
+      if (isTerminating(entry)) {
+        return null;
+      } else if (keyEquals(key, hash, readLong(entry, ENCODING), entry.get(KEY_HASHCODE))) {
+        long existingEncoding = readLong(entry, ENCODING);
+        int existingStatus = entry.get(STATUS);
+        MetadataTuple<V> existingValue = metadataTuple(
+                (V) storageEngine.readValue(existingEncoding),
+                existingStatus & ~RESERVED_STATUS_BITS);
+        MetadataTuple<V> result = remappingFunction.apply(key, existingValue);
+        if (result == null) {
+          storageEngine.freeMapping(existingEncoding, hash, true);
+          entry.put(STATUS_REMOVED);
+          slotRemoved(entry);
+          shrink();
+        } else if (result == existingValue) {
+          //nop
+        } else if (result.value() == existingValue.value()) {
+          entry.put(STATUS, (existingStatus & RESERVED_STATUS_BITS) | (result.metadata() & ~RESERVED_STATUS_BITS));
+        } else {
+          int [] newEntry = writeEntry(key, hash, result.value(), result.metadata());
+          if (hashtable != originalTable || !isPresent(entry)) {
+            storageEngine.freeMapping(readLong(newEntry, ENCODING), newEntry[KEY_HASHCODE], false);
+            return computeIfPresentWithMetadata(key, remappingFunction); //not exactly ideal - but technically correct
+          }
+          storageEngine.attachedMapping(readLong(newEntry, ENCODING), hash, result.metadata());
+          storageEngine.invalidateCache();
+          storageEngine.freeMapping(readLong(entry, ENCODING), entry.get(KEY_HASHCODE), false);
+          entry.put(newEntry);
+          slotUpdated((IntBuffer) entry.flip(), readLong(entry, ENCODING));
+          hit(entry);
+        }
+        return result;
+      } else {
+        hashtable.position(hashtable.position() + ENTRY_SIZE);
+      }
+    }
+
+    // hit reprobe limit - must rehash
+    expand(start, limit);
+
+    return computeIfPresentWithMetadata(key, remappingFunction);
+  }
 }

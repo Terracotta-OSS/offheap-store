@@ -78,7 +78,12 @@ public class WriteLockedOffHeapClockCacheIT extends AbstractConcurrentOffHeapMap
   public void testCacheFillBehavior() {
     CacheTestRoutines.testFillBehavior(createOffHeapBufferMap(new UpfrontAllocatingPageSource(new HeapBufferSource(), MemoryUnit.KILOBYTES.toBytes(8), MemoryUnit.KILOBYTES.toBytes(8))));
   }
-  
+
+  @Test
+  public void testCacheComputeEvictionBehavior() {
+    CacheTestRoutines.testComputeEvictionBehavior(createOffHeapBufferMap(new UpfrontAllocatingPageSource(new HeapBufferSource(), MemoryUnit.KILOBYTES.toBytes(8), MemoryUnit.KILOBYTES.toBytes(8))));
+  }
+
   @Override
   protected ConcurrentMap<SpecialInteger, SpecialInteger> createMap(Generator generator) {
     return new WriteLockedOffHeapClockCache<SpecialInteger, SpecialInteger>(new UnlimitedPageSource(new OffHeapBufferSource()), generator.engine(), 1);

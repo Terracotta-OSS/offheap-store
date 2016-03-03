@@ -75,6 +75,11 @@ public class ReadWriteLockedOffHeapClockCacheIT extends AbstractConcurrentOffHea
   }
   
   @Test
+  public void testCacheComputeEvictionBehavior() {
+    CacheTestRoutines.testComputeEvictionBehavior(createOffHeapBufferMap(new UpfrontAllocatingPageSource(new HeapBufferSource(), MemoryUnit.KILOBYTES.toBytes(8), MemoryUnit.KILOBYTES.toBytes(8))));
+  }
+
+  @Test
   public void testCacheEvictionThreshold() {
     CacheTestRoutines.testCacheEvictionThreshold(createOffHeapBufferMap(new PhantomReferenceLimitedPageSource(4 * 1024)));
   }

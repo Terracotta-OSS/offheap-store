@@ -21,8 +21,12 @@ import java.util.Random;
 import java.util.Set;
 
 import org.junit.Assert;
-
 import org.terracotta.offheapstore.exceptions.OversizeMappingException;
+import org.terracotta.offheapstore.jdk8.BiFunction;
+
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.number.OrderingComparison.lessThan;
+import static org.junit.Assert.assertThat;
 
 public final class CacheTestRoutines {
 
@@ -88,6 +92,8 @@ public final class CacheTestRoutines {
       }
     }
     
+    assertThat(cache.isEmpty(), is(false));
+
     Set<Integer> keySetCopy = new HashSet<Integer>(cache.keySet());
     
     for (Integer k : keySetCopy) {
@@ -101,4 +107,23 @@ public final class CacheTestRoutines {
       }
     }
   }  
+
+  public static void testComputeEvictionBehavior(Map<Integer, byte[]> cache) {
+    for (int i = 0; i < 100000; i++) {
+      AbstractOffHeapMapIT.doComputeWithMetadata(cache, i, new BiFunction<Integer, MetadataTuple<byte[]>, MetadataTuple<byte[]>>() {
+        @Override
+        public MetadataTuple<byte[]> apply(Integer t, MetadataTuple<byte[]> u) {
+          return MetadataTuple.metadataTuple(new byte[t % 1024], 0);
+        }
+      });
+      assertThat(cache.get(i).length, is(i % 1024));
+    }
+
+    assertThat(cache.isEmpty(), is(false));
+    assertThat(cache.size(), lessThan(100000));
+
+    for (Integer k : cache.keySet()) {
+      assertThat(cache.get(k).length, is(k % 1024));
+    }
+  }
 }

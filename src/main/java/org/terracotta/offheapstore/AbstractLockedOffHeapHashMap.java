@@ -23,6 +23,8 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 
+import org.terracotta.offheapstore.jdk8.BiFunction;
+import org.terracotta.offheapstore.jdk8.Function;
 import org.terracotta.offheapstore.paging.PageSource;
 import org.terracotta.offheapstore.storage.StorageEngine;
 
@@ -567,4 +569,40 @@ public abstract class AbstractLockedOffHeapHashMap<K, V> extends OffHeapHashMap<
   
   @Override
   public abstract Lock writeLock();
+
+  /*
+   * JDK-8-alike metadata methods
+   */
+  @Override
+  public MetadataTuple<V> computeWithMetadata(K key, BiFunction<? super K, ? super MetadataTuple<V>, ? extends MetadataTuple<V>> remappingFunction) {
+    Lock l = writeLock();
+    l.lock();
+    try {
+      return super.computeWithMetadata(key, remappingFunction);
+    } finally {
+      l.unlock();
+    }
+  }
+
+  @Override
+  public MetadataTuple<V> computeIfAbsentWithMetadata(K key, Function<? super K,? extends MetadataTuple<V>> mappingFunction) {
+    Lock l = writeLock();
+    l.lock();
+    try {
+      return super.computeIfAbsentWithMetadata(key, mappingFunction);
+    } finally {
+      l.unlock();
+    }
+  }
+
+  @Override
+  public MetadataTuple<V> computeIfPresentWithMetadata(K key, BiFunction<? super K,? super MetadataTuple<V>,? extends MetadataTuple<V>> remappingFunction) {
+    Lock l = writeLock();
+    l.lock();
+    try {
+      return super.computeIfPresentWithMetadata(key, remappingFunction);
+    } finally {
+      l.unlock();
+    }
+  }
 }
