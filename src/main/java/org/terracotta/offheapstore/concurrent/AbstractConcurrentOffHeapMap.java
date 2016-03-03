@@ -31,7 +31,10 @@ import java.util.concurrent.ConcurrentMap;
 import org.terracotta.offheapstore.OffHeapHashMap;
 import org.terracotta.offheapstore.Segment;
 import org.terracotta.offheapstore.MapInternals;
+import org.terracotta.offheapstore.MetadataTuple;
 import org.terracotta.offheapstore.exceptions.OversizeMappingException;
+import org.terracotta.offheapstore.jdk8.BiFunction;
+import org.terracotta.offheapstore.jdk8.Function;
 import org.terracotta.offheapstore.util.Factory;
 
 /**
@@ -715,5 +718,92 @@ public abstract class AbstractConcurrentOffHeapMap<K, V> extends AbstractMap<K, 
     }
 
     return evicted;
+  }
+
+  /*
+   * JDK-8-alike metadata methods
+   */
+  public MetadataTuple<V> computeWithMetadata(K key, BiFunction<? super K, ? super MetadataTuple<V>, ? extends MetadataTuple<V>> remappingFunction) {
+    try {
+      return segmentFor(key).computeWithMetadata(key, remappingFunction);
+    } catch (OversizeMappingException e) {
+      if (handleOversizeMappingException(key.hashCode())) {
+        try {
+          return segmentFor(key).computeWithMetadata(key, remappingFunction);
+        } catch (OversizeMappingException ex) {
+          //ignore
+        }
+      }
+
+      writeLockAll();
+      try {
+        do {
+          try {
+            return segmentFor(key).computeWithMetadata(key, remappingFunction);
+          } catch (OversizeMappingException ex) {
+            e = ex;
+          }
+        } while (handleOversizeMappingException(key.hashCode()));
+        throw e;
+      } finally {
+        writeUnlockAll();
+      }
+    }
+  }
+
+  public MetadataTuple<V> computeIfAbsentWithMetadata(K key, Function<? super K,? extends MetadataTuple<V>> mappingFunction) {
+    try {
+      return segmentFor(key).computeIfAbsentWithMetadata(key, mappingFunction);
+    } catch (OversizeMappingException e) {
+      if (handleOversizeMappingException(key.hashCode())) {
+        try {
+          return segmentFor(key).computeIfAbsentWithMetadata(key, mappingFunction);
+        } catch (OversizeMappingException ex) {
+          e = ex;
+        }
+      }
+
+      writeLockAll();
+      try {
+        do {
+          try {
+            return segmentFor(key).computeIfAbsentWithMetadata(key, mappingFunction);
+          } catch (OversizeMappingException ex) {
+            e = ex;
+          }
+        } while (handleOversizeMappingException(key.hashCode()));
+        throw e;
+      } finally {
+        writeUnlockAll();
+      }
+    }
+  }
+
+  public MetadataTuple<V> computeIfPresentWithMetadata(K key, BiFunction<? super K,? super MetadataTuple<V>,? extends MetadataTuple<V>> remappingFunction) {
+    try {
+      return segmentFor(key).computeIfPresentWithMetadata(key, remappingFunction);
+    } catch (OversizeMappingException e) {
+      if (handleOversizeMappingException(key.hashCode())) {
+        try {
+          return segmentFor(key).computeIfPresentWithMetadata(key, remappingFunction);
+        } catch (OversizeMappingException ex) {
+          e = ex;
+        }
+      }
+
+      writeLockAll();
+      try {
+        do {
+          try {
+            return segmentFor(key).computeIfPresentWithMetadata(key, remappingFunction);
+          } catch (OversizeMappingException ex) {
+            e = ex;
+          }
+        } while (handleOversizeMappingException(key.hashCode()));
+        throw e;
+      } finally {
+        writeUnlockAll();
+      }
+    }
   }
 }

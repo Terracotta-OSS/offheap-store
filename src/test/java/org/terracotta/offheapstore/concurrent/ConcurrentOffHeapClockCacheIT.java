@@ -72,9 +72,14 @@ public class ConcurrentOffHeapClockCacheIT extends AbstractConcurrentOffHeapMapI
 
   @Test
   public void testCacheFillBehavior() {
-    CacheTestRoutines.testFillBehavior(createOffHeapBufferMap(new UpfrontAllocatingPageSource(new HeapBufferSource(), MemoryUnit.KILOBYTES.toBytes(32), MemoryUnit.KILOBYTES.toBytes(32))));
+    CacheTestRoutines.testFillBehavior(createOffHeapBufferMap(new UpfrontAllocatingPageSource(new HeapBufferSource(), MemoryUnit.KILOBYTES.toBytes(64), MemoryUnit.KILOBYTES.toBytes(64))));
   }
-  
+
+  @Test
+  public void testCacheComputeEvictionBehavior() {
+    CacheTestRoutines.testComputeEvictionBehavior(createOffHeapBufferMap(new UpfrontAllocatingPageSource(new HeapBufferSource(), MemoryUnit.KILOBYTES.toBytes(64), MemoryUnit.KILOBYTES.toBytes(64))));
+  }
+
   @Override
   protected ConcurrentMap<SpecialInteger, SpecialInteger> createMap(Generator generator) {
     return new ConcurrentOffHeapClockCache<SpecialInteger, SpecialInteger>(new UnlimitedPageSource(new OffHeapBufferSource()), generator.factory(), 1, 16);
