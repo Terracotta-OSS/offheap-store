@@ -2040,7 +2040,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
 
       if (isTerminating(entry)) {
         return null;
-      } else if (keyEquals(key, hash, readLong(entry, ENCODING), entry.get(KEY_HASHCODE))) {
+      } else if (isPresent(entry) && keyEquals(key, hash, readLong(entry, ENCODING), entry.get(KEY_HASHCODE))) {
         long existingEncoding = readLong(entry, ENCODING);
         int existingStatus = entry.get(STATUS);
         MetadataTuple<V> existingValue = metadataTuple(
@@ -2075,9 +2075,6 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
       }
     }
 
-    // hit reprobe limit - must rehash
-    expand(start, limit);
-
-    return computeIfPresentWithMetadata(key, remappingFunction);
+    return null;
   }
 }
