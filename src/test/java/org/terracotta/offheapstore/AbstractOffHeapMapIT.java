@@ -666,6 +666,16 @@ public abstract class AbstractOffHeapMapIT {
     assertThat(map.get(keyB), nullValue());
     assertThat(map.get(keyA), nullValue());
     assertThat(map.size(), is(0));
+
+    assertThat(doComputeIfPresentWithMetadata(map, keyA, new BiFunction<SpecialInteger, MetadataTuple<SpecialInteger>, MetadataTuple<SpecialInteger>>() {
+      @Override
+      public MetadataTuple<SpecialInteger> apply(SpecialInteger t, MetadataTuple<SpecialInteger> u) {
+        return null;
+      }
+    }), nullValue());
+    assertThat(map.get(keyB), nullValue());
+    assertThat(map.get(keyA), nullValue());
+    assertThat(map.size(), is(0));
   }
 
   private static void testEmptyMap(Generator g, Map<SpecialInteger, SpecialInteger> m) {
