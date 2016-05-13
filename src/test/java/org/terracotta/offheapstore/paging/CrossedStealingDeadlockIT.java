@@ -15,12 +15,6 @@
  */
 package org.terracotta.offheapstore.paging;
 
-import org.terracotta.offheapstore.paging.UpfrontAllocatingPageSource;
-import org.terracotta.offheapstore.paging.PageSource;
-import static org.terracotta.offheapstore.util.MemoryUnit.KILOBYTES;
-import static org.terracotta.offheapstore.util.MemoryUnit.MEGABYTES;
-import static org.hamcrest.core.IsNull.notNullValue;
-
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
@@ -36,16 +30,19 @@ import org.junit.Assume;
 import org.junit.Test;
 
 import org.terracotta.offheapstore.WriteLockedOffHeapClockCache;
-import org.terracotta.offheapstore.buffersource.HeapBufferSource;
 import org.terracotta.offheapstore.storage.StorageEngine;
 import org.terracotta.offheapstore.storage.portability.StringPortability;
-import org.terracotta.offheapstore.util.PointerSizeEngineTypeParameterizedTest;
+import org.terracotta.offheapstore.util.OffHeapAndDiskStorageEngineDependentTest;
+
+import static org.hamcrest.core.IsNull.notNullValue;
+import static org.terracotta.offheapstore.util.MemoryUnit.MEGABYTES;
+
 
 /**
  *
  * @author Chris Dennis
  */
-public class CrossedStealingDeadlockIT extends PointerSizeEngineTypeParameterizedTest {
+public class CrossedStealingDeadlockIT extends OffHeapAndDiskStorageEngineDependentTest {
   
   private static final Method DEADLOCKED_THREADS_METHOD;
   static {
@@ -58,11 +55,15 @@ public class CrossedStealingDeadlockIT extends PointerSizeEngineTypeParameterize
     DEADLOCKED_THREADS_METHOD =  method;    
   }
 
+  public CrossedStealingDeadlockIT(TestMode mode) {
+    super(mode);
+  }
+
   @Test
   public void testRecursiveTableShrink() throws InterruptedException {
     Assume.assumeThat(DEADLOCKED_THREADS_METHOD, notNullValue());
     
-    PageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), MEGABYTES.toBytes(4), MEGABYTES.toBytes(4));
+    PageSource source = createPageSource(4, MEGABYTES);
 
     Collection<Thread> threads = new ArrayList<Thread>();
     for (int i = 0; i < 4; i++) {
@@ -82,7 +83,7 @@ public class CrossedStealingDeadlockIT extends PointerSizeEngineTypeParameterize
   }
   
   private Map<String, String> createSingleStripedCache(PageSource source) {
-    StorageEngine<String, String> storageEngine = create(source, KILOBYTES.toBytes(1), StringPortability.INSTANCE, StringPortability.INSTANCE, true, true);
+    StorageEngine<String, String> storageEngine = create(source, StringPortability.INSTANCE, StringPortability.INSTANCE, true, true);
     return new WriteLockedOffHeapClockCache<String, String>(source, true, storageEngine);
   }
   

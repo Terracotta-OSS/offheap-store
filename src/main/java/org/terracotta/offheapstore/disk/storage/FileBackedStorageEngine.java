@@ -22,8 +22,9 @@ import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -34,6 +35,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -451,15 +453,51 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
 
   @Override
   public boolean shrink() {
-    if (chunks.isEmpty()) {
-      return false;
-    } else {
-      FileChunk candidate = chunks.get(chunks.size() - 1);
-      if (candidate.evictAll()) {
-        chunks.remove(chunks.size() - 1).clear();
-        return true;
-      } else {
+    final Lock ownerLock = owner.writeLock();
+    ownerLock.lock();
+    try {
+      if (chunks.isEmpty()) {
         return false;
+      } else {
+        FileChunk candidate = chunks.get(chunks.size() - 1);
+
+        candidate.evictAll();
+
+        for (int floorIndex = chunks.size() - 1; floorIndex >= 0 && candidate.occupied() > 0; floorIndex--) {
+          FileChunk floor = chunks.get(floorIndex);
+          floor.evictAll();
+          compress(floor);
+
+          compress(candidate);
+        }
+        if (candidate.occupied() > 0) {
+          return false;
+        } else {
+          chunks.remove(chunks.size() - 1).clear();
+          return true;
+        }
+      }
+    } finally {
+      ownerLock.unlock();
+    }
+  }
+
+  private void compress(FileChunk from) {
+    for (Long encoding : from.encodings()) {
+      ByteBuffer keyBuffer = readKeyBuffer(encoding);
+      int keyHash = readKeyHash(encoding);
+      ByteBuffer valueBuffer = readValueBuffer(encoding);
+      for (FileChunk to : chunks) {
+        Long address = to.writeMappingBuffers(keyBuffer, valueBuffer, keyHash);
+        if (address != null) {
+          long compressed = address + to.baseAddress();
+          if (compressed < encoding && owner.updateEncoding(keyHash, encoding, compressed, ~0)) {
+            free(encoding);
+          } else {
+            free(compressed);
+          }
+          break;
+        }
       }
     }
   }
@@ -728,22 +766,22 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
       return valid;
     }
 
-    boolean evictAll() {
-      List<Long> targetEncodings = new ArrayList<Long>();
-      for (long encoding : owner.encodingSet()) {
-        long address = encoding - baseAddress();
-        if (address >= 0 && address < capacity()) {
-          targetEncodings.add(encoding);
+    Set<Long> encodings() {
+      Set<Long> encodings = new HashSet<Long>();
+      for (Long encoding : owner.encodingSet()) {
+        long relative = encoding - baseAddress();
+        if (relative >= 0 && relative < capacity()) {
+          encodings.add(encoding);
         }
       }
-      
-      for (long encoding : targetEncodings) {
+      return encodings;
+    }
+
+    void evictAll() {
+      for (long encoding : encodings()) {
         int slot = owner.getSlotForHashAndEncoding(readPojoHash(encoding - baseAddress()), encoding, ~0L);
-        if (!owner.evict(slot, true)) {
-          return false;
-        }
+        owner.evict(slot, true);
       }
-      return true;
     }
   }
 

@@ -79,13 +79,13 @@ public abstract class AbstractOffHeapClockCache<K, V> extends AbstractLockedOffH
   @Override
   protected void storageEngineFailure(Object failure) {
     if (isEmpty()) {
-      StringBuilder sb = new StringBuilder("Storage Engine and Eviction Failed.\n");
+      StringBuilder sb = new StringBuilder("Storage Engine and Eviction Failed - Empty Map\n");
       sb.append("Storage Engine : ").append(storageEngine);
       throw new OversizeMappingException(sb.toString());
     } else {
       int evictionIndex = getEvictionIndex();
       if (evictionIndex < 0) {
-        StringBuilder sb = new StringBuilder("Storage Engine and Eviction Failed.\n");
+        StringBuilder sb = new StringBuilder("Storage Engine and Eviction Failed - Everything Pinned (" + getSize() + " mappings) \n");
         sb.append("Storage Engine : ").append(storageEngine);
         throw new OversizeMappingException(sb.toString());
       } else {
