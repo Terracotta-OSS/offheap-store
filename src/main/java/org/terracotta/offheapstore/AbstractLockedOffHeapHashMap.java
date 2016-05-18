@@ -20,6 +20,7 @@ import java.util.AbstractCollection;
 import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 
@@ -601,6 +602,17 @@ public abstract class AbstractLockedOffHeapHashMap<K, V> extends OffHeapHashMap<
     l.lock();
     try {
       return super.computeIfPresentWithMetadata(key, remappingFunction);
+    } finally {
+      l.unlock();
+    }
+  }
+
+  @Override
+  public Map<K, V> removeAllWithHash(int hash) {
+    Lock l = writeLock();
+    l.lock();
+    try {
+      return super.removeAllWithHash(hash);
     } finally {
       l.unlock();
     }

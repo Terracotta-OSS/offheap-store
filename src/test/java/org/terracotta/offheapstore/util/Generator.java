@@ -284,7 +284,8 @@ public interface Generator {
     }
   }
 
-  static class BadInteger implements SpecialInteger {
+  public static class BadInteger implements SpecialInteger {
+    public static final int HASHCODE = 42;
 
     private final int n;
 
@@ -294,7 +295,7 @@ public interface Generator {
 
     @Override
     public int hashCode() {
-      return 42;
+      return HASHCODE;
     }
 
     @Override
