@@ -29,7 +29,7 @@ import org.terracotta.offheapstore.jdk8.Function;
  * @see AbstractConcurrentOffHeapMap
  * @author Chris Dennis
  */
-public interface Segment<K, V> extends ConcurrentMap<K, V>, MapInternals, ReadWriteLock {
+public interface Segment<K, V> extends ConcurrentMap<K, V>, MapInternals, ReadWriteLock, HashingMap<K, V> {
 
   /**
    * See {@link OffHeapHashMap#fill(Object, Object)} for a detailed description.

@@ -28,6 +28,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
+import org.terracotta.offheapstore.HashingMap;
 import org.terracotta.offheapstore.OffHeapHashMap;
 import org.terracotta.offheapstore.Segment;
 import org.terracotta.offheapstore.MapInternals;
@@ -49,7 +50,7 @@ import org.terracotta.offheapstore.util.Factory;
  *
  * @author Chris Dennis
  */
-public abstract class AbstractConcurrentOffHeapMap<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V>, ConcurrentMapInternals {
+public abstract class AbstractConcurrentOffHeapMap<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V>, ConcurrentMapInternals, HashingMap<K, V> {
 
   private static final int MAX_SEGMENTS = 1 << 16; // slightly conservative
   private static final int DEFAULT_CONCURRENCY = 16;
@@ -805,5 +806,10 @@ public abstract class AbstractConcurrentOffHeapMap<K, V> extends AbstractMap<K, 
         writeUnlockAll();
       }
     }
+  }
+
+  @Override
+  public Map<K, V> removeAllWithHash(int keyHash) {
+    return segmentFor(keyHash).removeAllWithHash(keyHash);
   }
 }

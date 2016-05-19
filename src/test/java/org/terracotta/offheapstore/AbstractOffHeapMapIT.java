@@ -15,6 +15,7 @@
  */
 package org.terracotta.offheapstore;
 
+import static org.hamcrest.number.OrderingComparison.greaterThan;
 import static org.terracotta.offheapstore.util.MemoryUnit.KILOBYTES;
 import static org.terracotta.offheapstore.util.Generator.*;
 
@@ -72,6 +73,31 @@ public abstract class AbstractOffHeapMapIT {
   protected abstract Map<SpecialInteger, SpecialInteger> createMap(Generator generator);
 
   protected abstract Map<Integer, byte[]> createOffHeapBufferMap(PageSource source);
+
+  @Test
+  public void testRemoveByHash() throws Exception {
+    final int ENTRIES_COUNT = 1013;
+    Map<SpecialInteger, SpecialInteger> map = createMap(generator);
+    HashingMap<SpecialInteger, SpecialInteger> hashingMap = (HashingMap<SpecialInteger, SpecialInteger>) map;
+
+    for (int i = 0; i < ENTRIES_COUNT; i++) {
+      SpecialInteger generated = generator.generate(i);
+      hashingMap.put(generated, generated);
+    }
+
+    Map<SpecialInteger, SpecialInteger> removed = hashingMap.removeAllWithHash(BadInteger.HASHCODE);
+    assertThat(removed.size(), greaterThan(0));
+    assertThat(hashingMap.size(), is(ENTRIES_COUNT - removed.size()));
+
+    for (int i = 0; i < ENTRIES_COUNT; i++) {
+      SpecialInteger generated = generator.generate(i);
+      if (removed.containsKey(generated)) {
+        assertThat(hashingMap.get(generated), nullValue());
+      } else {
+        assertThat(hashingMap.get(generated), is(generated));
+      }
+    }
+  }
 
   @Test
   public void testNpeBehaviors() {

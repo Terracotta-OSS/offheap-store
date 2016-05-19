@@ -19,7 +19,9 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.AbstractMap;
 import java.util.AbstractSet;
+import java.util.Collections;
 import java.util.ConcurrentModificationException;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -66,7 +68,7 @@ import static org.terracotta.offheapstore.MetadataTuple.metadataTuple;
  *
  * @author Chris Dennis
  */
-public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapInternals, StorageEngine.Owner {
+public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapInternals, StorageEngine.Owner, HashingMap<K, V> {
 
   /*
    * Future design ideas:
@@ -793,6 +795,60 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
     }
 
     return null;
+  }
+
+  @Override
+  public Map<K, V> removeAllWithHash(int hash) {
+    freePendingTables();
+
+    if (size == 0) {
+      return Collections.emptyMap();
+    }
+
+    Map<K, V> removed = new HashMap<K, V>();
+
+    hashtable.position(indexFor(spread(hash)));
+
+    int limit = reprobeLimit();
+
+    for (int i = 0; i < limit; i++) {
+      if (!hashtable.hasRemaining()) {
+        hashtable.rewind();
+      }
+
+      IntBuffer entry = (IntBuffer) hashtable.slice().limit(ENTRY_SIZE);
+
+      if (isTerminating(entry)) {
+        return removed;
+      } else if (isPresent(entry) && hash == entry.get(KEY_HASHCODE)) {
+        @SuppressWarnings("unchecked")
+        V removedValue = (V) storageEngine.readValue(readLong(entry, ENCODING));
+        @SuppressWarnings("unchecked")
+        K removedKey = (K) storageEngine.readKey(readLong(entry, ENCODING), hash);
+        storageEngine.freeMapping(readLong(entry, ENCODING), entry.get(KEY_HASHCODE), true);
+
+        removed.put(removedKey, removedValue);
+
+        /*
+         * TODO We might want to track the number of 'removed' slots in the
+         * table, and rehash it if we reach some threshold to avoid lookup costs
+         * staying artificially high when the table is relatively empty, but full
+         * of 'removed' slots.  This situation should be relatively rare for
+         * normal cache usage - but might be more common for more map like usage
+         * patterns.
+         *
+         * The more severe versions of this pattern are now handled by the table
+         * shrinking when the occupation drops below the shrink threshold, as
+         * that will rehash the table.
+         */
+        entry.put(STATUS, STATUS_REMOVED);
+        slotRemoved(entry);
+      }
+      hashtable.position(hashtable.position() + ENTRY_SIZE);
+    }
+
+    shrink();
+    return removed;
   }
 
   public boolean removeNoReturn(Object key) {
