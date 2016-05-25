@@ -32,6 +32,7 @@ import org.terracotta.offheapstore.disk.storage.PersistentIntegerStorageEngine;
 import org.terracotta.offheapstore.disk.storage.PersistentSplitStorageEngine;
 import org.terracotta.offheapstore.disk.storage.portability.PersistentByteArrayPortability;
 import org.terracotta.offheapstore.disk.storage.portability.PersistentSerializablePortability;
+import org.terracotta.offheapstore.util.MemoryUnit;
 
 /**
  *
@@ -85,7 +86,7 @@ public class PersistentConcurrentOffHeapCacheIT extends AbstractDiskTest {
     long occupiedSize = -1;
     
     MappedPageSource source = new MappedPageSource(dataFile);
-    PersistentConcurrentOffHeapClockCache<Integer, byte[]> map = new PersistentConcurrentOffHeapClockCache<Integer, byte[]>(source, FileBackedStorageEngine.createFactory(source, new PersistentSerializablePortability(), PersistentByteArrayPortability.INSTANCE));
+    PersistentConcurrentOffHeapClockCache<Integer, byte[]> map = new PersistentConcurrentOffHeapClockCache<Integer, byte[]>(source, FileBackedStorageEngine.createFactory(source, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), PersistentByteArrayPortability.INSTANCE));
     try {
       for (int i = 0; i < 100; i++) {
         map.put(Integer.valueOf(i), new byte[i]);
@@ -104,7 +105,7 @@ public class PersistentConcurrentOffHeapCacheIT extends AbstractDiskTest {
       ObjectInputStream din = new ObjectInputStream(bin);
       try {
         MappedPageSource clonedSource = new MappedPageSource(dataFile, false);
-        clone = new PersistentConcurrentOffHeapClockCache<Integer, byte[]>(din, clonedSource, FileBackedStorageEngine.createFactory(clonedSource, new PersistentSerializablePortability(), PersistentByteArrayPortability.INSTANCE, false));
+        clone = new PersistentConcurrentOffHeapClockCache<Integer, byte[]>(din, clonedSource, FileBackedStorageEngine.createFactory(clonedSource, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), PersistentByteArrayPortability.INSTANCE, false));
         clone.bootstrap(din);
       } finally {
         din.close();
@@ -128,7 +129,7 @@ public class PersistentConcurrentOffHeapCacheIT extends AbstractDiskTest {
     byte[] indexData;
 
     MappedPageSource source = new MappedPageSource(dataFile);
-    PersistentConcurrentOffHeapClockCache<Integer, Serializable> map = new PersistentConcurrentOffHeapClockCache<Integer, Serializable>(source, FileBackedStorageEngine.createFactory(source, new PersistentSerializablePortability(), new PersistentSerializablePortability()));
+    PersistentConcurrentOffHeapClockCache<Integer, Serializable> map = new PersistentConcurrentOffHeapClockCache<Integer, Serializable>(source, FileBackedStorageEngine.createFactory(source, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), new PersistentSerializablePortability()));
     try {
       for (int i = 0; i < 100; i++) {
         map.put(Integer.valueOf(i), "Hello World");
@@ -146,7 +147,7 @@ public class PersistentConcurrentOffHeapCacheIT extends AbstractDiskTest {
       ObjectInputStream din = new ObjectInputStream(bin);
       try {
         MappedPageSource clonedSource = new MappedPageSource(dataFile, false);
-        clone = new PersistentConcurrentOffHeapClockCache<Integer, Serializable>(din, clonedSource, FileBackedStorageEngine.createFactory(clonedSource, new PersistentSerializablePortability(), new PersistentSerializablePortability(), false));
+        clone = new PersistentConcurrentOffHeapClockCache<Integer, Serializable>(din, clonedSource, FileBackedStorageEngine.createFactory(clonedSource, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), new PersistentSerializablePortability(), false));
         clone.bootstrap(din);
       } finally {
         din.close();
@@ -169,7 +170,7 @@ public class PersistentConcurrentOffHeapCacheIT extends AbstractDiskTest {
     byte[] indexData;
 
     MappedPageSource source = new MappedPageSource(dataFile);
-    PersistentConcurrentOffHeapClockCache<Number, Serializable> map = new PersistentConcurrentOffHeapClockCache<Number, Serializable>(source, FileBackedStorageEngine.createFactory(source, new PersistentSerializablePortability(), new PersistentSerializablePortability()));
+    PersistentConcurrentOffHeapClockCache<Number, Serializable> map = new PersistentConcurrentOffHeapClockCache<Number, Serializable>(source, FileBackedStorageEngine.createFactory(source, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), new PersistentSerializablePortability()));
     try {
       for (int i = 0; i < 100; i++) {
         map.put(Integer.valueOf(i), "Hello World");
@@ -187,7 +188,7 @@ public class PersistentConcurrentOffHeapCacheIT extends AbstractDiskTest {
       ObjectInputStream din = new ObjectInputStream(bin);
       try {
         MappedPageSource clonedSource = new MappedPageSource(dataFile, false);
-        clone = new PersistentConcurrentOffHeapClockCache<Number, Serializable>(din, clonedSource, FileBackedStorageEngine.createFactory(clonedSource, new PersistentSerializablePortability(), new PersistentSerializablePortability(), false));
+        clone = new PersistentConcurrentOffHeapClockCache<Number, Serializable>(din, clonedSource, FileBackedStorageEngine.createFactory(clonedSource, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), new PersistentSerializablePortability(), false));
         clone.bootstrap(din);
       } finally {
         din.close();
@@ -227,7 +228,7 @@ public class PersistentConcurrentOffHeapCacheIT extends AbstractDiskTest {
     byte[] indexData;
 
     MappedPageSource source = new MappedPageSource(dataFile);
-    PersistentConcurrentOffHeapClockCache<Integer, Serializable> map = new PersistentConcurrentOffHeapClockCache<Integer, Serializable>(source, FileBackedStorageEngine.createFactory(source, new PersistentSerializablePortability(), new PersistentSerializablePortability()));
+    PersistentConcurrentOffHeapClockCache<Integer, Serializable> map = new PersistentConcurrentOffHeapClockCache<Integer, Serializable>(source, FileBackedStorageEngine.createFactory(source, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), new PersistentSerializablePortability()));
     try {
       for (int i = 0; i < primitives.length; i++) {
         map.put(Integer.valueOf(i), primitives[i]);
@@ -245,7 +246,7 @@ public class PersistentConcurrentOffHeapCacheIT extends AbstractDiskTest {
       ObjectInputStream din = new ObjectInputStream(bin);
       try {
         MappedPageSource clonedSource = new MappedPageSource(dataFile, false);
-        clone = new PersistentConcurrentOffHeapClockCache<Integer, Serializable>(din, clonedSource, FileBackedStorageEngine.createFactory(clonedSource, new PersistentSerializablePortability(), new PersistentSerializablePortability(), false));
+        clone = new PersistentConcurrentOffHeapClockCache<Integer, Serializable>(din, clonedSource, FileBackedStorageEngine.createFactory(clonedSource, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), new PersistentSerializablePortability(), false));
         clone.bootstrap(din);
       } finally {
         din.close();
@@ -268,7 +269,7 @@ public class PersistentConcurrentOffHeapCacheIT extends AbstractDiskTest {
     byte[] indexData;
 
     MappedPageSource source = new MappedPageSource(dataFile);
-    PersistentConcurrentOffHeapClockCache<Integer, byte[]> map = new PersistentConcurrentOffHeapClockCache<Integer, byte[]>(source, FileBackedStorageEngine.createFactory(source, new PersistentSerializablePortability(), PersistentByteArrayPortability.INSTANCE));
+    PersistentConcurrentOffHeapClockCache<Integer, byte[]> map = new PersistentConcurrentOffHeapClockCache<Integer, byte[]>(source, FileBackedStorageEngine.createFactory(source, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), PersistentByteArrayPortability.INSTANCE));
     try {
       for (int i = 0; i < 100; i++) {
         map.put(Integer.valueOf(i), new byte[i]);
@@ -290,7 +291,7 @@ public class PersistentConcurrentOffHeapCacheIT extends AbstractDiskTest {
       ObjectInputStream din = new ObjectInputStream(bin);
       try {
         MappedPageSource clonedSource = new MappedPageSource(dataFile, false);
-        clone = new PersistentConcurrentOffHeapClockCache<Integer, byte[]>(din, clonedSource, FileBackedStorageEngine.createFactory(clonedSource, new PersistentSerializablePortability(), PersistentByteArrayPortability.INSTANCE, false));
+        clone = new PersistentConcurrentOffHeapClockCache<Integer, byte[]>(din, clonedSource, FileBackedStorageEngine.createFactory(clonedSource, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), PersistentByteArrayPortability.INSTANCE, false));
         clone.bootstrap(din);
       } finally {
         din.close();

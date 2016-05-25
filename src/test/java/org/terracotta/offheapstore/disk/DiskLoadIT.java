@@ -33,6 +33,7 @@ import org.terracotta.offheapstore.disk.storage.portability.PersistentByteArrayP
 import org.terracotta.offheapstore.disk.storage.portability.PersistentSerializablePortability;
 import org.terracotta.offheapstore.storage.StorageEngine;
 import org.terracotta.offheapstore.util.Factory;
+import org.terracotta.offheapstore.util.MemoryUnit;
 
 /**
  *
@@ -76,7 +77,7 @@ public class DiskLoadIT {
             }
           }
         });
-        return new FileBackedStorageEngine<Integer, byte[]>(source, new PersistentSerializablePortability(), PersistentByteArrayPortability.INSTANCE, e);
+        return new FileBackedStorageEngine<Integer, byte[]>(source, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), PersistentByteArrayPortability.INSTANCE, e);
       }
     }, 1, SEGMENTS);
     try {
