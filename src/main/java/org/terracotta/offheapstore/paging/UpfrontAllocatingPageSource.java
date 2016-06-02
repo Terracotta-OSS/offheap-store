@@ -131,7 +131,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
                   DebuggingUtils.toBase2SuffixedString(max), DebuggingUtils.toBase2SuffixedString(freePhysical));
         }
 
-        LOGGER.info("Allocating {}B in chunks", DebuggingUtils.toBase2SuffixedString(max));
+        LOGGER.debug("Allocating {}B in chunks", DebuggingUtils.toBase2SuffixedString(max));
 
         for (ByteBuffer buffer : allocateBackingBuffers(source, max, maxChunk, minChunk, fixed)) {
           sliceAllocators.add(new PowerOfTwoAllocator(buffer.capacity()));
@@ -274,7 +274,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
     private Page allocateFromFree(int size, boolean victim, OffHeapStorageArea owner) {
         if (Integer.bitCount(size) != 1) {
             int rounded = Integer.highestOneBit(size) << 1;
-            LOGGER.info("Request to allocate {}B will allocate {}B", size, DebuggingUtils.toBase2SuffixedString(rounded));
+            LOGGER.debug("Request to allocate {}B will allocate {}B", size, DebuggingUtils.toBase2SuffixedString(rounded));
             size = rounded;
         }
 
@@ -468,7 +468,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
             throw new IllegalArgumentException("An attempt was made to allocate more off-heap memory than the JVM can allow." +
                     " The limit on off-heap memory size is given by the -XX:MaxDirectMemorySize command (or equivalent).");
           } else {
-            LOGGER.info("Allocated {}B in {}B chunks.", new Object[]{DebuggingUtils.toBase2SuffixedString(allocated - lastFailureAt), DebuggingUtils.toBase2SuffixedString(currentChunkSize)});
+            LOGGER.debug("Allocated {}B in {}B chunks.", new Object[]{DebuggingUtils.toBase2SuffixedString(allocated - lastFailureAt), DebuggingUtils.toBase2SuffixedString(currentChunkSize)});
             currentChunkSize >>>= 1;
             lastFailureAt = allocated;
           }
@@ -488,9 +488,9 @@ public class UpfrontAllocatingPageSource implements PageSource {
       if (allocatorLog != null) {
         allocatorLog.close();
       }
-      LOGGER.info("Allocated {}B in {}B chunks.", new Object[]{DebuggingUtils.toBase2SuffixedString(allocated - lastFailureAt), DebuggingUtils.toBase2SuffixedString(currentChunkSize)});
+      LOGGER.debug("Allocated {}B in {}B chunks.", new Object[]{DebuggingUtils.toBase2SuffixedString(allocated - lastFailureAt), DebuggingUtils.toBase2SuffixedString(currentChunkSize)});
       long duration = System.nanoTime() - start;
-      LOGGER.info("Took {} ms to create off-heap storage of {}B.", TimeUnit.NANOSECONDS.toMillis(duration), DebuggingUtils.toBase2SuffixedString(max));
+      LOGGER.debug("Took {} ms to create off-heap storage of {}B.", TimeUnit.NANOSECONDS.toMillis(duration), DebuggingUtils.toBase2SuffixedString(max));
       return Collections.unmodifiableCollection(buffers);
     }
 
