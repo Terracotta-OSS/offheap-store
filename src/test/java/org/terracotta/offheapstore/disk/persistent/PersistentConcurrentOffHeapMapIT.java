@@ -15,7 +15,6 @@
  */
 package org.terracotta.offheapstore.disk.persistent;
 
-import org.terracotta.offheapstore.disk.persistent.PersistentConcurrentOffHeapHashMap;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -33,6 +32,7 @@ import org.terracotta.offheapstore.disk.storage.PersistentIntegerStorageEngine;
 import org.terracotta.offheapstore.disk.storage.PersistentSplitStorageEngine;
 import org.terracotta.offheapstore.disk.storage.portability.PersistentByteArrayPortability;
 import org.terracotta.offheapstore.disk.storage.portability.PersistentSerializablePortability;
+import org.terracotta.offheapstore.util.MemoryUnit;
 
 /**
  *
@@ -94,7 +94,7 @@ public class PersistentConcurrentOffHeapMapIT extends AbstractDiskTest {
     long occupiedSize = -1;
     
     MappedPageSource source = new MappedPageSource(dataFile);
-    PersistentConcurrentOffHeapHashMap<Integer, byte[]> map = new PersistentConcurrentOffHeapHashMap<Integer, byte[]>(source, FileBackedStorageEngine.createFactory(source, new PersistentSerializablePortability(), PersistentByteArrayPortability.INSTANCE));
+    PersistentConcurrentOffHeapHashMap<Integer, byte[]> map = new PersistentConcurrentOffHeapHashMap<Integer, byte[]>(source, FileBackedStorageEngine.createFactory(source, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), PersistentByteArrayPortability.INSTANCE));
     try {
       for (int i = 0; i < 100; i++) {
         map.put(Integer.valueOf(i), new byte[i]);
@@ -121,7 +121,7 @@ public class PersistentConcurrentOffHeapMapIT extends AbstractDiskTest {
       ObjectInputStream din = new ObjectInputStream(bin);
       try {
         MappedPageSource clonedSource = new MappedPageSource(dataFile, false);
-        clone = new PersistentConcurrentOffHeapHashMap<Integer, byte[]>(din, clonedSource, FileBackedStorageEngine.createFactory(clonedSource, new PersistentSerializablePortability(), PersistentByteArrayPortability.INSTANCE, false));
+        clone = new PersistentConcurrentOffHeapHashMap<Integer, byte[]>(din, clonedSource, FileBackedStorageEngine.createFactory(clonedSource, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), PersistentByteArrayPortability.INSTANCE, false));
         clone.bootstrap(din);
       } finally {
         din.close();
@@ -145,7 +145,7 @@ public class PersistentConcurrentOffHeapMapIT extends AbstractDiskTest {
     byte[] indexData;
 
     MappedPageSource source = new MappedPageSource(dataFile);
-    PersistentConcurrentOffHeapHashMap<Integer, Serializable> map = new PersistentConcurrentOffHeapHashMap<Integer, Serializable>(source, FileBackedStorageEngine.createFactory(source, new PersistentSerializablePortability(), new PersistentSerializablePortability()));
+    PersistentConcurrentOffHeapHashMap<Integer, Serializable> map = new PersistentConcurrentOffHeapHashMap<Integer, Serializable>(source, FileBackedStorageEngine.createFactory(source, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), new PersistentSerializablePortability()));
     try {
       for (int i = 0; i < 100; i++) {
         map.put(Integer.valueOf(i), "Hello World");
@@ -171,7 +171,7 @@ public class PersistentConcurrentOffHeapMapIT extends AbstractDiskTest {
       ObjectInputStream din = new ObjectInputStream(bin);
       try {
         MappedPageSource clonedSource = new MappedPageSource(dataFile, false);
-        clone = new PersistentConcurrentOffHeapHashMap<Integer, Serializable>(din, clonedSource, FileBackedStorageEngine.createFactory(clonedSource, new PersistentSerializablePortability(), new PersistentSerializablePortability(), false));
+        clone = new PersistentConcurrentOffHeapHashMap<Integer, Serializable>(din, clonedSource, FileBackedStorageEngine.createFactory(clonedSource, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), new PersistentSerializablePortability(), false));
         clone.bootstrap(din);
       } finally {
         din.close();
@@ -194,7 +194,7 @@ public class PersistentConcurrentOffHeapMapIT extends AbstractDiskTest {
     byte[] indexData;
 
     MappedPageSource source = new MappedPageSource(dataFile);
-    PersistentConcurrentOffHeapHashMap<Number, Serializable> map = new PersistentConcurrentOffHeapHashMap<Number, Serializable>(source, FileBackedStorageEngine.createFactory(source, new PersistentSerializablePortability(), new PersistentSerializablePortability()));
+    PersistentConcurrentOffHeapHashMap<Number, Serializable> map = new PersistentConcurrentOffHeapHashMap<Number, Serializable>(source, FileBackedStorageEngine.createFactory(source, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), new PersistentSerializablePortability()));
     try {
       for (int i = 0; i < 100; i++) {
         map.put(Integer.valueOf(i), "Hello World");
@@ -220,7 +220,7 @@ public class PersistentConcurrentOffHeapMapIT extends AbstractDiskTest {
       ObjectInputStream din = new ObjectInputStream(bin);
       try {
         MappedPageSource clonedSource = new MappedPageSource(dataFile, false);
-        clone = new PersistentConcurrentOffHeapHashMap<Number, Serializable>(din, clonedSource, FileBackedStorageEngine.createFactory(clonedSource, new PersistentSerializablePortability(), new PersistentSerializablePortability(), false));
+        clone = new PersistentConcurrentOffHeapHashMap<Number, Serializable>(din, clonedSource, FileBackedStorageEngine.createFactory(clonedSource, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), new PersistentSerializablePortability(), false));
         clone.bootstrap(din);
       } finally {
         din.close();
@@ -260,7 +260,7 @@ public class PersistentConcurrentOffHeapMapIT extends AbstractDiskTest {
     byte[] indexData;
 
     MappedPageSource source = new MappedPageSource(dataFile);
-    PersistentConcurrentOffHeapHashMap<Integer, Serializable> map = new PersistentConcurrentOffHeapHashMap<Integer, Serializable>(source, FileBackedStorageEngine.createFactory(source, new PersistentSerializablePortability(), new PersistentSerializablePortability()));
+    PersistentConcurrentOffHeapHashMap<Integer, Serializable> map = new PersistentConcurrentOffHeapHashMap<Integer, Serializable>(source, FileBackedStorageEngine.createFactory(source, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), new PersistentSerializablePortability()));
     try {
       for (int i = 0; i < primitives.length; i++) {
         map.put(Integer.valueOf(i), primitives[i]);
@@ -286,7 +286,7 @@ public class PersistentConcurrentOffHeapMapIT extends AbstractDiskTest {
       ObjectInputStream din = new ObjectInputStream(bin);
       try {
         MappedPageSource clonedSource = new MappedPageSource(dataFile, false);
-        clone = new PersistentConcurrentOffHeapHashMap<Integer, Serializable>(din, clonedSource, FileBackedStorageEngine.createFactory(clonedSource, new PersistentSerializablePortability(), new PersistentSerializablePortability(), false));
+        clone = new PersistentConcurrentOffHeapHashMap<Integer, Serializable>(din, clonedSource, FileBackedStorageEngine.createFactory(clonedSource, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), new PersistentSerializablePortability(), false));
         clone.bootstrap(din);
       } finally {
         din.close();
@@ -309,7 +309,7 @@ public class PersistentConcurrentOffHeapMapIT extends AbstractDiskTest {
     byte[] indexData;
 
     MappedPageSource source = new MappedPageSource(dataFile);
-    PersistentConcurrentOffHeapHashMap<Integer, byte[]> map = new PersistentConcurrentOffHeapHashMap<Integer, byte[]>(source, FileBackedStorageEngine.createFactory(source, new PersistentSerializablePortability(), PersistentByteArrayPortability.INSTANCE));
+    PersistentConcurrentOffHeapHashMap<Integer, byte[]> map = new PersistentConcurrentOffHeapHashMap<Integer, byte[]>(source, FileBackedStorageEngine.createFactory(source, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), PersistentByteArrayPortability.INSTANCE));
     try {
       for (int i = 0; i < 100; i++) {
         map.put(Integer.valueOf(i), new byte[i]);
@@ -339,7 +339,7 @@ public class PersistentConcurrentOffHeapMapIT extends AbstractDiskTest {
       ObjectInputStream din = new ObjectInputStream(bin);
       try {
         MappedPageSource clonedSource = new MappedPageSource(dataFile, false);
-        clone = new PersistentConcurrentOffHeapHashMap<Integer, byte[]>(din, clonedSource, FileBackedStorageEngine.createFactory(clonedSource, new PersistentSerializablePortability(), PersistentByteArrayPortability.INSTANCE, false));
+        clone = new PersistentConcurrentOffHeapHashMap<Integer, byte[]>(din, clonedSource, FileBackedStorageEngine.createFactory(clonedSource, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), PersistentByteArrayPortability.INSTANCE, false));
         clone.bootstrap(din);
       } finally {
         din.close();
