@@ -13,6 +13,8 @@ import org.terracotta.offheapstore.disk.paging.MappedPageSource;
 import org.terracotta.offheapstore.disk.storage.FileBackedStorageEngine;
 import org.terracotta.offheapstore.storage.portability.StringPortability;
 
+import static org.terracotta.offheapstore.util.MemoryUnit.BYTES;
+
 @RunWith(BlockJUnit4ClassRunner.class)
 public class RestartableFileBackedStorageEngineIT extends RestartableStorageEngineIT {
 
@@ -33,7 +35,8 @@ public class RestartableFileBackedStorageEngineIT extends RestartableStorageEngi
   protected RestartableStorageEngine<?, String, String, String> createEngine() {
     try {
       MappedPageSource source = new MappedPageSource(testFile);
-      FileBackedStorageEngine<String, LinkedNode<String>> delegate = new FileBackedStorageEngine<String, LinkedNode<String>>(source, StringPortability.INSTANCE, new LinkedNodePortability<String>(StringPortability.INSTANCE), 1);
+      FileBackedStorageEngine<String, LinkedNode<String>> delegate = new FileBackedStorageEngine<String, LinkedNode<String>>(source,
+          Long.MAX_VALUE, BYTES, StringPortability.INSTANCE, new LinkedNodePortability<String>(StringPortability.INSTANCE));
       return new RestartableStorageEngine<FileBackedStorageEngine<String, LinkedNode<String>>, String, String, String>("id", new NoOpRestartStore<String, ByteBuffer, ByteBuffer>(), delegate, true);
     } catch (IOException e) {
       throw new AssertionError(e);
