@@ -8,6 +8,7 @@ import static com.terracottatech.offheapstore.storage.restartable.LinkedNodePort
 import java.nio.ByteBuffer;
 
 import org.terracotta.offheapstore.storage.portability.Portability;
+import org.terracotta.offheapstore.storage.portability.WriteBackPortability;
 import org.terracotta.offheapstore.storage.portability.WriteContext;
 
 public class AttachedLinkedNode<T> implements LinkedNode<T> {
@@ -55,7 +56,11 @@ public class AttachedLinkedNode<T> implements LinkedNode<T> {
   @SuppressWarnings("unchecked")
   @Override
   public T getValue() {
-    return (T) valuePortability.decode(getBuffer(VALUE_OFFSET));
+    if (valuePortability instanceof WriteBackPortability<?>) {
+      return (T) ((WriteBackPortability<? super T>) valuePortability).decode(getBuffer(VALUE_OFFSET), getWriteContext());
+    } else {
+      return (T) valuePortability.decode(getBuffer(VALUE_OFFSET));
+    }
   }
   
   @Override
@@ -88,5 +93,27 @@ public class AttachedLinkedNode<T> implements LinkedNode<T> {
   @Override
   public int getMetadata() {
     throw new UnsupportedOperationException();
+  }
+
+  /**
+   * A write context that passes the write back requests to the next
+   * storage engine in the chain.
+   *
+   * @return a write context that can be used to write back individual longs offsetting into
+   *         the generic type represented within {@code this} object.
+   */
+  private WriteContext getWriteContext() {
+    return new WriteContext() {
+
+      @Override
+      public void setLong(int offset, long value) {
+        writer.setLong(VALUE_OFFSET + offset, value);
+      }
+
+      @Override
+      public void flush() {
+        //no-op
+      }
+    };
   }
 }
