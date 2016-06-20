@@ -24,6 +24,9 @@ import com.terracottatech.offheapstore.storage.restartable.RestartableStorageEng
 import org.terracotta.offheapstore.util.Factory;
 import org.terracotta.offheapstore.util.MemoryUnit;
 
+import static java.lang.Math.max;
+import static org.terracotta.offheapstore.util.MemoryUnit.BYTES;
+
 @RunWith(BlockJUnit4ClassRunner.class)
 public class ConcurrentDiskCacheRestartabilityIT extends AbstractRestartabilityCacheIT {
 
@@ -55,7 +58,9 @@ public class ConcurrentDiskCacheRestartabilityIT extends AbstractRestartabilityC
     } catch (IOException e) {
       throw new AssertionError(e);
     }
-    Factory<RestartableStorageEngine<FileBackedStorageEngine<K, LinkedNode<V>>, ByteBuffer, K, V>> storageEngineFactory = RestartableStorageEngine.createFactory(id, persistence, FileBackedStorageEngine.<K, LinkedNode<V>>createFactory(source, 1, keyPortability, new LinkedNodePortability<V>(valuePortability)), synchronous);
+    Factory<RestartableStorageEngine<FileBackedStorageEngine<K, LinkedNode<V>>, ByteBuffer, K, V>> storageEngineFactory =
+        RestartableStorageEngine.createFactory(id, persistence, FileBackedStorageEngine.<K, LinkedNode<V>>createFactory(source,
+            max(unit.toBytes(size) / 160, 1024), BYTES, keyPortability, new LinkedNodePortability<V>(valuePortability)), synchronous);
     ConcurrentOffHeapClockCache<K, V> map = new ConcurrentOffHeapClockCache<K, V>(source, storageEngineFactory);
     objectMgr.registerObject(new OffHeapObjectManagerStripe<ByteBuffer>(id, map));
     return map;

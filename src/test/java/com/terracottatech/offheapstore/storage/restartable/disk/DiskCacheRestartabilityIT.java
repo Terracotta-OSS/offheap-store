@@ -23,6 +23,9 @@ import com.terracottatech.offheapstore.storage.restartable.OffHeapObjectManagerS
 import com.terracottatech.offheapstore.storage.restartable.RestartableStorageEngine;
 import org.terracotta.offheapstore.util.MemoryUnit;
 
+import static java.lang.Math.max;
+import static org.terracotta.offheapstore.util.MemoryUnit.BYTES;
+
 @RunWith(BlockJUnit4ClassRunner.class)
 public class DiskCacheRestartabilityIT extends AbstractRestartabilityCacheIT {
 
@@ -54,7 +57,8 @@ public class DiskCacheRestartabilityIT extends AbstractRestartabilityCacheIT {
     } catch (IOException e) {
       throw new AssertionError(e);
     }
-    FileBackedStorageEngine<K, LinkedNode<V>> delegateEngine = new FileBackedStorageEngine<K, LinkedNode<V>>(source, keyPortability, new LinkedNodePortability<V>(valuePortability), 1);
+    FileBackedStorageEngine<K, LinkedNode<V>> delegateEngine = new FileBackedStorageEngine<K, LinkedNode<V>>(source,
+        max(unit.toBytes(size) / 10, 1024), BYTES, keyPortability, new LinkedNodePortability<V>(valuePortability));
     RestartableStorageEngine<?, ByteBuffer, K, V> storageEngine = new RestartableStorageEngine<FileBackedStorageEngine<K, LinkedNode<V>>, ByteBuffer, K, V>(id, persistence, delegateEngine, synchronous);
     ReadWriteLockedOffHeapClockCache<K, V> map = new ReadWriteLockedOffHeapClockCache<K, V>(source, storageEngine);
     objectMgr.registerObject(new OffHeapObjectManagerStripe<ByteBuffer>(id, map));
