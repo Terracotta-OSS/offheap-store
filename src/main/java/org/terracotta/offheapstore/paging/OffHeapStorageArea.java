@@ -204,11 +204,15 @@ public class OffHeapStorageArea {
   }
 
   public ByteBuffer readBuffer(long address, int length) {
+    return readBuffer(address, length, false);
+  }
+
+  public ByteBuffer readBuffer(long address, int length, boolean forceCopy) {
     int pageIndex = pageIndexFor(address);
     int pageAddress = pageAddressFor(address);
     int pageSize = pageSizeFor(pageIndex);
 
-    if (pageAddress + length <= pageSize) {
+    if (!forceCopy && pageAddress + length <= pageSize) {
       ByteBuffer buffer = pages.get(pageIndex).asByteBuffer();
       return ((ByteBuffer) buffer.duplicate().limit(pageAddress + length).position(pageAddress)).slice().asReadOnlyBuffer();
     } else {
