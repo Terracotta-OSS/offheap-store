@@ -52,6 +52,7 @@ public class OffHeapStorageArea {
   private static final Logger LOGGER = LoggerFactory.getLogger(OffHeapStorageArea.class);
   private static final boolean VALIDATING = shouldValidate(OffHeapStorageArea.class);
   private static final long LARGEST_POWER_OF_TWO = Integer.highestOneBit(Integer.MAX_VALUE);
+  private static final ByteBuffer[] EMPTY_BUFFER_ARRAY = new ByteBuffer[0];
 
   private final int initialPageSize;
   private final int maximalPageSize;
@@ -203,28 +204,62 @@ public class OffHeapStorageArea {
     }
   }
 
+  /**
+   * Read the given range and return the data as a single read-only {@code ByteBuffer}.
+   *
+   * @param address address to read from
+   * @param length number of bytes to read
+   * @return a read-only buffer
+   */
   public ByteBuffer readBuffer(long address, int length) {
+    ByteBuffer[] buffers = readBuffers(address, length);
+    if (buffers.length == 1) {
+      return buffers[0];
+    } else {
+      ByteBuffer copy = ByteBuffer.allocate(length);
+      for (ByteBuffer b : buffers) {
+        copy.put(b);
+      }
+      return ((ByteBuffer) copy.flip()).asReadOnlyBuffer();
+    }
+  }
+
+  /**
+   * Read the given range and return the data as an array of read-only {@code ByteBuffer}s.
+   *
+   * @param address address to read from
+   * @param length number of bytes to read
+   * @return an array of read-only buffers
+   */
+  public ByteBuffer[] readBuffers(long address, int length) {
     int pageIndex = pageIndexFor(address);
     int pageAddress = pageAddressFor(address);
     int pageSize = pageSizeFor(pageIndex);
 
     if (pageAddress + length <= pageSize) {
-      ByteBuffer buffer = pages.get(pageIndex).asByteBuffer();
-      return ((ByteBuffer) buffer.duplicate().limit(pageAddress + length).position(pageAddress)).slice().asReadOnlyBuffer();
+      ByteBuffer pageBuffer = pages.get(pageIndex).asByteBuffer().duplicate();
+      ByteBuffer buffer = ((ByteBuffer) pageBuffer
+              .limit(pageAddress + length)
+              .position(pageAddress))
+              .slice().asReadOnlyBuffer();
+      return new ByteBuffer[] { buffer };
     } else {
-      ByteBuffer data = ByteBuffer.allocate(length);
-      while (data.hasRemaining()) {
-        ByteBuffer buffer = pages.get(pageIndex).asByteBuffer().duplicate();
-        buffer.position(pageAddress);
-        if (buffer.remaining() > data.remaining()) {
-          buffer.limit(buffer.position() + data.remaining());
+      List<ByteBuffer> buffers = new ArrayList<ByteBuffer>(length / pageSize);
+      int remaining = length;
+      while (remaining > 0) {
+        ByteBuffer pageBuffer = pages.get(pageIndex).asByteBuffer().duplicate();
+        pageBuffer.position(pageAddress);
+        if (pageBuffer.remaining() > remaining) {
+          pageBuffer.limit(pageBuffer.position() + remaining);
         }
+        ByteBuffer buffer = pageBuffer.slice().asReadOnlyBuffer();
         address += buffer.remaining();
-        data.put(buffer);
+        remaining -= buffer.remaining();
+        buffers.add(buffer);
         pageIndex = pageIndexFor(address);
         pageAddress = pageAddressFor(address);
       }
-      return ((ByteBuffer) data.flip()).asReadOnlyBuffer();
+      return buffers.toArray(EMPTY_BUFFER_ARRAY);
     }
   }
 
@@ -349,7 +384,7 @@ public class OffHeapStorageArea {
     long compressed = allocator.allocate(sizeOfArea);
     if (compressed >= 0) {
       if (compressed < lastAddress) {
-        writeBuffer(compressed, readBuffer(lastAddress, sizeOfArea));
+        writeBuffers(compressed, readBuffers(lastAddress, sizeOfArea));
         if (owner.moved(lastAddress, compressed)) {
           allocator.free(lastAddress);
           return true;
@@ -602,7 +637,7 @@ public class OffHeapStorageArea {
         long relocated = allocator.allocate(sizeOfArea);
         if (relocated >= 0) {
           if (relocated < target) {
-            writeBuffer(relocated, readBuffer(target, sizeOfArea));
+            writeBuffers(relocated, readBuffers(target, sizeOfArea));
             if (!owner.moved(target, relocated)) {
               throw new AssertionError("Failure to move mapping during release");
             }

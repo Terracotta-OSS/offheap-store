@@ -15,20 +15,8 @@
  */
 package org.terracotta.offheapstore.paging;
 
-import org.terracotta.offheapstore.paging.Page;
-import org.terracotta.offheapstore.paging.OffHeapStorageArea;
-import org.terracotta.offheapstore.paging.UnlimitedPageSource;
-import org.terracotta.offheapstore.paging.PageSource;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-
 import org.junit.Assert;
 import org.junit.Test;
-
 import org.terracotta.offheapstore.WriteLockedOffHeapClockCache;
 import org.terracotta.offheapstore.buffersource.HeapBufferSource;
 import org.terracotta.offheapstore.buffersource.OffHeapBufferSource;
@@ -38,11 +26,119 @@ import org.terracotta.offheapstore.storage.SplitStorageEngine;
 import org.terracotta.offheapstore.storage.portability.ByteArrayPortability;
 import org.terracotta.offheapstore.util.PointerSizeParameterizedTest;
 
-/**
- *
- * @author cdennis
- */
+import java.nio.ByteBuffer;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+
+import static org.hamcrest.collection.IsArrayWithSize.arrayWithSize;
+import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertThat;
+
 public class OffHeapStorageAreaTest extends PointerSizeParameterizedTest {
+
+  @Test
+  public void testNonStraddlingReadBuffersReturnsSingleBuffer() {
+    PageSource pageSource = new UnlimitedPageSource(new HeapBufferSource());
+    OffHeapStorageArea osa = new OffHeapStorageArea(getPointerSize(), null, pageSource, 1024, false, false);
+
+    assertThat(osa.readBuffers(osa.allocate(64), 64), arrayWithSize(1));
+  }
+
+  @Test
+  public void testNonStraddlingReadBuffersReturnsReadOnlyBuffer() {
+    PageSource pageSource = new UnlimitedPageSource(new HeapBufferSource());
+    OffHeapStorageArea osa = new OffHeapStorageArea(getPointerSize(), null, pageSource, 1024, false, false);
+
+    assertThat(osa.readBuffers(osa.allocate(64), 64)[0].isReadOnly(), is(true));
+  }
+
+  @Test
+  public void testStraddlingReadBuffersReturnsMultipleBuffers() {
+    PageSource pageSource = new UnlimitedPageSource(new HeapBufferSource());
+    OffHeapStorageArea osa = new OffHeapStorageArea(getPointerSize(), null, pageSource, 128, false, false);
+
+    assertThat(osa.readBuffers(osa.allocate(256), 256), arrayWithSize(3));
+  }
+
+  @Test
+  public void testStraddlingReadBuffersReturnsReadOnlyBuffers() {
+    PageSource pageSource = new UnlimitedPageSource(new HeapBufferSource());
+    OffHeapStorageArea osa = new OffHeapStorageArea(getPointerSize(), null, pageSource, 128, false, false);
+
+    for (ByteBuffer buffer : osa.readBuffers(osa.allocate(256), 256)) {
+      assertThat(buffer.isReadOnly(), is(true));
+    }
+  }
+
+  @Test
+  public void testReadBuffersReturnsCorrectData() {
+    PageSource pageSource = new UnlimitedPageSource(new HeapBufferSource());
+    OffHeapStorageArea osa = new OffHeapStorageArea(getPointerSize(), null, pageSource, 128, false, false);
+
+    long base = osa.allocate(1024);
+    for (int i = 0; i < 1024; i++) {
+      osa.writeByte(base + i, (byte) i);
+    }
+
+    for (int i = 1; i < 512; i <<= 1) {
+      for (int o = -1; o <= 1; o++) {
+        ByteBuffer[] buffers = osa.readBuffers(base, i + o);
+
+        int j = 0;
+        for (ByteBuffer buffer : buffers) {
+          while (buffer.hasRemaining()) {
+            assertThat(buffer.get(), is((byte) j));
+            j++;
+          }
+        }
+        assertThat(j, is(i + o));
+      }
+    }
+  }
+
+  @Test
+  public void testNonStraddlingReadBufferReturnsReadOnlyBuffer() {
+    PageSource pageSource = new UnlimitedPageSource(new HeapBufferSource());
+    OffHeapStorageArea osa = new OffHeapStorageArea(getPointerSize(), null, pageSource, 1024, false, false);
+
+    assertThat(osa.readBuffer(osa.allocate(64), 64).isReadOnly(), is(true));
+  }
+
+  @Test
+  public void testStraddlingReadBufferReturnsReadOnlyBuffer() {
+    PageSource pageSource = new UnlimitedPageSource(new HeapBufferSource());
+    OffHeapStorageArea osa = new OffHeapStorageArea(getPointerSize(), null, pageSource, 128, false, false);
+
+    assertThat(osa.readBuffer(osa.allocate(256), 256).isReadOnly(), is(true));
+  }
+
+  @Test
+  public void testReadBufferReturnsCorrectData() {
+    PageSource pageSource = new UnlimitedPageSource(new HeapBufferSource());
+    OffHeapStorageArea osa = new OffHeapStorageArea(getPointerSize(), null, pageSource, 128, false, false);
+
+    long base = osa.allocate(1024);
+    for (int i = 0; i < 1024; i++) {
+      osa.writeByte(base + i, (byte) i);
+    }
+
+    for (int i = 1; i < 512; i <<= 1) {
+      for (int o = -1; o <= 1; o++) {
+        ByteBuffer buffer = osa.readBuffer(base, i + o);
+
+        int j = 0;
+        while (buffer.hasRemaining()) {
+          assertThat(buffer.get(), is((byte) j));
+          j++;
+        }
+        assertThat(j, is(i + o));
+      }
+    }
+  }
 
   @Test
   public void testRecoveryOfPages() {
@@ -75,35 +171,35 @@ public class OffHeapStorageAreaTest extends PointerSizeParameterizedTest {
   @Test
   public void testVariablePageSize() {
     PageSource source = new UnlimitedPageSource(new HeapBufferSource());
-    
+
     OffHeapStorageArea storage = new OffHeapStorageArea(getPointerSize(), null, source, 1, 1024, false, false);
 
     Map<Integer, Long> locations = new HashMap<Integer, Long>();
-    
+
     for (int i = 0; i < 2048; i++) {
       long pointer = storage.allocate(Integer.SIZE / Byte.SIZE);
       storage.writeInt(pointer, i);
       locations.put(i, pointer);
     }
-    
+
     System.err.println(storage);
-    
+
     for (int i = 0; i < 2048; i++) {
       int pointer = locations.get(i).intValue();
       Assert.assertEquals(i, storage.readInt(pointer));
     }
-    
+
     for (Long pointer : locations.values()) {
       storage.free(pointer);
     }
   }
-  
+
 //  @Test
 //  public void testVariablePageSizeAddressLogic() {
 //    PageSource source = new UnlimitedPageSource(new HeapBufferSource());
-//    
+//
 //    OffHeapStorageArea storage = new OffHeapStorageArea(null, source, 1, 1024, false, false);
-//    
+//
 //    for (int i = 0, address = 0; i < 100; i++) {
 //      int size = storage.pageSizeFor(i);
 //      int base = storage.addressForPage(i);
@@ -115,7 +211,7 @@ public class OffHeapStorageAreaTest extends PointerSizeParameterizedTest {
 ////      System.err.println("Base : " + base);
 ////      System.err.println();
 //    }
-//    
+//
 //    for (int i = 0; i < 10240; i++) {
 //      int page = storage.pageIndexFor(i);
 //      int pageAddress = storage.pageAddressFor(i);
@@ -126,7 +222,7 @@ public class OffHeapStorageAreaTest extends PointerSizeParameterizedTest {
 ////      System.err.println();
 //    }
 //  }
-  
+
   static class GettablePageSource implements PageSource {
 
     final Random rndm = new Random();
