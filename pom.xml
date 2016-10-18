@@ -20,7 +20,7 @@ limitations under the License.
 
   <groupId>org.terracotta</groupId>
   <artifactId>offheap-store</artifactId>
-  <version>2.3-SNAPSHOT</version>
+  <version>2.3.1</version>
   <packaging>jar</packaging>
 
   <name>Terracotta Off-Heap Store</name>
