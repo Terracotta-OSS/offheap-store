@@ -126,7 +126,7 @@ public class UpfrontAllocatingPageSourceTest {
   public void testVariableChunkSizesSuccess() {
     Map<Integer, Integer> chunks = new HashMap<Integer, Integer>();
 
-    //Allocate 128k sucessfully
+    //Allocate 128k successfully
     chunks.put(64 * 1024, 1);
     chunks.put(32 * 1024, 1);
     chunks.put(16 * 1024, 2);
@@ -139,7 +139,7 @@ public class UpfrontAllocatingPageSourceTest {
   public void testVariableChunkSizesFailureDueToLimitation() {
     Map<Integer, Integer> chunks = new HashMap<Integer, Integer>();
 
-    //Allocate 128k sucessfully
+    //Allocate 128k successfully
     chunks.put(64 * 1024, 1);
     chunks.put(32 * 1024, 1);
     chunks.put(16 * 1024, 2);
@@ -157,7 +157,7 @@ public class UpfrontAllocatingPageSourceTest {
   public void testVariableChunkSizesFailureDueToExhaustion() {
     Map<Integer, Integer> chunks = new HashMap<Integer, Integer>();
 
-    //Allocate 128k sucessfully
+    //Allocate 128k successfully
     chunks.put(64 * 1024, 1);
     chunks.put(32 * 1024, 1);
     chunks.put(16 * 1024, 1);
