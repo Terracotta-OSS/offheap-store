@@ -41,6 +41,10 @@ import java.util.NavigableSet;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static org.terracotta.offheapstore.storage.allocator.PowerOfTwoAllocator.Packing.CEILING;
@@ -60,8 +64,6 @@ public class UpfrontAllocatingPageSource implements PageSource {
     public static final String ALLOCATION_LOG_LOCATION = UpfrontAllocatingPageSource.class.getName() + ".allocationDump";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UpfrontAllocatingPageSource.class);
-    private static final double PROGRESS_LOGGING_STEP_SIZE = 0.1;
-    private static final long PROGRESS_LOGGING_THRESHOLD = MemoryUnit.GIGABYTES.toBytes(4L);
     private static final Comparator<Page> REGION_COMPARATOR = new Comparator<Page>() {
       @Override
       public int compare(Page a, Page b) {
@@ -452,74 +454,124 @@ public class UpfrontAllocatingPageSource implements PageSource {
       throw new AssertionError();
     }
 
-    private static Collection<ByteBuffer> allocateBackingBuffers(BufferSource source, long toAllocate, int maxChunk, int minChunk, boolean fixed) {
+  /**
+   * Allocate multiple buffers to fulfill the requested memory {@code toAllocate}. We first divide {@code toAllocate} in
+   * chunks of size {@maxChunk} and try to allocate them in parallel on all available processors. If one chunk fails to be
+   * allocated, we try to allocate two chunks of {@code maxChunk / 2}. If this allocation fails, we continue dividing until
+   * we reach of size of {@code minChunk}. If at that moment, the allocation still fails, an {@code IllegalArgumentException}
+   * is thrown.
+   * <p>
+   * When {@code fixed} is requested, we will only allocated buffers of {@code maxChunk} size. If allocation fails, an
+   * {@code IllegalArgumentException} is thrown without any division.
+   * <p>
+   * If the allocation is interrupted, the method will exit and return what was allocated so far. The interrupt flag is
+   * set.
+   *
+   * @param source source used to allocate memory buffers
+   * @param toAllocate total amount of memory to allocate
+   * @param maxChunk maximum size of a buffer. This is the targeted size for all buffers if everything goes well
+   * @param minChunk minimum buffer size allowed
+   * @param fixed if all buffers should have a the same size (except the last one with {@code toAllocate % maxChunk != 0}, if true, {@code minChunk} isn't used
+   * @return the list of allocated buffers
+   * @throws IllegalArgumentException when we fail to allocate the requested memory
+   */
+    private static Collection<ByteBuffer> allocateBackingBuffers(final BufferSource source, long toAllocate, int maxChunk, final int minChunk, final boolean fixed) {
 
-      PrintStream allocatorLog;
+      final PrintStream allocatorLog;
       try {
-        allocatorLog = createAllocatorLog(toAllocate, maxChunk, minChunk);
+      final Collection<ByteBuffer> buffers = new ArrayList<ByteBuffer>((int)(toAllocate / maxChunk + 10)); // guess the number of buffers and add some padding just in case
       } catch (IOException e) {
-        LOGGER.warn("Exception creating allocation log", e);
-        allocatorLog = null;
+        throw new IllegalArgumentException("Failed to create allocator log", e);
       }
 
-      long start = 0;
-
-      if(LOGGER.isDebugEnabled()) {
-        start = System.nanoTime();
-      }
+      final long start = (LOGGER.isDebugEnabled() ? System.nanoTime() : 0);
 
       if (allocatorLog != null) {
-        allocatorLog.printf("timestamp,duration,size,allocated,physfree,totalswap,freeswap,committed%n");
+        allocatorLog.printf("timestamp,duration,size,physfree,totalswap,freeswap,committed%n");
       }
-      long progressStep = Math.max(PROGRESS_LOGGING_THRESHOLD, (long) (toAllocate * PROGRESS_LOGGING_STEP_SIZE));
-      long lastFailureAt = 0;
-      long currentChunkSize = maxChunk;
+
+      ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
+        List<Future<Long>> futures = new ArrayList<Future<Long>>((int)(toAllocate / maxChunk + 1));
+      List<Future<?>> futures = new ArrayList<Future<?>>((int) toAllocate / maxChunk + 1);
+
       long allocated = 0;
-      long nextProgressLogAt = progressStep;
 
-      Collection<ByteBuffer> buffers = new ArrayList<ByteBuffer>((int) toAllocate / maxChunk + 10); // guess the number of buffers and add some padding just in case
+      while(allocated < toAllocate) {
+        final int currentChunkSize = (int) Math.min(maxChunk, toAllocate - allocated);
+        futures.add(executorService.submit(new Runnable() {
+          @Override
+          public void run() {
+            bufferAllocation(source, currentChunkSize, minChunk, fixed, allocatorLog, start, buffers);
+          }
+        }));
+        allocated += currentChunkSize;
+      }
 
-      while (allocated < toAllocate) {
-        long blockStart = System.nanoTime();
-        ByteBuffer b = source.allocateBuffer((int) Math.min(currentChunkSize, (toAllocate - allocated)));
-        long blockDuration = System.nanoTime() - blockStart;
-        if (b == null) {
-          if (fixed || (currentChunkSize >>> 1) < minChunk) {
-            throw new IllegalArgumentException("An attempt was made to allocate more off-heap memory than the JVM can allow." +
-                    " The limit on off-heap memory size is given by the -XX:MaxDirectMemorySize command (or equivalent).");
-          } else {
-            if(LOGGER.isDebugEnabled()) {
-              LOGGER.debug("Allocated {}B in {}B chunks.", DebuggingUtils.toBase2SuffixedString(allocated - lastFailureAt), DebuggingUtils.toBase2SuffixedString(currentChunkSize));
-            }
-            currentChunkSize >>>= 1;
-            lastFailureAt = allocated;
-          }
-        } else {
-          buffers.add(b);
-          allocated += b.capacity();
+      executorService.shutdown();
 
-          if (allocatorLog != null) {
-            allocatorLog.printf("%d,%d,%d,%d,%d,%d,%d,%d%n", System.nanoTime() - start, blockDuration, b.capacity(), allocated, PhysicalMemory.freePhysicalMemory(), PhysicalMemory.totalSwapSpace(), PhysicalMemory.freeSwapSpace(), PhysicalMemory.ourCommittedVirtualMemory());
+      for(Future<?> future : futures) {
+        try {
+          future.get(); // no result to retrieve. However, we want to know if allocation failed
+        } catch(ExecutionException e) {
+          if(e.getCause() instanceof RuntimeException) {
+            throw (RuntimeException) e.getCause();
           }
-          if (allocated > nextProgressLogAt) {
-            LOGGER.info("Allocation {}% complete", (100 * allocated) / toAllocate);
-            nextProgressLogAt += progressStep;
-          }
+          throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          break;
         }
       }
+
       if (allocatorLog != null) {
         allocatorLog.close();
       }
 
       if(LOGGER.isDebugEnabled()) {
-        LOGGER.debug("Allocated {}B in {}B chunks.", DebuggingUtils.toBase2SuffixedString(allocated - lastFailureAt), DebuggingUtils.toBase2SuffixedString(currentChunkSize));
         long duration = System.nanoTime() - start;
         LOGGER.debug("Took {} ms to create off-heap storage of {}B.", TimeUnit.NANOSECONDS.toMillis(duration), DebuggingUtils.toBase2SuffixedString(toAllocate));
       }
+
       return Collections.unmodifiableCollection(buffers);
     }
 
-    private static PrintStream createAllocatorLog(long max, int maxChunk, int minChunk) throws IOException {
+  private static void bufferAllocation(BufferSource source, int toAllocate, int minChunk, boolean fixed, PrintStream allocatorLog, long start, Collection<ByteBuffer> buffers) {
+    long allocated = 0;
+    long currentChunkSize = toAllocate;
+
+    while (allocated < toAllocate) {
+      long blockStart = System.nanoTime();
+      int currentAllocation = (int)Math.min(currentChunkSize, (toAllocate - allocated));
+      ByteBuffer b = source.allocateBuffer(currentAllocation);
+      long blockDuration = System.nanoTime() - blockStart;
+
+      if (b == null) {
+        if (fixed || (currentChunkSize >>> 1) < minChunk) {
+          throw new IllegalArgumentException("An attempt was made to allocate more off-heap memory than the JVM can allow." +
+                                             " The limit on off-heap memory size is given by the -XX:MaxDirectMemorySize command (or equivalent).");
+        }
+
+        // In case of failure, we try half the allocation size. It might pass if memory fragmentation caused the failure
+        currentChunkSize >>>= 1;
+
+        if(LOGGER.isDebugEnabled()) {
+          LOGGER.debug("Allocated failed at {}B, trying  {}B chunks.", DebuggingUtils.toBase2SuffixedString(currentAllocation), DebuggingUtils.toBase2SuffixedString(currentChunkSize));
+        }
+      } else {
+        synchronized (buffers) {
+          buffers.add(b);
+        }
+        allocated += currentAllocation;
+
+        if (allocatorLog != null) {
+          allocatorLog.printf("%d,%d,%d,%d,%d,%d,%d%n", System.nanoTime() - start, blockDuration, currentAllocation, PhysicalMemory.freePhysicalMemory(), PhysicalMemory.totalSwapSpace(), PhysicalMemory.freeSwapSpace(), PhysicalMemory.ourCommittedVirtualMemory());
+        }
+      }
+    }
+  }
+
+  private static PrintStream createAllocatorLog(long max, int maxChunk, int minChunk) throws IOException {
       String path = System.getProperty(ALLOCATION_LOG_LOCATION);
       if (path == null) {
         return null;
