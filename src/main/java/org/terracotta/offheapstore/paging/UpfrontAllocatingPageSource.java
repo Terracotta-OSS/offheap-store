@@ -145,7 +145,9 @@ public class UpfrontAllocatingPageSource implements PageSource {
                   DebuggingUtils.toBase2SuffixedString(toAllocate), DebuggingUtils.toBase2SuffixedString(freePhysical));
         }
 
-        LOGGER.debug("Allocating {}B in chunks", DebuggingUtils.toBase2SuffixedString(toAllocate));
+        if(LOGGER.isInfoEnabled()) {
+          LOGGER.info("Allocating {}B in chunks", DebuggingUtils.toBase2SuffixedString(toAllocate));
+        }
 
         for (ByteBuffer buffer : allocateBackingBuffers(source, toAllocate, maxChunk, minChunk, fixed)) {
           sliceAllocators.add(new PowerOfTwoAllocator(buffer.capacity()));
@@ -497,7 +499,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
         throw new IllegalArgumentException("Failed to create allocator log", e);
       }
 
-      final long start = (LOGGER.isDebugEnabled() ? System.nanoTime() : 0);
+      final long start = (LOGGER.isInfoEnabled() ? System.nanoTime() : 0);
 
       if (allocatorLog != null) {
         allocatorLog.printf("timestamp,duration,size,physfree,totalswap,freeswap,committed%n");
@@ -541,9 +543,9 @@ public class UpfrontAllocatingPageSource implements PageSource {
         allocatorLog.close();
       }
 
-      if(LOGGER.isDebugEnabled()) {
+      if(LOGGER.isInfoEnabled()) {
         long duration = System.nanoTime() - start;
-        LOGGER.debug("Took {} ms to create off-heap storage of {}B.", TimeUnit.NANOSECONDS.toMillis(duration), DebuggingUtils.toBase2SuffixedString(toAllocate));
+        LOGGER.info("Took {} ms to create off-heap storage of {}B.", TimeUnit.NANOSECONDS.toMillis(duration), DebuggingUtils.toBase2SuffixedString(toAllocate));
       }
 
       return Collections.unmodifiableCollection(buffers);
@@ -579,6 +581,10 @@ public class UpfrontAllocatingPageSource implements PageSource {
 
         if (allocatorLog != null) {
           allocatorLog.printf("%d,%d,%d,%d,%d,%d,%d%n", System.nanoTime() - start, blockDuration, currentAllocation, PhysicalMemory.freePhysicalMemory(), PhysicalMemory.totalSwapSpace(), PhysicalMemory.freeSwapSpace(), PhysicalMemory.ourCommittedVirtualMemory());
+        }
+
+        if(LOGGER.isDebugEnabled()) {
+          LOGGER.debug("{}B chunk allocated", DebuggingUtils.toBase2SuffixedString(currentAllocation));
         }
       }
     }
