@@ -155,6 +155,19 @@ public class UpfrontAllocatingPageSource implements PageSource {
         }
     }
 
+  /**
+   * Return the total allocated capacity, used or not
+   *
+   * @return the total capacity
+   */
+  public long getCapacity() {
+    long capacity = 0;
+    for(ByteBuffer buffer : buffers) {
+      capacity += buffer.capacity();
+    }
+    return capacity;
+  }
+
     /**
      * Allocates a byte buffer of at least the given size.
      * <p>

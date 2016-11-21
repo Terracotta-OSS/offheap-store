@@ -64,6 +64,12 @@ public class UpfrontAllocatingPageSourceTest {
   }
 
   @Test
+  public void testGetCapacity() {
+    UpfrontAllocatingPageSource source = new UpfrontAllocatingPageSource(new OffHeapBufferSource(), 2 * 1024, 1024);
+    Assert.assertEquals(2 * 1024, source.getCapacity());
+  }
+
+  @Test
   public void testUpfrontAllocatingBufferSource() {
     PageSource source = new UpfrontAllocatingPageSource(new OffHeapBufferSource(), 2 * 1024, 1024);
 
