@@ -41,6 +41,7 @@ import java.util.NavigableSet;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -64,6 +65,9 @@ public class UpfrontAllocatingPageSource implements PageSource {
     public static final String ALLOCATION_LOG_LOCATION = UpfrontAllocatingPageSource.class.getName() + ".allocationDump";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UpfrontAllocatingPageSource.class);
+    private static final double PROGRESS_LOGGING_STEP_SIZE = 0.1;
+    private static final long PROGRESS_LOGGING_THRESHOLD = MemoryUnit.GIGABYTES.toBytes(4L);
+
     private static final Comparator<Page> REGION_COMPARATOR = new Comparator<Page>() {
       @Override
       public int compare(Page a, Page b) {
@@ -492,55 +496,59 @@ public class UpfrontAllocatingPageSource implements PageSource {
    */
     private static Collection<ByteBuffer> allocateBackingBuffers(final BufferSource source, long toAllocate, int maxChunk, final int minChunk, final boolean fixed) {
 
-      final PrintStream allocatorLog;
-      try {
-      final Collection<ByteBuffer> buffers = new ArrayList<ByteBuffer>((int)(toAllocate / maxChunk + 10)); // guess the number of buffers and add some padding just in case
-      } catch (IOException e) {
-        throw new IllegalArgumentException("Failed to create allocator log", e);
-      }
-
       final long start = (LOGGER.isInfoEnabled() ? System.nanoTime() : 0);
 
-      if (allocatorLog != null) {
-        allocatorLog.printf("timestamp,duration,size,physfree,totalswap,freeswap,committed%n");
-      }
+      final Collection<ByteBuffer> buffers = new ArrayList<ByteBuffer>((int)toAllocate / maxChunk + 10); // guess the number of buffers and add some padding just in case
 
-      ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+      final PrintStream allocatorLog = createAllocatorLog(toAllocate, maxChunk, minChunk);
 
-        List<Future<Long>> futures = new ArrayList<Future<Long>>((int)(toAllocate / maxChunk + 1));
-      List<Future<?>> futures = new ArrayList<Future<?>>((int) toAllocate / maxChunk + 1);
-
-      long allocated = 0;
-
-      while(allocated < toAllocate) {
-        final int currentChunkSize = (int) Math.min(maxChunk, toAllocate - allocated);
-        futures.add(executorService.submit(new Runnable() {
-          @Override
-          public void run() {
-            bufferAllocation(source, currentChunkSize, minChunk, fixed, allocatorLog, start, buffers);
-          }
-        }));
-        allocated += currentChunkSize;
-      }
-
-      executorService.shutdown();
-
-      for(Future<?> future : futures) {
-        try {
-          future.get(); // no result to retrieve. However, we want to know if allocation failed
-        } catch(ExecutionException e) {
-          if(e.getCause() instanceof RuntimeException) {
-            throw (RuntimeException) e.getCause();
-          }
-          throw new RuntimeException(e);
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          break;
+      try {
+        if (allocatorLog != null) {
+          allocatorLog.printf("timestamp,duration,size,physfree,totalswap,freeswap,committed%n");
         }
-      }
 
-      if (allocatorLog != null) {
-        allocatorLog.close();
+        ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
+        List<Future<Long>> futures = new ArrayList<Future<Long>>((int)toAllocate / maxChunk + 1);
+
+        for (long dispatched = 0; dispatched < toAllocate; ) {
+          final int currentChunkSize = (int)Math.min(maxChunk, toAllocate - dispatched);
+          futures.add(executorService.submit(new Callable<Long>() {
+            @Override
+            public Long call() throws Exception {
+              return bufferAllocation(source, currentChunkSize, minChunk, fixed, allocatorLog, start, buffers);
+            }
+          }));
+          dispatched += currentChunkSize;
+        }
+
+        executorService.shutdown();
+
+        long allocated = 0;
+        long progressStep = Math.max(PROGRESS_LOGGING_THRESHOLD, (long)(toAllocate * PROGRESS_LOGGING_STEP_SIZE));
+        long nextProgressLogAt = progressStep;
+
+        for (Future<Long> future : futures) {
+          try {
+            allocated += future.get();
+            if (allocated > nextProgressLogAt) {
+              LOGGER.info("Allocation {}% complete", (100 * allocated) / toAllocate);
+              nextProgressLogAt += progressStep;
+            }
+          } catch (ExecutionException e) {
+            if (e.getCause() instanceof RuntimeException) {
+              throw (RuntimeException)e.getCause();
+            }
+            throw new RuntimeException(e);
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            break;
+          }
+        }
+      } finally {
+        if (allocatorLog != null) {
+          allocatorLog.close();
+        }
       }
 
       if(LOGGER.isInfoEnabled()) {
@@ -551,7 +559,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
       return Collections.unmodifiableCollection(buffers);
     }
 
-  private static void bufferAllocation(BufferSource source, int toAllocate, int minChunk, boolean fixed, PrintStream allocatorLog, long start, Collection<ByteBuffer> buffers) {
+  private static long bufferAllocation(BufferSource source, int toAllocate, int minChunk, boolean fixed, PrintStream allocatorLog, long start, Collection<ByteBuffer> buffers) {
     long allocated = 0;
     long currentChunkSize = toAllocate;
 
@@ -588,15 +596,23 @@ public class UpfrontAllocatingPageSource implements PageSource {
         }
       }
     }
+
+    return allocated;
   }
 
-  private static PrintStream createAllocatorLog(long max, int maxChunk, int minChunk) throws IOException {
+  private static PrintStream createAllocatorLog(long max, int maxChunk, int minChunk) {
       String path = System.getProperty(ALLOCATION_LOG_LOCATION);
       if (path == null) {
         return null;
       } else {
-        File allocatorLogFile = File.createTempFile("allocation", ".csv", new File(path));
-        PrintStream allocatorLogStream = new PrintStream(allocatorLogFile, "US-ASCII");
+        PrintStream allocatorLogStream;
+        try {
+          File allocatorLogFile = File.createTempFile("allocation", ".csv", new File(path));
+          allocatorLogStream = new PrintStream(allocatorLogFile, "US-ASCII");
+        } catch (IOException e) {
+          LOGGER.warn("Exception creating allocation log", e);
+          return null;
+        }
         allocatorLogStream.printf("Timestamp: %s%n", new Date());
         allocatorLogStream.printf("Allocating: %sB%n",DebuggingUtils.toBase2SuffixedString(max));
         allocatorLogStream.printf("Max Chunk: %sB%n",DebuggingUtils.toBase2SuffixedString(maxChunk));
