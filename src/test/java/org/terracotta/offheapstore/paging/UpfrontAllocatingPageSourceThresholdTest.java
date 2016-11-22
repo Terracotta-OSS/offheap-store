@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,9 +15,9 @@
  */
 package org.terracotta.offheapstore.paging;
 
-import org.terracotta.offheapstore.paging.Page;
-import org.terracotta.offheapstore.paging.OffHeapStorageArea;
-import org.terracotta.offheapstore.paging.UpfrontAllocatingPageSource;
+import org.hamcrest.core.IsNull;
+import org.hamcrest.number.OrderingComparison;
+import org.junit.Test;
 import org.terracotta.offheapstore.buffersource.HeapBufferSource;
 import org.terracotta.offheapstore.paging.UpfrontAllocatingPageSource.ThresholdDirection;
 import org.terracotta.offheapstore.storage.PointerSize;
@@ -27,11 +27,7 @@ import org.terracotta.offheapstore.util.NoOpLock;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 
-import org.hamcrest.core.IsNull;
-import org.hamcrest.number.OrderingComparison;
-import org.junit.Test;
-
-import static org.hamcrest.core.Is.*;
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
 /**
@@ -39,7 +35,7 @@ import static org.junit.Assert.assertThat;
  * @author cdennis
  */
 public class UpfrontAllocatingPageSourceThresholdTest {
-  
+
   @Test
   public void testSimpleRisingThreshold() {
     UpfrontAllocatingPageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), MemoryUnit.KILOBYTES.toBytes(1), MemoryUnit.KILOBYTES.toBytes(1));
@@ -51,7 +47,7 @@ public class UpfrontAllocatingPageSourceThresholdTest {
         rising.set(true);
       }
     });
-    
+
     assertThat(rising.getAndSet(false), is(false));
     Page a = source.allocate(256, false, false, null);
     assertThat(rising.getAndSet(false), is(true));
@@ -64,7 +60,7 @@ public class UpfrontAllocatingPageSourceThresholdTest {
     source.free(c);
     assertThat(rising.getAndSet(false), is(false));
   }
-  
+
   @Test
   public void testSimpleFallingThreshold() {
     UpfrontAllocatingPageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), MemoryUnit.KILOBYTES.toBytes(1), MemoryUnit.KILOBYTES.toBytes(1));
@@ -76,7 +72,7 @@ public class UpfrontAllocatingPageSourceThresholdTest {
         falling.set(true);
       }
     });
-    
+
     Page a = source.allocate(256, false, false, null);
     assertThat(falling.getAndSet(false), is(false));
     source.free(a);
@@ -108,7 +104,7 @@ public class UpfrontAllocatingPageSourceThresholdTest {
         rising128.set(true);
       }
     });
-    
+
     assertThat(rising64.getAndSet(false), is(false));
     assertThat(rising128.getAndSet(false), is(false));
     Page a = source.allocate(96, false, false, null);
@@ -148,7 +144,7 @@ public class UpfrontAllocatingPageSourceThresholdTest {
         falling128.set(true);
       }
     });
-    
+
     Page a = source.allocate(48, false, false, null);
     Page b = source.allocate(96, false, false, null);
     assertThat(falling64.getAndSet(false), is(false));
@@ -174,7 +170,7 @@ public class UpfrontAllocatingPageSourceThresholdTest {
     assertThat(falling64.getAndSet(false), is(true));
     assertThat(falling128.getAndSet(false), is(false));
   }
-  
+
   @Test
   public void testRisingAndFallingThresholds() {
     UpfrontAllocatingPageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), MemoryUnit.KILOBYTES.toBytes(1), MemoryUnit.KILOBYTES.toBytes(1));
@@ -194,7 +190,7 @@ public class UpfrontAllocatingPageSourceThresholdTest {
         falling64.set(true);
       }
     });
-    
+
     Page a = source.allocate(32, false, false, null);
     assertThat(rising64.getAndSet(false), is(false));
     assertThat(falling64.getAndSet(false), is(false));
@@ -208,14 +204,14 @@ public class UpfrontAllocatingPageSourceThresholdTest {
     assertThat(rising64.getAndSet(false), is(false));
     assertThat(falling64.getAndSet(false), is(false));
   }
-  
+
   @Test
   public void testThresholdsDuringSteal() {
     UpfrontAllocatingPageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), MemoryUnit.KILOBYTES.toBytes(1), MemoryUnit.KILOBYTES.toBytes(1));
     SimpleOwner owner = new SimpleOwner();
     OffHeapStorageArea storage = new OffHeapStorageArea(PointerSize.INT, owner, source, 128, false, true);
     owner.bind(storage);
-    
+
     final AtomicBoolean rising512 = new AtomicBoolean();
     source.addAllocationThreshold(ThresholdDirection.RISING, 512, new Runnable() {
 
@@ -232,12 +228,12 @@ public class UpfrontAllocatingPageSourceThresholdTest {
         falling64.set(true);
       }
     });
-    
+
     long victim = storage.allocate(128);
     assertThat(victim, OrderingComparison.greaterThanOrEqualTo(0L));
     assertThat(rising512.getAndSet(false), is(false));
     assertThat(falling64.getAndSet(false), is(false));
-    
+
     Page thief = source.allocate(1024, true, false, null);
     assertThat(thief, IsNull.notNullValue());
     assertThat(storage.getAllocatedMemory(), is(0L));
@@ -249,14 +245,14 @@ public class UpfrontAllocatingPageSourceThresholdTest {
     assertThat(storage.getAllocatedMemory(), is(0L));
     assertThat(rising512.getAndSet(false), is(false));
     assertThat(falling64.getAndSet(false), is(false));
-    
+
     source.free(thief);
     assertThat(storage.getAllocatedMemory(), is(0L));
     assertThat(source.getAllocatedSize(), is(0L));
     assertThat(rising512.getAndSet(false), is(false));
     assertThat(falling64.getAndSet(false), is(true));
   }
-  
+
   @Test
   public void testActionThatThrows() {
     UpfrontAllocatingPageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), MemoryUnit.KILOBYTES.toBytes(1), MemoryUnit.KILOBYTES.toBytes(1));
@@ -267,21 +263,21 @@ public class UpfrontAllocatingPageSourceThresholdTest {
         throw new Error();
       }
     });
-    
+
     Page a = source.allocate(256, false, false, null);
     assertThat(a, IsNull.notNullValue());
     assertThat(source.getAllocatedSize(), is(256L));
     source.free(a);
   }
-  
+
   static class SimpleOwner implements OffHeapStorageArea.Owner {
 
     private OffHeapStorageArea storage;
-    
+
     public void bind(OffHeapStorageArea storage) {
       this.storage = storage;
     }
-    
+
     @Override
     public boolean evictAtAddress(long address, boolean shrink) {
       storage.free(address);
