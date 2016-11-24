@@ -498,7 +498,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
 
       final long start = (LOGGER.isDebugEnabled() ? System.nanoTime() : 0);
 
-      final Collection<ByteBuffer> buffers = new ArrayList<ByteBuffer>((int)toAllocate / maxChunk + 10); // guess the number of buffers and add some padding just in case
+      final Collection<ByteBuffer> buffers = new ArrayList<ByteBuffer>((int)(toAllocate / maxChunk + 10)); // guess the number of buffers and add some padding just in case
 
       final PrintStream allocatorLog = createAllocatorLog(toAllocate, maxChunk, minChunk);
 
@@ -509,7 +509,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
 
         ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
-        List<Future<Long>> futures = new ArrayList<Future<Long>>((int)toAllocate / maxChunk + 1);
+        List<Future<Long>> futures = new ArrayList<Future<Long>>((int)(toAllocate / maxChunk + 1));
 
         for (long dispatched = 0; dispatched < toAllocate; ) {
           final int currentChunkSize = (int)Math.min(maxChunk, toAllocate - dispatched);
