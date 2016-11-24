@@ -496,7 +496,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
    */
     private static Collection<ByteBuffer> allocateBackingBuffers(final BufferSource source, long toAllocate, int maxChunk, final int minChunk, final boolean fixed) {
 
-      final long start = (LOGGER.isInfoEnabled() ? System.nanoTime() : 0);
+      final long start = (LOGGER.isDebugEnabled() ? System.nanoTime() : 0);
 
       final Collection<ByteBuffer> buffers = new ArrayList<ByteBuffer>((int)toAllocate / maxChunk + 10); // guess the number of buffers and add some padding just in case
 
@@ -551,9 +551,9 @@ public class UpfrontAllocatingPageSource implements PageSource {
         }
       }
 
-      if(LOGGER.isInfoEnabled()) {
+      if(LOGGER.isDebugEnabled()) {
         long duration = System.nanoTime() - start;
-        LOGGER.info("Took {} ms to create off-heap storage of {}B.", TimeUnit.NANOSECONDS.toMillis(duration), DebuggingUtils.toBase2SuffixedString(toAllocate));
+        LOGGER.debug("Took {} ms to create off-heap storage of {}B.", TimeUnit.NANOSECONDS.toMillis(duration), DebuggingUtils.toBase2SuffixedString(toAllocate));
       }
 
       return Collections.unmodifiableCollection(buffers);
