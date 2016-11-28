@@ -499,9 +499,9 @@ public class UpfrontAllocatingPageSource implements PageSource {
 
       final long start = (LOGGER.isDebugEnabled() ? System.nanoTime() : 0);
 
-      final Collection<ByteBuffer> buffers = new ArrayList<ByteBuffer>((int)(toAllocate / maxChunk + 10)); // guess the number of buffers and add some padding just in case
-
       final PrintStream allocatorLog = createAllocatorLog(toAllocate, maxChunk, minChunk);
+
+      final Collection<ByteBuffer> buffers = new ArrayList<ByteBuffer>((int)(toAllocate / maxChunk + 10)); // guess the number of buffers and add some padding just in case
 
       try {
         if (allocatorLog != null) {
@@ -510,14 +510,14 @@ public class UpfrontAllocatingPageSource implements PageSource {
 
         ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
-        List<Future<Long>> futures = new ArrayList<Future<Long>>((int)(toAllocate / maxChunk + 1));
+        List<Future<Collection<ByteBuffer>>> futures = new ArrayList<Future<Collection<ByteBuffer>>>((int)(toAllocate / maxChunk + 1));
 
         for (long dispatched = 0; dispatched < toAllocate; ) {
           final int currentChunkSize = (int)Math.min(maxChunk, toAllocate - dispatched);
-          futures.add(executorService.submit(new Callable<Long>() {
+          futures.add(executorService.submit(new Callable<Collection<ByteBuffer>>() {
             @Override
-            public Long call() throws Exception {
-              return bufferAllocation(source, currentChunkSize, minChunk, fixed, allocatorLog, start, buffers);
+            public Collection<ByteBuffer> call() throws Exception {
+              return bufferAllocation(source, currentChunkSize, minChunk, fixed, allocatorLog, start);
             }
           }));
           dispatched += currentChunkSize;
@@ -530,11 +530,15 @@ public class UpfrontAllocatingPageSource implements PageSource {
         long nextProgressLogAt = progressStep;
         AtomicBoolean wasInterrupted = new AtomicBoolean(false);
 
-        for (Future<Long> future : futures) {
-          allocated += uninterruptibleGet(future, wasInterrupted);
-          if (allocated > nextProgressLogAt) {
-            LOGGER.info("Allocation {}% complete", (100 * allocated) / toAllocate);
-            nextProgressLogAt += progressStep;
+        for (Future<Collection<ByteBuffer>> future : futures) {
+          Collection<ByteBuffer> result = uninterruptibleGet(future, wasInterrupted);
+          buffers.addAll(result);
+          for(ByteBuffer buffer : result) {
+            allocated += buffer.capacity();
+            if (allocated > nextProgressLogAt) {
+              LOGGER.info("Allocation {}% complete", (100 * allocated) / toAllocate);
+              nextProgressLogAt += progressStep;
+            }
           }
         }
 
@@ -557,9 +561,11 @@ public class UpfrontAllocatingPageSource implements PageSource {
       return Collections.unmodifiableCollection(buffers);
     }
 
-  private static long bufferAllocation(BufferSource source, int toAllocate, int minChunk, boolean fixed, PrintStream allocatorLog, long start, Collection<ByteBuffer> buffers) {
+  private static Collection<ByteBuffer> bufferAllocation(BufferSource source, int toAllocate, int minChunk, boolean fixed, PrintStream allocatorLog, long start) {
     long allocated = 0;
     long currentChunkSize = toAllocate;
+
+    Collection<ByteBuffer> buffers = new ArrayList<ByteBuffer>();
 
     while (allocated < toAllocate) {
       long blockStart = System.nanoTime();
@@ -580,9 +586,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
           LOGGER.debug("Allocated failed at {}B, trying  {}B chunks.", DebuggingUtils.toBase2SuffixedString(currentAllocation), DebuggingUtils.toBase2SuffixedString(currentChunkSize));
         }
       } else {
-        synchronized (buffers) {
-          buffers.add(b);
-        }
+        buffers.add(b);
         allocated += currentAllocation;
 
         if (allocatorLog != null) {
@@ -596,10 +600,10 @@ public class UpfrontAllocatingPageSource implements PageSource {
       }
     }
 
-    return allocated;
+    return buffers;
   }
 
-  private static long uninterruptibleGet(Future<Long> future, AtomicBoolean interrupted) {
+  private static <T> T uninterruptibleGet(Future<T> future, AtomicBoolean interrupted) {
       while(true) {
         try {
           return future.get();
