@@ -508,22 +508,24 @@ public class UpfrontAllocatingPageSource implements PageSource {
           allocatorLog.printf("timestamp,threadid,duration,size,physfree,totalswap,freeswap,committed%n");
         }
 
-        ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-
         List<Future<Collection<ByteBuffer>>> futures = new ArrayList<Future<Collection<ByteBuffer>>>((int)(toAllocate / maxChunk + 1));
+        
+        ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        try {
 
-        for (long dispatched = 0; dispatched < toAllocate; ) {
-          final int currentChunkSize = (int)Math.min(maxChunk, toAllocate - dispatched);
-          futures.add(executorService.submit(new Callable<Collection<ByteBuffer>>() {
-            @Override
-            public Collection<ByteBuffer> call() throws Exception {
-              return bufferAllocation(source, currentChunkSize, minChunk, fixed, allocatorLog, start);
-            }
-          }));
-          dispatched += currentChunkSize;
+          for (long dispatched = 0; dispatched < toAllocate; ) {
+            final int currentChunkSize = (int)Math.min(maxChunk, toAllocate - dispatched);
+            futures.add(executorService.submit(new Callable<Collection<ByteBuffer>>() {
+              @Override
+              public Collection<ByteBuffer> call() throws Exception {
+                return bufferAllocation(source, currentChunkSize, minChunk, fixed, allocatorLog, start);
+              }
+            }));
+            dispatched += currentChunkSize;
+          }
+        } finally {
+          executorService.shutdown();
         }
-
-        executorService.shutdown();
 
         long allocated = 0;
         long progressStep = Math.max(PROGRESS_LOGGING_THRESHOLD, (long)(toAllocate * PROGRESS_LOGGING_STEP_SIZE));
