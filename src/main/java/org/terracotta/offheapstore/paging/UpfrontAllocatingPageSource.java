@@ -47,6 +47,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.terracotta.offheapstore.storage.allocator.PowerOfTwoAllocator.Packing.CEILING;
 import static org.terracotta.offheapstore.storage.allocator.PowerOfTwoAllocator.Packing.FLOOR;
@@ -483,8 +484,8 @@ public class UpfrontAllocatingPageSource implements PageSource {
    * When {@code fixed} is requested, we will only allocated buffers of {@code maxChunk} size. If allocation fails, an
    * {@code IllegalArgumentException} is thrown without any division.
    * <p>
-   * If the allocation is interrupted, the method will exit and return what was allocated so far. The interrupt flag is
-   * set.
+   * If the allocation is interrupted, the method will ignore it and continue allocation. It will then return with the
+   * interrupt flag is set.
    *
    * @param source source used to allocate memory buffers
    * @param toAllocate total amount of memory to allocate
@@ -527,24 +528,21 @@ public class UpfrontAllocatingPageSource implements PageSource {
         long allocated = 0;
         long progressStep = Math.max(PROGRESS_LOGGING_THRESHOLD, (long)(toAllocate * PROGRESS_LOGGING_STEP_SIZE));
         long nextProgressLogAt = progressStep;
+        AtomicBoolean wasInterrupted = new AtomicBoolean(false);
 
         for (Future<Long> future : futures) {
-          try {
-            allocated += future.get();
-            if (allocated > nextProgressLogAt) {
-              LOGGER.info("Allocation {}% complete", (100 * allocated) / toAllocate);
-              nextProgressLogAt += progressStep;
-            }
-          } catch (ExecutionException e) {
-            if (e.getCause() instanceof RuntimeException) {
-              throw (RuntimeException)e.getCause();
-            }
-            throw new RuntimeException(e);
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            break;
+          allocated += uninterruptibleGet(future, wasInterrupted);
+          if (allocated > nextProgressLogAt) {
+            LOGGER.info("Allocation {}% complete", (100 * allocated) / toAllocate);
+            nextProgressLogAt += progressStep;
           }
         }
+
+        // Set the interruption flag to tell whoever is interested
+        if(wasInterrupted.get()) {
+          Thread.currentThread().interrupt();
+        }
+
       } finally {
         if (allocatorLog != null) {
           allocatorLog.close();
@@ -599,6 +597,22 @@ public class UpfrontAllocatingPageSource implements PageSource {
     }
 
     return allocated;
+  }
+
+  private static long uninterruptibleGet(Future<Long> future, AtomicBoolean interrupted) {
+      while(true) {
+        try {
+          return future.get();
+        } catch (ExecutionException e) {
+          if (e.getCause() instanceof RuntimeException) {
+            throw (RuntimeException)e.getCause();
+          }
+          throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+          // Note the interruption and just keep going
+          interrupted.set(true);
+        }
+      }
   }
 
   private static PrintStream createAllocatorLog(long max, int maxChunk, int minChunk) {
