@@ -193,7 +193,7 @@ public class UpfrontAllocatingPageSourceTest {
       Assert.assertThat(reader.readLine(), equalTo("Allocating: 128KB"));
       Assert.assertThat(reader.readLine(), equalTo("Max Chunk: 1KB"));
       Assert.assertThat(reader.readLine(), equalTo("Min Chunk: 512B"));
-      Assert.assertThat(reader.readLine(), equalTo("timestamp,duration,size,physfree,totalswap,freeswap,committed"));
+      Assert.assertThat(reader.readLine(), equalTo("timestamp,threadid,duration,size,physfree,totalswap,freeswap,committed"));
       while (true) {
         String line = reader.readLine();
         if (line == null) {
@@ -202,7 +202,7 @@ public class UpfrontAllocatingPageSourceTest {
           Assert.assertThat(reader.readLine(), new TypeSafeMatcher<String>() {
             @Override
             protected boolean matchesSafely(String t) {
-              return t.matches("(?:\\d+|null),(?:\\d+|null),(?:\\d+|null),(?:\\d+|null),(?:\\d+|null),(?:\\d+|null),(?:\\d+|null)");
+              return t.matches("(?:\\d+|null),(?:\\d+|null),(?:\\d+|null),(?:\\d+|null),(?:\\d+|null),(?:\\d+|null),(?:\\d+|null),(?:\\d+|null)");
             }
 
             @Override

@@ -504,7 +504,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
 
       try {
         if (allocatorLog != null) {
-          allocatorLog.printf("timestamp,duration,size,physfree,totalswap,freeswap,committed%n");
+          allocatorLog.printf("timestamp,threadid,duration,size,physfree,totalswap,freeswap,committed%n");
         }
 
         ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
@@ -588,7 +588,8 @@ public class UpfrontAllocatingPageSource implements PageSource {
         allocated += currentAllocation;
 
         if (allocatorLog != null) {
-          allocatorLog.printf("%d,%d,%d,%d,%d,%d,%d%n", System.nanoTime() - start, blockDuration, currentAllocation, PhysicalMemory.freePhysicalMemory(), PhysicalMemory.totalSwapSpace(), PhysicalMemory.freeSwapSpace(), PhysicalMemory.ourCommittedVirtualMemory());
+          allocatorLog.printf("%d,%d,%d,%d,%d,%d,%d,%d%n", System.nanoTime() - start,
+            Thread.currentThread().getId(),  blockDuration, currentAllocation, PhysicalMemory.freePhysicalMemory(), PhysicalMemory.totalSwapSpace(), PhysicalMemory.freeSwapSpace(), PhysicalMemory.ourCommittedVirtualMemory());
         }
 
         if(LOGGER.isDebugEnabled()) {
