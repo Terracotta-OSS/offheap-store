@@ -41,6 +41,9 @@ import java.io.LineNumberReader;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -215,6 +218,46 @@ public class UpfrontAllocatingPageSourceTest {
     } finally {
       reader.close();
     }
+  }
+
+  @Test
+  public void testInterruption() throws InterruptedException {
+    final AtomicReference<UpfrontAllocatingPageSource> pageSourceAtomicReference = new AtomicReference<UpfrontAllocatingPageSource>();
+    final CountDownLatch latch = new CountDownLatch(1);
+    final AtomicBoolean wasInterrupted = new AtomicBoolean(false);
+
+    Thread t = new Thread() {
+      public void run() {
+        UpfrontAllocatingPageSource pageSource = new UpfrontAllocatingPageSource(new HeapBufferSource() {
+          private boolean firstTime = true;
+          @Override
+          public ByteBuffer allocateBuffer(int size) {
+            if(firstTime) {
+              try {
+                latch.countDown();
+                Thread.sleep(200);
+              } catch (InterruptedException e) {
+                // ignore
+              }
+              firstTime = false;
+            }
+            return super.allocateBuffer(size);
+          }
+        }, 512, 512, 512);
+        pageSourceAtomicReference.set(pageSource);
+        wasInterrupted.set(Thread.currentThread().isInterrupted());
+      }
+    };
+
+    t.start();
+
+    latch.await();
+
+    t.interrupt();
+    t.join();
+
+    Assert.assertThat(wasInterrupted.get(), equalTo(true));
+    Assert.assertThat(pageSourceAtomicReference.get().getCapacity(), equalTo(512L));
   }
 
   static class TestChunkedBufferSource implements BufferSource {

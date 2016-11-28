@@ -509,7 +509,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
         }
 
         List<Future<Collection<ByteBuffer>>> futures = new ArrayList<Future<Collection<ByteBuffer>>>((int)(toAllocate / maxChunk + 1));
-        
+
         ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         try {
 
@@ -530,10 +530,9 @@ public class UpfrontAllocatingPageSource implements PageSource {
         long allocated = 0;
         long progressStep = Math.max(PROGRESS_LOGGING_THRESHOLD, (long)(toAllocate * PROGRESS_LOGGING_STEP_SIZE));
         long nextProgressLogAt = progressStep;
-        AtomicBoolean wasInterrupted = new AtomicBoolean(false);
 
         for (Future<Collection<ByteBuffer>> future : futures) {
-          Collection<ByteBuffer> result = uninterruptibleGet(future, wasInterrupted);
+          Collection<ByteBuffer> result = uninterruptibleGet(future);
           buffers.addAll(result);
           for(ByteBuffer buffer : result) {
             allocated += buffer.capacity();
@@ -542,11 +541,6 @@ public class UpfrontAllocatingPageSource implements PageSource {
               nextProgressLogAt += progressStep;
             }
           }
-        }
-
-        // Set the interruption flag to tell whoever is interested
-        if(wasInterrupted.get()) {
-          Thread.currentThread().interrupt();
         }
 
       } finally {
@@ -605,8 +599,10 @@ public class UpfrontAllocatingPageSource implements PageSource {
     return buffers;
   }
 
-  private static <T> T uninterruptibleGet(Future<T> future, AtomicBoolean interrupted) {
-      while(true) {
+  private static <T> T uninterruptibleGet(Future<T> future) {
+    boolean wasInterrupted = false;
+    try {
+      while (true) {
         try {
           return future.get();
         } catch (ExecutionException e) {
@@ -615,10 +611,15 @@ public class UpfrontAllocatingPageSource implements PageSource {
           }
           throw new RuntimeException(e);
         } catch (InterruptedException e) {
-          // Note the interruption and just keep going
-          interrupted.set(true);
+          // Remember and keep going
+          wasInterrupted = true;
         }
       }
+    } finally {
+      if(wasInterrupted) {
+        Thread.currentThread().interrupt();
+      }
+    }
   }
 
   private static PrintStream createAllocatorLog(long max, int maxChunk, int minChunk) {
