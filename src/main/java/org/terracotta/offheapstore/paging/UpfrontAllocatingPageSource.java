@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,21 +15,8 @@
  */
 package org.terracotta.offheapstore.paging;
 
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.IdentityHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TreeSet;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.terracotta.offheapstore.buffersource.BufferSource;
 import org.terracotta.offheapstore.storage.allocator.PowerOfTwoAllocator;
 import org.terracotta.offheapstore.util.DebuggingUtils;
@@ -39,14 +26,31 @@ import org.terracotta.offheapstore.util.PhysicalMemory;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.IdentityHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.NavigableSet;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.terracotta.offheapstore.storage.allocator.PowerOfTwoAllocator.Packing.FLOOR;
 import static org.terracotta.offheapstore.storage.allocator.PowerOfTwoAllocator.Packing.CEILING;
+import static org.terracotta.offheapstore.storage.allocator.PowerOfTwoAllocator.Packing.FLOOR;
 
 /**
  * An upfront allocating direct byte buffer source.
@@ -64,6 +68,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
     private static final Logger LOGGER = LoggerFactory.getLogger(UpfrontAllocatingPageSource.class);
     private static final double PROGRESS_LOGGING_STEP_SIZE = 0.1;
     private static final long PROGRESS_LOGGING_THRESHOLD = MemoryUnit.GIGABYTES.toBytes(4L);
+
     private static final Comparator<Page> REGION_COMPARATOR = new Comparator<Page>() {
       @Override
       public int compare(Page a, Page b) {
@@ -77,7 +82,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
 
     private final SortedMap<Long, Runnable> risingThresholds = new TreeMap<Long, Runnable>();
     private final SortedMap<Long, Runnable> fallingThresholds = new TreeMap<Long, Runnable>();
-    
+
     private final List<PowerOfTwoAllocator> sliceAllocators = new ArrayList<PowerOfTwoAllocator>();
     private final List<PowerOfTwoAllocator> victimAllocators = new ArrayList<PowerOfTwoAllocator>();
 
@@ -87,7 +92,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
      * TODO : currently the TreeSet along with the comparator above works for the
      * subSet queries due to the alignment properties of the region allocation
      * being used here.  I more flexible implementation might involve switching
-     * to using an AATreeSet subclass - that would also require me to finish 
+     * to using an AATreeSet subclass - that would also require me to finish
      * writing the subSet implementation for that class.
      */
     private final List<NavigableSet<Page>> victims = new ArrayList<NavigableSet<Page>>();
@@ -95,51 +100,80 @@ public class UpfrontAllocatingPageSource implements PageSource {
     private volatile int availableSet = ~0;
 
     /**
-     * Create an up-front allocating buffer source of {@code max} total bytes, in
-     * {@code chunk} byte chunks.
+     * Create an up-front allocating buffer source of {@code toAllocate} total bytes, in
+     * {@code chunkSize} byte chunks.
      *
-     * @param source source from which initial buffers will be allocated
-     * @param max    total space to allocate
-     * @param chunk  chunk size to allocate in
+     * @param source     source from which initial buffers will be allocated
+     * @param toAllocate total space to allocate in bytes
+     * @param chunkSize  chunkSize size to allocate in bytes
      */
-    public UpfrontAllocatingPageSource(BufferSource source, long max, int chunk) {
-        this(source, max, chunk, -1, true);
+    public UpfrontAllocatingPageSource(BufferSource source, long toAllocate, int chunkSize) {
+        this(source, toAllocate, chunkSize, -1, true);
     }
 
     /**
-     * Create an up-front allocating buffer source of {@code max} total bytes, in
+     * Create an up-front allocating buffer source of {@code toAllocate} total bytes, in
      * maximally sized chunks, within the given bounds.
      *
-     * @param source   source from which initial buffers will be allocated
-     * @param max      total space to allocate
-     * @param maxChunk the largest chunk size
-     * @param minChunk the smallest chunk size
+     * @param source     source from which initial buffers will be allocated
+     * @param toAllocate total space to allocate in bytes
+     * @param maxChunk   the largest chunk size in bytes
+     * @param minChunk   the smallest chunk size in bytes
      */
-    public UpfrontAllocatingPageSource(BufferSource source, long max, int maxChunk, int minChunk) {
-        this(source, max, maxChunk, minChunk, false);
+    public UpfrontAllocatingPageSource(BufferSource source, long toAllocate, int maxChunk, int minChunk) {
+        this(source, toAllocate, maxChunk, minChunk, false);
     }
 
-    private UpfrontAllocatingPageSource(BufferSource source, long max, int maxChunk, int minChunk, boolean fixed) {
+  /**
+   * Create an up-front allocating buffer source of {@code toAllocate} total bytes, in
+   * maximally sized chunks, within the given bounds.
+   * <p>
+   * By default we try to allocate chunks of {@code maxChunk} size. However, unless {@code fixed} is true, in case of
+   * allocation failure, we will try to allocate half-smaller chunks. We do not allocate chunks smaller than {@code minChunk}
+   * though.
+   *
+   * @param source     source from which initial buffers will be allocated
+   * @param toAllocate total space to allocate in bytes
+   * @param maxChunk   the largest chunk size in bytes
+   * @param minChunk   the smallest chunk size in bytes
+   * @param fixed      if the chunks should all be of size {@code maxChunk} or can be smaller
+   */
+    private UpfrontAllocatingPageSource(BufferSource source, long toAllocate, int maxChunk, int minChunk, boolean fixed) {
         Long totalPhysical = PhysicalMemory.totalPhysicalMemory();
         Long freePhysical = PhysicalMemory.freePhysicalMemory();
-        if (totalPhysical != null && max > totalPhysical) {
-          throw new IllegalArgumentException("Attempting to allocate " + DebuggingUtils.toBase2SuffixedString(max) + "B of memory "
+        if (totalPhysical != null && toAllocate > totalPhysical) {
+          throw new IllegalArgumentException("Attempting to allocate " + DebuggingUtils.toBase2SuffixedString(toAllocate) + "B of memory "
                   + "when the host only contains " + DebuggingUtils.toBase2SuffixedString(totalPhysical) + "B of physical memory");
         }
-        if (freePhysical != null && max > freePhysical) {
+        if (freePhysical != null && toAllocate > freePhysical) {
           LOGGER.warn("Attempting to allocate {}B of offheap when there is only {}B of free physical memory - some paging will therefore occur.",
-                  DebuggingUtils.toBase2SuffixedString(max), DebuggingUtils.toBase2SuffixedString(freePhysical));
+                  DebuggingUtils.toBase2SuffixedString(toAllocate), DebuggingUtils.toBase2SuffixedString(freePhysical));
         }
 
-        LOGGER.debug("Allocating {}B in chunks", DebuggingUtils.toBase2SuffixedString(max));
+        if(LOGGER.isInfoEnabled()) {
+          LOGGER.info("Allocating {}B in chunks", DebuggingUtils.toBase2SuffixedString(toAllocate));
+        }
 
-        for (ByteBuffer buffer : allocateBackingBuffers(source, max, maxChunk, minChunk, fixed)) {
+        for (ByteBuffer buffer : allocateBackingBuffers(source, toAllocate, maxChunk, minChunk, fixed)) {
           sliceAllocators.add(new PowerOfTwoAllocator(buffer.capacity()));
           victimAllocators.add(new PowerOfTwoAllocator(buffer.capacity()));
           victims.add(new TreeSet<Page>(REGION_COMPARATOR));
           buffers.add(buffer);
         }
     }
+
+  /**
+   * Return the total allocated capacity, used or not
+   *
+   * @return the total capacity
+   */
+  public long getCapacity() {
+    long capacity = 0;
+    for(ByteBuffer buffer : buffers) {
+      capacity += buffer.capacity();
+    }
+    return capacity;
+  }
 
     /**
      * Allocates a byte buffer of at least the given size.
@@ -233,7 +267,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
           sliceAllocator.free(r.address, r.size);
           victimAllocator.free(r.address, r.size);
         }
-        
+
         if (results.size() == targets.size()) {
           for (Page p : targets) {
             victimAllocator.free(p.address(), p.size());
@@ -251,7 +285,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
           }
         }
       }
-      
+
       try {
         return allocateAsThief(size, victim, owner);
       } finally {
@@ -338,7 +372,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
         }
         return sum;
     }
-    
+
     public long getAllocatedSizeUnSync() {
         long sum = 0;
         for (PowerOfTwoAllocator a : sliceAllocators) {
@@ -346,7 +380,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
         }
         return sum;
     }
-    
+
     private boolean isUnavailable(int size) {
         return (availableSet & size) == 0;
     }
@@ -381,7 +415,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
       } else {
         thresholds = Collections.emptyList();
       }
-      
+
       for (Runnable r : thresholds) {
         try {
           r.run();
@@ -390,7 +424,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
         }
       }
     }
-    
+
     /**
      * Adds an allocation threshold action.
      * <p>
@@ -403,9 +437,9 @@ public class UpfrontAllocatingPageSource implements PageSource {
      * synchronously with the triggering allocation.  This means care must be taken
      * to avoid mutating any map that uses this page source from within the action
      * otherwise deadlocks may result.  Exceptions thrown by the action will be
-     * caught and logged by the page source and will not be propagated on the 
+     * caught and logged by the page source and will not be propagated on the
      * allocating thread.
-     * 
+     *
      * @param direction new actions direction
      * @param threshold new actions threshold level
      * @param action fired on breaching the threshold
@@ -420,12 +454,12 @@ public class UpfrontAllocatingPageSource implements PageSource {
       }
       throw new AssertionError();
     }
-    
+
     /**
      * Removes an allocation threshold action.
      * <p>
      * Removes the allocation threshold action for the given level and direction.
-     * 
+     *
      * @param direction registered actions direction
      * @param threshold registered actions threshold level
      * @return the removed condition or {@code null} if no action was present.
@@ -440,67 +474,167 @@ public class UpfrontAllocatingPageSource implements PageSource {
       throw new AssertionError();
     }
 
-    private static Collection<ByteBuffer> allocateBackingBuffers(BufferSource source, long max, int maxChunk, int minChunk, boolean fixed) {
-      Collection<ByteBuffer> buffers = new LinkedList<ByteBuffer>();
+  /**
+   * Allocate multiple buffers to fulfill the requested memory {@code toAllocate}. We first divide {@code toAllocate} in
+   * chunks of size {@maxChunk} and try to allocate them in parallel on all available processors. If one chunk fails to be
+   * allocated, we try to allocate two chunks of {@code maxChunk / 2}. If this allocation fails, we continue dividing until
+   * we reach of size of {@code minChunk}. If at that moment, the allocation still fails, an {@code IllegalArgumentException}
+   * is thrown.
+   * <p>
+   * When {@code fixed} is requested, we will only allocated buffers of {@code maxChunk} size. If allocation fails, an
+   * {@code IllegalArgumentException} is thrown without any division.
+   * <p>
+   * If the allocation is interrupted, the method will ignore it and continue allocation. It will then return with the
+   * interrupt flag is set.
+   *
+   * @param source source used to allocate memory buffers
+   * @param toAllocate total amount of memory to allocate
+   * @param maxChunk maximum size of a buffer. This is the targeted size for all buffers if everything goes well
+   * @param minChunk minimum buffer size allowed
+   * @param fixed if all buffers should have a the same size (except the last one with {@code toAllocate % maxChunk != 0}, if true, {@code minChunk} isn't used
+   * @return the list of allocated buffers
+   * @throws IllegalArgumentException when we fail to allocate the requested memory
+   */
+    private static Collection<ByteBuffer> allocateBackingBuffers(final BufferSource source, long toAllocate, int maxChunk, final int minChunk, final boolean fixed) {
 
-      PrintStream allocatorLog;
+      final long start = (LOGGER.isDebugEnabled() ? System.nanoTime() : 0);
+
+      final PrintStream allocatorLog = createAllocatorLog(toAllocate, maxChunk, minChunk);
+
+      final Collection<ByteBuffer> buffers = new ArrayList<ByteBuffer>((int)(toAllocate / maxChunk + 10)); // guess the number of buffers and add some padding just in case
+
       try {
-        allocatorLog = createAllocatorLog(max, maxChunk, minChunk);
-      } catch (IOException e) {
-        LOGGER.warn("Exception creating allocation log", e);
-        allocatorLog = null;
-      }
-      long start = System.nanoTime();
-      if (allocatorLog != null) {
-        allocatorLog.printf("timestamp,duration,size,allocated,physfree,totalswap,freeswap,committed%n");
-      }
-      long progressStep = Math.max(PROGRESS_LOGGING_THRESHOLD, (long) (max * PROGRESS_LOGGING_STEP_SIZE));
-      long lastFailureAt = 0;
-      long currentChunkSize = maxChunk;
-      long allocated = 0;
-      long nextProgressLogAt = progressStep;
-      while (allocated < max) {
-        long blockStart = System.nanoTime();
-        ByteBuffer b = source.allocateBuffer((int) Math.min(currentChunkSize, (max - allocated)));
-        long blockDuration = System.nanoTime() - blockStart;
-        if (b == null) {
-          if (fixed || (currentChunkSize >>> 1) < minChunk) {
-            throw new IllegalArgumentException("An attempt was made to allocate more off-heap memory than the JVM can allow." +
-                    " The limit on off-heap memory size is given by the -XX:MaxDirectMemorySize command (or equivalent).");
-          } else {
-            LOGGER.debug("Allocated {}B in {}B chunks.", new Object[]{DebuggingUtils.toBase2SuffixedString(allocated - lastFailureAt), DebuggingUtils.toBase2SuffixedString(currentChunkSize)});
-            currentChunkSize >>>= 1;
-            lastFailureAt = allocated;
+        if (allocatorLog != null) {
+          allocatorLog.printf("timestamp,threadid,duration,size,physfree,totalswap,freeswap,committed%n");
+        }
+
+        List<Future<Collection<ByteBuffer>>> futures = new ArrayList<Future<Collection<ByteBuffer>>>((int)(toAllocate / maxChunk + 1));
+
+        ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        try {
+
+          for (long dispatched = 0; dispatched < toAllocate; ) {
+            final int currentChunkSize = (int)Math.min(maxChunk, toAllocate - dispatched);
+            futures.add(executorService.submit(new Callable<Collection<ByteBuffer>>() {
+              @Override
+              public Collection<ByteBuffer> call() throws Exception {
+                return bufferAllocation(source, currentChunkSize, minChunk, fixed, allocatorLog, start);
+              }
+            }));
+            dispatched += currentChunkSize;
           }
-        } else {
-          buffers.add(b);
-          allocated += b.capacity();
-          
-          if (allocatorLog != null) {
-            allocatorLog.printf("%d,%d,%d,%d,%d,%d,%d,%d%n", System.nanoTime() - start, blockDuration, b.capacity(), allocated, PhysicalMemory.freePhysicalMemory(), PhysicalMemory.totalSwapSpace(), PhysicalMemory.freeSwapSpace(), PhysicalMemory.ourCommittedVirtualMemory());
-          }
-          if (allocated > nextProgressLogAt) {
-            LOGGER.info("Allocation {}% complete", (100 * allocated) / max);
-            nextProgressLogAt += progressStep;
+        } finally {
+          executorService.shutdown();
+        }
+
+        long allocated = 0;
+        long progressStep = Math.max(PROGRESS_LOGGING_THRESHOLD, (long)(toAllocate * PROGRESS_LOGGING_STEP_SIZE));
+        long nextProgressLogAt = progressStep;
+
+        for (Future<Collection<ByteBuffer>> future : futures) {
+          Collection<ByteBuffer> result = uninterruptibleGet(future);
+          buffers.addAll(result);
+          for(ByteBuffer buffer : result) {
+            allocated += buffer.capacity();
+            if (allocated > nextProgressLogAt) {
+              LOGGER.info("Allocation {}% complete", (100 * allocated) / toAllocate);
+              nextProgressLogAt += progressStep;
+            }
           }
         }
+
+      } finally {
+        if (allocatorLog != null) {
+          allocatorLog.close();
+        }
       }
-      if (allocatorLog != null) {
-        allocatorLog.close();
+
+      if(LOGGER.isDebugEnabled()) {
+        long duration = System.nanoTime() - start;
+        LOGGER.debug("Took {} ms to create off-heap storage of {}B.", TimeUnit.NANOSECONDS.toMillis(duration), DebuggingUtils.toBase2SuffixedString(toAllocate));
       }
-      LOGGER.debug("Allocated {}B in {}B chunks.", new Object[]{DebuggingUtils.toBase2SuffixedString(allocated - lastFailureAt), DebuggingUtils.toBase2SuffixedString(currentChunkSize)});
-      long duration = System.nanoTime() - start;
-      LOGGER.debug("Took {} ms to create off-heap storage of {}B.", TimeUnit.NANOSECONDS.toMillis(duration), DebuggingUtils.toBase2SuffixedString(max));
+
       return Collections.unmodifiableCollection(buffers);
     }
 
-    private static PrintStream createAllocatorLog(long max, int maxChunk, int minChunk) throws IOException {
+  private static Collection<ByteBuffer> bufferAllocation(BufferSource source, int toAllocate, int minChunk, boolean fixed, PrintStream allocatorLog, long start) {
+    long allocated = 0;
+    long currentChunkSize = toAllocate;
+
+    Collection<ByteBuffer> buffers = new ArrayList<ByteBuffer>();
+
+    while (allocated < toAllocate) {
+      long blockStart = System.nanoTime();
+      int currentAllocation = (int)Math.min(currentChunkSize, (toAllocate - allocated));
+      ByteBuffer b = source.allocateBuffer(currentAllocation);
+      long blockDuration = System.nanoTime() - blockStart;
+
+      if (b == null) {
+        if (fixed || (currentChunkSize >>> 1) < minChunk) {
+          throw new IllegalArgumentException("An attempt was made to allocate more off-heap memory than the JVM can allow." +
+                                             " The limit on off-heap memory size is given by the -XX:MaxDirectMemorySize command (or equivalent).");
+        }
+
+        // In case of failure, we try half the allocation size. It might pass if memory fragmentation caused the failure
+        currentChunkSize >>>= 1;
+
+        if(LOGGER.isDebugEnabled()) {
+          LOGGER.debug("Allocated failed at {}B, trying  {}B chunks.", DebuggingUtils.toBase2SuffixedString(currentAllocation), DebuggingUtils.toBase2SuffixedString(currentChunkSize));
+        }
+      } else {
+        buffers.add(b);
+        allocated += currentAllocation;
+
+        if (allocatorLog != null) {
+          allocatorLog.printf("%d,%d,%d,%d,%d,%d,%d,%d%n", System.nanoTime() - start,
+            Thread.currentThread().getId(),  blockDuration, currentAllocation, PhysicalMemory.freePhysicalMemory(), PhysicalMemory.totalSwapSpace(), PhysicalMemory.freeSwapSpace(), PhysicalMemory.ourCommittedVirtualMemory());
+        }
+
+        if(LOGGER.isDebugEnabled()) {
+          LOGGER.debug("{}B chunk allocated", DebuggingUtils.toBase2SuffixedString(currentAllocation));
+        }
+      }
+    }
+
+    return buffers;
+  }
+
+  private static <T> T uninterruptibleGet(Future<T> future) {
+    boolean wasInterrupted = false;
+    try {
+      while (true) {
+        try {
+          return future.get();
+        } catch (ExecutionException e) {
+          if (e.getCause() instanceof RuntimeException) {
+            throw (RuntimeException)e.getCause();
+          }
+          throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+          // Remember and keep going
+          wasInterrupted = true;
+        }
+      }
+    } finally {
+      if(wasInterrupted) {
+        Thread.currentThread().interrupt();
+      }
+    }
+  }
+
+  private static PrintStream createAllocatorLog(long max, int maxChunk, int minChunk) {
       String path = System.getProperty(ALLOCATION_LOG_LOCATION);
       if (path == null) {
         return null;
       } else {
-        File allocatorLogFile = File.createTempFile("allocation", ".csv", new File(path));
-        PrintStream allocatorLogStream = new PrintStream(allocatorLogFile, "US-ASCII");
+        PrintStream allocatorLogStream;
+        try {
+          File allocatorLogFile = File.createTempFile("allocation", ".csv", new File(path));
+          allocatorLogStream = new PrintStream(allocatorLogFile, "US-ASCII");
+        } catch (IOException e) {
+          LOGGER.warn("Exception creating allocation log", e);
+          return null;
+        }
         allocatorLogStream.printf("Timestamp: %s%n", new Date());
         allocatorLogStream.printf("Allocating: %sB%n",DebuggingUtils.toBase2SuffixedString(max));
         allocatorLogStream.printf("Max Chunk: %sB%n",DebuggingUtils.toBase2SuffixedString(maxChunk));
