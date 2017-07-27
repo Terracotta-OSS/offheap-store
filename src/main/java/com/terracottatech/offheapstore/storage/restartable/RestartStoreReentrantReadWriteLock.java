@@ -1,5 +1,6 @@
 package com.terracottatech.offheapstore.storage.restartable;
 
+import com.terracottatech.frs.NotPausedException;
 import com.terracottatech.frs.RestartStore;
 import com.terracottatech.frs.RestartStoreException;
 import com.terracottatech.frs.Snapshot;
@@ -102,6 +103,16 @@ public class RestartStoreReentrantReadWriteLock<I, K, V> extends ReentrantReadWr
     @Override
     public Statistics getStatistics() {
       return restartability.getStatistics();
+    }
+
+    @Override
+    public Future<Future<Snapshot>> pause() {
+      return restartability.pause();
+    }
+
+    @Override
+    public void resume() throws NotPausedException {
+      restartability.resume();
     }
   }
 
