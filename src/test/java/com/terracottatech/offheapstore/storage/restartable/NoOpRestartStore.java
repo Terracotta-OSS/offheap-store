@@ -1,5 +1,6 @@
 package com.terracottatech.offheapstore.storage.restartable;
 
+import com.terracottatech.frs.NotPausedException;
 import com.terracottatech.frs.RestartStore;
 import com.terracottatech.frs.RestartStoreException;
 import com.terracottatech.frs.Snapshot;
@@ -74,6 +75,16 @@ public class NoOpRestartStore<I, K, V> implements RestartStore<I, K, V> {
   @Override
   public Statistics getStatistics() {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public Future<Future<Snapshot>> pause() {
+    return null;
+  }
+
+  @Override
+  public void resume() throws NotPausedException {
+
   }
 
   public static class NoOpTransaction<I, K, V> implements Transaction<I, K, V> {

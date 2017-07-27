@@ -2,6 +2,7 @@ package com.terracottatech.offheapstore.storage.restartable;
 
 import org.junit.Test;
 
+import com.terracottatech.frs.NotPausedException;
 import com.terracottatech.frs.RestartStore;
 import com.terracottatech.frs.RestartStoreException;
 import com.terracottatech.frs.Snapshot;
@@ -99,6 +100,16 @@ public class RestartStoreReentrantReadWriteLockIT {
     @Override
     public Statistics getStatistics() {
       throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Future<Future<Snapshot>> pause() {
+      return null;
+    }
+
+    @Override
+    public void resume() throws NotPausedException {
+
     }
   }
   
