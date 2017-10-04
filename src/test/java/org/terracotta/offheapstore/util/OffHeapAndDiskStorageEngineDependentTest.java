@@ -18,7 +18,8 @@ package org.terracotta.offheapstore.util;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import org.junit.internal.AssumptionViolatedException;
+
+import org.junit.AssumptionViolatedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.terracotta.offheapstore.buffersource.OffHeapBufferSource;

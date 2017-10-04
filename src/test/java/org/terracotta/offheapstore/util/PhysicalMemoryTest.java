@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,9 +15,10 @@
  */
 package org.terracotta.offheapstore.util;
 
-import org.terracotta.offheapstore.util.PhysicalMemory;
+import sun.security.util.SecurityConstants;
 import java.lang.management.OperatingSystemMXBean;
 import java.security.Permission;
+import java.util.Arrays;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -32,26 +33,18 @@ import static org.hamcrest.number.OrderingComparison.lessThanOrEqualTo;
  * @author cdennis
  */
 public class PhysicalMemoryTest {
-  
+
   @Test
   public void testMemoryInvariants() {
     Assert.assertThat(PhysicalMemory.freePhysicalMemory(), anyOf(nullValue(Long.class), lessThanOrEqualTo(PhysicalMemory.totalPhysicalMemory())));
     Assert.assertThat(PhysicalMemory.freeSwapSpace(), anyOf(nullValue(Long.class), lessThanOrEqualTo(PhysicalMemory.totalSwapSpace())));
     Assert.assertThat(PhysicalMemory.ourCommittedVirtualMemory(), anyOf(nullValue(Long.class), greaterThanOrEqualTo(0L)));
   }
-  
+
   @Test
   public void testBehaviorWithSecurityManager() {
-    final Thread testThread = Thread.currentThread();
+    Thread testThread = Thread.currentThread();
     System.setSecurityManager(new SecurityManager() {
-
-      @Override
-      public void checkMemberAccess(Class<?> clazz, int which) {
-        if (Thread.currentThread() == testThread && OperatingSystemMXBean.class.isAssignableFrom(clazz)) {
-          throw new SecurityException();
-        }
-      }
-
       @Override
       public void checkPackageAccess(String pkg) {
         if (Thread.currentThread() == testThread && pkg.startsWith("com.sun.")) {
@@ -59,7 +52,25 @@ public class PhysicalMemoryTest {
         }
       }
 
+      @Override
       public void checkPermission(Permission perm) {
+        // To be allowed to set the security manager back to null at the end of the test
+        if(perm.getName().equals("setSecurityManager")) {
+          return;
+        }
+
+        // We care only about the test threads, other can do whatever they want
+        if (Thread.currentThread() == testThread && perm.getName().equals(SecurityConstants.CHECK_MEMBER_ACCESS_PERMISSION)) {
+          // OperatingSystemMXBean should not ask for permissions
+          Class<?> stack[] = getClassContext();
+          Arrays.stream(stack)
+            .filter(c -> OperatingSystemMXBean.class.isAssignableFrom(c))
+            .findAny()
+            .ifPresent(c -> {
+              System.out.println("Found " + c); throw new SecurityException(); });
+        }
+
+        super.checkPermission(perm);
       }
     });
     try {

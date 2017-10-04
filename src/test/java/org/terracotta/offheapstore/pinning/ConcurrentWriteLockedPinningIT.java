@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,11 +15,9 @@
  */
 package org.terracotta.offheapstore.pinning;
 
-import org.terracotta.offheapstore.pinning.PinnableCache;
 import static org.terracotta.offheapstore.util.MemoryUnit.KILOBYTES;
 
-import org.junit.internal.AssumptionViolatedException;
-
+import org.junit.AssumptionViolatedException;
 import org.terracotta.offheapstore.concurrent.ConcurrentWriteLockedOffHeapClockCache;
 import org.terracotta.offheapstore.paging.PageSource;
 import org.terracotta.offheapstore.storage.IntegerStorageEngine;
@@ -52,5 +50,5 @@ public class ConcurrentWriteLockedPinningIT extends AbstractPinningIT {
   @Override
   protected PinnableCache<Integer, byte[]> createSharingPinnedByteArrayCache(PageSource source) {
     throw new AssumptionViolatedException("Cannot create sharing concurrent cache");
-  }  
+  }
 }
