@@ -29,12 +29,7 @@ import org.terracotta.offheapstore.util.Factory;
 public class IntegerStorageEngine implements HalfStorageEngine<Integer> {
 
   private static final IntegerStorageEngine              SINGLETON = new IntegerStorageEngine();
-  private static final Factory<IntegerStorageEngine> FACTORY   = new Factory<IntegerStorageEngine>() {
-    @Override
-    public IntegerStorageEngine newInstance() {
-      return SINGLETON;
-    }
-  };
+  private static final Factory<IntegerStorageEngine> FACTORY   = () -> SINGLETON;
 
   public static IntegerStorageEngine instance() {
     return SINGLETON;

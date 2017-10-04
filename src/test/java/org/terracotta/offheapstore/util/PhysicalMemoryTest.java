@@ -64,7 +64,7 @@ public class PhysicalMemoryTest {
           // OperatingSystemMXBean should not ask for permissions
           Class<?> stack[] = getClassContext();
           Arrays.stream(stack)
-            .filter(c -> OperatingSystemMXBean.class.isAssignableFrom(c))
+            .filter(OperatingSystemMXBean.class::isAssignableFrom)
             .findAny()
             .ifPresent(c -> {
               System.out.println("Found " + c); throw new SecurityException(); });

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,17 +30,12 @@ import org.terracotta.offheapstore.util.Factory;
 public class PersistentIntegerStorageEngine extends IntegerStorageEngine implements PersistentHalfStorageEngine<Integer> {
 
   private static final PersistentIntegerStorageEngine                   SINGLETON = new PersistentIntegerStorageEngine();
-  private static final Factory<PersistentIntegerStorageEngine> FACTORY   = new Factory<PersistentIntegerStorageEngine>() {
-    @Override
-    public PersistentIntegerStorageEngine newInstance() {
-      return SINGLETON;
-    }
-  };
+  private static final Factory<PersistentIntegerStorageEngine> FACTORY   = () -> SINGLETON;
 
   public static Factory<PersistentIntegerStorageEngine> createPersistentFactory() {
     return FACTORY;
   }
-  
+
   @Override
   public void flush() throws IOException {
     //no-op

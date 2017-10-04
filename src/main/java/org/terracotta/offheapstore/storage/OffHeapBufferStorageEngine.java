@@ -55,43 +55,19 @@ public class OffHeapBufferStorageEngine<K, V> extends PortabilityBasedStorageEng
    */
 
   public static <K, V> Factory<OffHeapBufferStorageEngine<K, V>> createFactory(final PointerSize width, final PageSource source, final int pageSize, final Portability<? super K> keyPortability, final Portability<? super V> valuePortability, final boolean thief, final boolean victim) {
-    return new Factory<OffHeapBufferStorageEngine<K, V>>() {
-
-      @Override
-      public OffHeapBufferStorageEngine<K, V> newInstance() {
-        return new OffHeapBufferStorageEngine<>(width, source, pageSize, keyPortability, valuePortability, thief, victim);
-      }
-    };
+    return () -> new OffHeapBufferStorageEngine<>(width, source, pageSize, keyPortability, valuePortability, thief, victim);
   }
 
   public static <K, V> Factory<OffHeapBufferStorageEngine<K, V>> createFactory(final PointerSize width, final PageSource source, final int pageSize, final Portability<? super K> keyPortability, final Portability<? super V> valuePortability, final boolean thief, final boolean victim, final float compressThreshold) {
-    return new Factory<OffHeapBufferStorageEngine<K, V>>() {
-
-      @Override
-      public OffHeapBufferStorageEngine<K, V> newInstance() {
-        return new OffHeapBufferStorageEngine<>(width, source, pageSize, keyPortability, valuePortability, thief, victim, compressThreshold);
-      }
-    };
+    return () -> new OffHeapBufferStorageEngine<>(width, source, pageSize, keyPortability, valuePortability, thief, victim, compressThreshold);
   }
 
   public static <K, V> Factory<OffHeapBufferStorageEngine<K, V>> createFactory(final PointerSize width, final PageSource source, final int initialPageSize, final int maximalPageSize, final Portability<? super K> keyPortability, final Portability<? super V> valuePortability, final boolean thief, final boolean victim) {
-    return new Factory<OffHeapBufferStorageEngine<K, V>>() {
-
-      @Override
-      public OffHeapBufferStorageEngine<K, V> newInstance() {
-        return new OffHeapBufferStorageEngine<>(width, source, initialPageSize, maximalPageSize, keyPortability, valuePortability, thief, victim);
-      }
-    };
+    return () -> new OffHeapBufferStorageEngine<>(width, source, initialPageSize, maximalPageSize, keyPortability, valuePortability, thief, victim);
   }
 
   public static <K, V> Factory<OffHeapBufferStorageEngine<K, V>> createFactory(final PointerSize width, final PageSource source, final int initialPageSize, final int maximalPageSize, final Portability<? super K> keyPortability, final Portability<? super V> valuePortability, final boolean thief, final boolean victim, final float compressThreshold) {
-    return new Factory<OffHeapBufferStorageEngine<K, V>>() {
-
-      @Override
-      public OffHeapBufferStorageEngine<K, V> newInstance() {
-        return new OffHeapBufferStorageEngine<>(width, source, initialPageSize, maximalPageSize, keyPortability, valuePortability, thief, victim, compressThreshold);
-      }
-    };
+    return () -> new OffHeapBufferStorageEngine<>(width, source, initialPageSize, maximalPageSize, keyPortability, valuePortability, thief, victim, compressThreshold);
   }
 
   protected final OffHeapStorageArea storageArea;

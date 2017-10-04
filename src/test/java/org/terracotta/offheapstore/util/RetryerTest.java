@@ -132,10 +132,7 @@ public class RetryerTest {
     retryer.shutdownNow();
 
     try {
-      retryer.completeAsynchronously(new Runnable() {
-        @Override
-        public void run() {
-        }
+      retryer.completeAsynchronously(() -> {
       });
       fail("Expected RejectedExecutionException");
     } catch (RejectedExecutionException e) {

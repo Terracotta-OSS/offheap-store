@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,21 +31,11 @@ import org.terracotta.offheapstore.util.Factory;
 public class SerializableStorageEngine extends OffHeapBufferStorageEngine<Serializable, Serializable> {
 
   public static Factory<SerializableStorageEngine> createFactory(final PointerSize width, final PageSource source, final int pageSize) {
-    return new Factory<SerializableStorageEngine>() {
-      @Override
-      public SerializableStorageEngine newInstance() {
-        return new SerializableStorageEngine(width, source, pageSize);
-      }
-    };
+    return () -> new SerializableStorageEngine(width, source, pageSize);
   }
 
   public static Factory<SerializableStorageEngine> createFactory(final PointerSize width, final PageSource source, final int pageSize, final Portability<Serializable> portability) {
-    return new Factory<SerializableStorageEngine>() {
-      @Override
-      public SerializableStorageEngine newInstance() {
-        return new SerializableStorageEngine(width, source, pageSize, portability);
-      }
-    };
+    return () -> new SerializableStorageEngine(width, source, pageSize, portability);
   }
 
   public SerializableStorageEngine(PointerSize width, PageSource source, int pageSize) {
@@ -54,5 +44,5 @@ public class SerializableStorageEngine extends OffHeapBufferStorageEngine<Serial
 
   protected SerializableStorageEngine(PointerSize width, PageSource source, int pageSize, Portability<Serializable> portability) {
     super(width, source, pageSize, portability, portability);
-  }  
+  }
 }

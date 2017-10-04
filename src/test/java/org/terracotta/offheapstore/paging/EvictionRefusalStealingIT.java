@@ -246,24 +246,20 @@ public class EvictionRefusalStealingIT {
 
     System.err.println("Fitted " + victim.size() + " mappings in victim");
 
-    Runnable accessor = new Runnable() {
-
-      @Override
-      public void run() {
-        Random rndm = new Random();
-        try {
-          int last = 0;
-          while (!Thread.interrupted()) {
-            if (rndm.nextBoolean()) {
-              last = rndm.nextInt();
-              victim.put(last, new byte[128]);
-            } else {
-              victim.get(last);
-            }
+    Runnable accessor = () -> {
+      Random rndm1 = new Random();
+      try {
+        int last = 0;
+        while (!Thread.interrupted()) {
+          if (rndm1.nextBoolean()) {
+            last = rndm1.nextInt();
+            victim.put(last, new byte[128]);
+          } else {
+            victim.get(last);
           }
-        } catch (OversizeMappingException e) {
-          System.err.println("Cache fully shrunk (caught : " + e + ")");
         }
+      } catch (OversizeMappingException e) {
+        System.err.println("Cache fully shrunk (caught : " + e + ")");
       }
     };
 

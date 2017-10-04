@@ -88,23 +88,13 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
   }
 
   public static <K, V> Factory<FileBackedStorageEngine<K, V>> createFactory(final MappedPageSource source, final long maxChunkSize, final MemoryUnit maxChunkUnit, final Portability<? super K> keyPortability, final Portability<? super V> valuePortability, final boolean bootstrap) {
-    Factory<ExecutorService> executorFactory = new Factory<ExecutorService>() {
-      @Override
-      public ExecutorService newInstance() {
-        return new ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
-      }
-    };
+    Factory<ExecutorService> executorFactory = () -> new ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
     return createFactory(source, maxChunkSize, maxChunkUnit, keyPortability, valuePortability, executorFactory, bootstrap);
   }
 
   public static <K, V> Factory<FileBackedStorageEngine<K, V>> createFactory(final MappedPageSource source, final long maxChunkSize, final MemoryUnit maxChunkUnit, final Portability<? super K> keyPortability, final Portability<? super V> valuePortability, final Factory<ExecutorService> executorFactory, final boolean bootstrap) {
-    return new Factory<FileBackedStorageEngine<K, V>>() {
-      @Override
-      public FileBackedStorageEngine<K, V> newInstance() {
-        return new FileBackedStorageEngine<>(source, maxChunkSize, maxChunkUnit, keyPortability, valuePortability, executorFactory
-          .newInstance(), bootstrap);
-      }
-    };
+    return () -> new FileBackedStorageEngine<>(source, maxChunkSize, maxChunkUnit, keyPortability, valuePortability, executorFactory
+      .newInstance(), bootstrap);
   }
 
   public FileBackedStorageEngine(MappedPageSource source, final long maxChunkSize, final MemoryUnit maxChunkUnit, Portability<? super K> keyPortability, Portability<? super V> valuePortability) {
@@ -153,12 +143,9 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
 
   @Override
   public void flush() throws IOException {
-    Future<Void> flush = writeExecutor.submit(new Callable<Void>() {
-      @Override
-      public Void call() throws IOException {
-        writeChannel.force(true);
-        return null;
-      }
+    Future<Void> flush = writeExecutor.submit(() -> {
+      writeChannel.force(true);
+      return null;
     });
 
     boolean interrupted = false;
@@ -246,25 +233,17 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
         final ByteBuffer binaryKeyForDecode = binaryKey.duplicate();
         final ByteBuffer binaryValueForDecode = binaryValue.duplicate();
         final Thread caller = Thread.currentThread();
-        fireRecovered(new Callable<K>() {
-
-          @Override
-          public K call() throws Exception {
-            if (caller == Thread.currentThread()) {
-              return (K) keyPortability.decode(binaryKeyForDecode.duplicate());
-            } else {
-              throw new IllegalStateException();
-            }
+        fireRecovered(() -> {
+          if (caller == Thread.currentThread()) {
+            return (K) keyPortability.decode(binaryKeyForDecode.duplicate());
+          } else {
+            throw new IllegalStateException();
           }
-        }, new Callable<V>() {
-
-          @Override
-          public V call() throws Exception {
-            if (caller == Thread.currentThread()) {
-              return (V) valuePortability.decode(binaryValueForDecode.duplicate());
-            } else {
-              throw new IllegalStateException();
-            }
+        }, () -> {
+          if (caller == Thread.currentThread()) {
+            return (V) valuePortability.decode(binaryValueForDecode.duplicate());
+          } else {
+            throw new IllegalStateException();
           }
         }, binaryKey, binaryValue, hash, 0, encoding);
       }

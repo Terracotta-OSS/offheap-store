@@ -111,12 +111,9 @@ public class CrossSegmentEvictionIT {
     final ConcurrentOffHeapClockCache<Integer, byte[]> test = new ConcurrentOffHeapClockCache<>(source, SplitStorageEngine
       .createFactory(IntegerStorageEngine.createFactory(), OffHeapBufferHalfStorageEngine.createFactory(source, 4096, ByteArrayPortability.INSTANCE)));
 
-    Runnable oversize = new Runnable() {
-      @Override
-      public void run() {
-        for (int i = 0; i < 100; i++) {
-          test.put(i, new byte[1 * 1024 * 1024]);
-        }
+    Runnable oversize = () -> {
+      for (int i = 0; i < 100; i++) {
+        test.put(i, new byte[1 * 1024 * 1024]);
       }
     };
 
@@ -129,12 +126,7 @@ public class CrossSegmentEvictionIT {
     t2.start();
 
     try {
-      assertBy(30, TimeUnit.SECONDS, new Callable<Boolean>() {
-        @Override
-        public Boolean call() throws Exception {
-          return t1.isAlive() || t2.isAlive();
-        }
-      }, is(false));
+      assertBy(30, TimeUnit.SECONDS, () -> t1.isAlive() || t2.isAlive(), is(false));
     } catch (AssertionError e) {
       ThreadInfo[] ti = ManagementFactory.getThreadMXBean().getThreadInfo(new long[] {t1.getId(), t2.getId()}, Integer.MAX_VALUE);
       StringBuilder sb = new StringBuilder();

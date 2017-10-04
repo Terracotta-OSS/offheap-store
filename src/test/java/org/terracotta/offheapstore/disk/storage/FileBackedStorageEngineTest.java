@@ -139,12 +139,9 @@ public class FileBackedStorageEngineTest extends AbstractDiskTest {
         Collection<Callable<Void>> tasks = new ArrayList<>(1024);
         for (int c = 0; c < 1024; c++, i++) {
           final int key = i;
-          tasks.add(new Callable<Void>() {
-            @Override
-            public Void call() {
-              map.put(key, new byte[1024]);
-              return null;
-            }
+          tasks.add(() -> {
+            map.put(key, new byte[1024]);
+            return null;
           });
         }
         long start = System.nanoTime();

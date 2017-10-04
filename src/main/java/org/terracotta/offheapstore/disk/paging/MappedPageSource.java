@@ -45,13 +45,10 @@ import org.terracotta.offheapstore.util.Retryer;
 public class MappedPageSource implements PageSource {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(MappedPageSource.class);
-  private static final Retryer ASYNC_FLUSH_EXECUTOR = new Retryer(10, 600, TimeUnit.SECONDS, new ThreadFactory() {
-    @Override
-    public Thread newThread(Runnable r) {
-      Thread t = new Thread(r, "MappedByteBufferSource Async Flush Thread");
-      t.setDaemon(true);
-      return t;
-    }
+  private static final Retryer ASYNC_FLUSH_EXECUTOR = new Retryer(10, 600, TimeUnit.SECONDS, r -> {
+    Thread t = new Thread(r, "MappedByteBufferSource Async Flush Thread");
+    t.setDaemon(true);
+    return t;
   });
 
   private final File file;

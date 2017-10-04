@@ -45,12 +45,7 @@ public interface Generator {
 
     @Override
     public Factory<StorageEngine<SpecialInteger, SpecialInteger>> factory() {
-      return new Factory<StorageEngine<SpecialInteger, SpecialInteger>>() {
-        @Override
-        public StorageEngine<SpecialInteger, SpecialInteger> newInstance() {
-          return engine();
-        }
-      };
+      return () -> engine();
     }
 
     @Override
@@ -154,12 +149,7 @@ public interface Generator {
 
     @Override
     public Factory<StorageEngine<SpecialInteger, SpecialInteger>> factory() {
-      return new Factory<StorageEngine<SpecialInteger, SpecialInteger>>() {
-        @Override
-        public StorageEngine<SpecialInteger, SpecialInteger> newInstance() {
-          return engine();
-        }
-      };
+      return () -> engine();
     }
 
     @Override
@@ -249,12 +239,7 @@ public interface Generator {
     }
   };
 
-  Factory<StorageEngine<SpecialInteger, SpecialInteger>> BAD_FACTORY = new Factory<StorageEngine<SpecialInteger, SpecialInteger>>() {
-    @Override
-    public StorageEngine<SpecialInteger, SpecialInteger> newInstance() {
-      return BAD_GENERATOR.engine();
-    }
-  };
+  Factory<StorageEngine<SpecialInteger, SpecialInteger>> BAD_FACTORY = () -> BAD_GENERATOR.engine();
 
   class GoodInteger implements SpecialInteger {
 

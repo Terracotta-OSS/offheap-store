@@ -106,24 +106,13 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
 
   protected final PageSource tableSource;
 
-  private final WeakIdentityHashMap<IntBuffer, PendingPage> pendingTableFrees = new WeakIdentityHashMap<>(new ReaperTask<PendingPage>() {
-    @Override
-    public void reap(PendingPage pending) {
-      freeTable(pending.tablePage);
-    }
-  });
+  private final WeakIdentityHashMap<IntBuffer, PendingPage> pendingTableFrees = new WeakIdentityHashMap<>(pending -> freeTable(pending.tablePage));
 
   private final int initialTableSize;
 
   private final boolean tableAllocationsSteal;
 
-  private final ThreadLocal<Boolean> tableResizing = new ThreadLocal<Boolean>() {
-
-    @Override
-    protected Boolean initialValue() {
-      return Boolean.FALSE;
-    }
-  };
+  private final ThreadLocal<Boolean> tableResizing = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
   protected volatile int size;
 

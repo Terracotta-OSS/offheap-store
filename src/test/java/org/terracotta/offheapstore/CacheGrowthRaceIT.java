@@ -62,12 +62,10 @@ public class CacheGrowthRaceIT extends OffHeapAndDiskStorageEngineDependentTest 
     Collection<Callable<Void>> tasks = new ArrayList<>();
     for (int i = 0; i < TASK_COUNT; i++) {
       final int index = i;
-      tasks.add(new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          cache.put(index, large);
-          return null;
-        }});
+      tasks.add(() -> {
+        cache.put(index, large);
+        return null;
+      });
     }
 
     for (Future<?> result : executor.invokeAll(tasks, 100000, SECONDS)) {
@@ -89,17 +87,15 @@ public class CacheGrowthRaceIT extends OffHeapAndDiskStorageEngineDependentTest 
     Collection<Callable<Void>> tasks = new ArrayList<>();
     for (int i = 0; i < TASK_COUNT; i++) {
       final int index = i;
-      tasks.add(new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          try {
-            cache.put(Integer.toString(index), large);
-            fail();
-          } catch (OversizeMappingException e) {
-            //expected
-          }
-          return null;
-        }});
+      tasks.add(() -> {
+        try {
+          cache.put(Integer.toString(index), large);
+          fail();
+        } catch (OversizeMappingException e) {
+          //expected
+        }
+        return null;
+      });
     }
 
     for (Future<?> result : executor.invokeAll(tasks, 100000, SECONDS)) {

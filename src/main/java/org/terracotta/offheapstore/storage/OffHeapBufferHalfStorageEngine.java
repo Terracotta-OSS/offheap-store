@@ -45,12 +45,7 @@ public class OffHeapBufferHalfStorageEngine<T> extends PortabilityBasedHalfStora
   }
 
   public static <T> Factory<OffHeapBufferHalfStorageEngine<T>> createFactory(final PageSource source, final int initialPageSize, final int maximalPageSize, final Portability<? super T> portability, final boolean thief, final boolean victim) {
-    return new Factory<OffHeapBufferHalfStorageEngine<T>>() {
-      @Override
-      public OffHeapBufferHalfStorageEngine<T> newInstance() {
-        return new OffHeapBufferHalfStorageEngine<>(source, initialPageSize, maximalPageSize, portability, thief, victim);
-      }
-    };
+    return () -> new OffHeapBufferHalfStorageEngine<>(source, initialPageSize, maximalPageSize, portability, thief, victim);
   }
 
   private volatile Owner owner;

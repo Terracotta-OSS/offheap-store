@@ -68,14 +68,11 @@ public class UpfrontAllocatingPageSource implements PageSource {
     private static final double PROGRESS_LOGGING_STEP_SIZE = 0.1;
     private static final long PROGRESS_LOGGING_THRESHOLD = MemoryUnit.GIGABYTES.toBytes(4L);
 
-    private static final Comparator<Page> REGION_COMPARATOR = new Comparator<Page>() {
-      @Override
-      public int compare(Page a, Page b) {
-        if (a.address() == b.address()) {
-          return a.size() - b.size();
-        } else {
-          return a.address() - b.address();
-        }
+    private static final Comparator<Page> REGION_COMPARATOR = (a, b) -> {
+      if (a.address() == b.address()) {
+        return a.size() - b.size();
+      } else {
+        return a.address() - b.address();
       }
     };
 
@@ -514,12 +511,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
 
           for (long dispatched = 0; dispatched < toAllocate; ) {
             final int currentChunkSize = (int)Math.min(maxChunk, toAllocate - dispatched);
-            futures.add(executorService.submit(new Callable<Collection<ByteBuffer>>() {
-              @Override
-              public Collection<ByteBuffer> call() throws Exception {
-                return bufferAllocation(source, currentChunkSize, minChunk, fixed, allocatorLog, start);
-              }
-            }));
+            futures.add(executorService.submit(() -> bufferAllocation(source, currentChunkSize, minChunk, fixed, allocatorLog, start)));
             dispatched += currentChunkSize;
           }
         } finally {

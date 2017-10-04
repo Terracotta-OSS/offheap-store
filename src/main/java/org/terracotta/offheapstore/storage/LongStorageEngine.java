@@ -28,12 +28,7 @@ import org.terracotta.offheapstore.util.Factory;
 public class LongStorageEngine<V> implements StorageEngine<Long, V> {
 
   public static <V> Factory<LongStorageEngine<V>> createFactory(final Factory<? extends HalfStorageEngine<V>> valueFactory) {
-    return new Factory<LongStorageEngine<V>>() {
-      @Override
-      public LongStorageEngine<V> newInstance() {
-        return new LongStorageEngine<>(valueFactory.newInstance());
-      }
-    };
+    return () -> new LongStorageEngine<>(valueFactory.newInstance());
   }
 
   private final HalfStorageEngine<V> valueStorage;

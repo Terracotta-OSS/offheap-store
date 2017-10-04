@@ -36,14 +36,11 @@ public class TimeoutTest {
   @Test
   public void test() throws ExecutionException {
     ExecutorService service = Executors.newSingleThreadExecutor();
-    Future<?> future = service.submit(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          Thread.sleep(2000);
-        } catch (InterruptedException e) {
+    Future<?> future = service.submit(() -> {
+      try {
+        Thread.sleep(2000);
+      } catch (InterruptedException e) {
 
-        }
       }
     });
     while (true) {

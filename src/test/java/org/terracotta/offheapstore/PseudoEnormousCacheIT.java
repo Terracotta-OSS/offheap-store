@@ -69,12 +69,7 @@ public class PseudoEnormousCacheIT {
 
   static class DementedSegmentFactory implements Factory<Segment<Integer, Integer>> {
 
-    private static final Segment<Integer, Integer> DEMENTED_SEGMENT = (Segment<Integer, Integer>) Proxy.newProxyInstance(Segment.class.getClassLoader(), new Class<?>[]{Segment.class}, new InvocationHandler() {
-      @Override
-      public Object invoke(Object o, Method method, Object[] os) throws Throwable {
-        return null;
-      }
-    });
+    private static final Segment<Integer, Integer> DEMENTED_SEGMENT = (Segment<Integer, Integer>) Proxy.newProxyInstance(Segment.class.getClassLoader(), new Class<?>[]{Segment.class}, (o, method, os) -> null);
     private volatile boolean done;
 
     @Override

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,12 +43,7 @@ public class EvictionListeningReadWriteLockedOffHeapClockCache<K, V> extends Rea
   public boolean evict(final int index, boolean shrink) {
     boolean evicted;
     try {
-      listener.evicting(new Callable<Entry<K, V>>() {
-        @Override
-        public Entry<K, V> call() throws Exception {
-          return getEntryAtTableOffset(index);
-        }
-      });
+      listener.evicting(() -> getEntryAtTableOffset(index));
     } finally {
       evicted = super.evict(index, shrink);
     }

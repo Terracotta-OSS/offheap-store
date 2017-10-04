@@ -110,12 +110,7 @@ public final class CacheTestRoutines {
 
   public static void testComputeEvictionBehavior(Map<Integer, byte[]> cache) {
     for (int i = 0; i < 100000; i++) {
-      AbstractOffHeapMapIT.doComputeWithMetadata(cache, i, new BiFunction<Integer, MetadataTuple<byte[]>, MetadataTuple<byte[]>>() {
-        @Override
-        public MetadataTuple<byte[]> apply(Integer t, MetadataTuple<byte[]> u) {
-          return MetadataTuple.metadataTuple(new byte[t % 1024], 0);
-        }
-      });
+      AbstractOffHeapMapIT.doComputeWithMetadata(cache, i, (t, u) -> MetadataTuple.metadataTuple(new byte[t % 1024], 0));
       assertThat(cache.get(i).length, is(i % 1024));
     }
 

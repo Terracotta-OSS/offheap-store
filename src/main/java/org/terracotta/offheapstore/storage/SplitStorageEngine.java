@@ -29,13 +29,7 @@ import org.terracotta.offheapstore.util.Factory;
 public class SplitStorageEngine<K, V> implements StorageEngine<K, V> {
 
   public static <K, V> Factory<SplitStorageEngine<K, V>> createFactory(final Factory<? extends HalfStorageEngine<K>> keyFactory, final Factory<? extends HalfStorageEngine<V>> valueFactory) {
-    return new Factory<SplitStorageEngine<K, V>>() {
-
-      @Override
-      public SplitStorageEngine<K, V> newInstance() {
-        return new SplitStorageEngine<>(keyFactory.newInstance(), valueFactory.newInstance());
-      }
-    };
+    return () -> new SplitStorageEngine<>(keyFactory.newInstance(), valueFactory.newInstance());
   }
 
   protected final HalfStorageEngine<? super K> keyStorageEngine;

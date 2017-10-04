@@ -40,13 +40,7 @@ public class UpfrontAllocatingPageSourceThresholdTest {
   public void testSimpleRisingThreshold() {
     UpfrontAllocatingPageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), MemoryUnit.KILOBYTES.toBytes(1), MemoryUnit.KILOBYTES.toBytes(1));
     final AtomicBoolean rising = new AtomicBoolean();
-    source.addAllocationThreshold(ThresholdDirection.RISING, 128, new Runnable() {
-
-      @Override
-      public void run() {
-        rising.set(true);
-      }
-    });
+    source.addAllocationThreshold(ThresholdDirection.RISING, 128, () -> rising.set(true));
 
     assertThat(rising.getAndSet(false), is(false));
     Page a = source.allocate(256, false, false, null);
@@ -65,13 +59,7 @@ public class UpfrontAllocatingPageSourceThresholdTest {
   public void testSimpleFallingThreshold() {
     UpfrontAllocatingPageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), MemoryUnit.KILOBYTES.toBytes(1), MemoryUnit.KILOBYTES.toBytes(1));
     final AtomicBoolean falling = new AtomicBoolean();
-    source.addAllocationThreshold(ThresholdDirection.FALLING, 128, new Runnable() {
-
-      @Override
-      public void run() {
-        falling.set(true);
-      }
-    });
+    source.addAllocationThreshold(ThresholdDirection.FALLING, 128, () -> falling.set(true));
 
     Page a = source.allocate(256, false, false, null);
     assertThat(falling.getAndSet(false), is(false));
@@ -89,21 +77,9 @@ public class UpfrontAllocatingPageSourceThresholdTest {
   public void testMultipleRisingThresholds() {
     UpfrontAllocatingPageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), MemoryUnit.KILOBYTES.toBytes(1), MemoryUnit.KILOBYTES.toBytes(1));
     final AtomicBoolean rising64 = new AtomicBoolean();
-    source.addAllocationThreshold(ThresholdDirection.RISING, 64, new Runnable() {
-
-      @Override
-      public void run() {
-        rising64.set(true);
-      }
-    });
+    source.addAllocationThreshold(ThresholdDirection.RISING, 64, () -> rising64.set(true));
     final AtomicBoolean rising128 = new AtomicBoolean();
-    source.addAllocationThreshold(ThresholdDirection.RISING, 128, new Runnable() {
-
-      @Override
-      public void run() {
-        rising128.set(true);
-      }
-    });
+    source.addAllocationThreshold(ThresholdDirection.RISING, 128, () -> rising128.set(true));
 
     assertThat(rising64.getAndSet(false), is(false));
     assertThat(rising128.getAndSet(false), is(false));
@@ -129,21 +105,9 @@ public class UpfrontAllocatingPageSourceThresholdTest {
   public void testMultipleFallingThresholds() {
     UpfrontAllocatingPageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), MemoryUnit.KILOBYTES.toBytes(1), MemoryUnit.KILOBYTES.toBytes(1));
     final AtomicBoolean falling64 = new AtomicBoolean();
-    source.addAllocationThreshold(ThresholdDirection.FALLING, 64, new Runnable() {
-
-      @Override
-      public void run() {
-        falling64.set(true);
-      }
-    });
+    source.addAllocationThreshold(ThresholdDirection.FALLING, 64, () -> falling64.set(true));
     final AtomicBoolean falling128 = new AtomicBoolean();
-    source.addAllocationThreshold(ThresholdDirection.FALLING, 128, new Runnable() {
-
-      @Override
-      public void run() {
-        falling128.set(true);
-      }
-    });
+    source.addAllocationThreshold(ThresholdDirection.FALLING, 128, () -> falling128.set(true));
 
     Page a = source.allocate(48, false, false, null);
     Page b = source.allocate(96, false, false, null);
@@ -175,21 +139,9 @@ public class UpfrontAllocatingPageSourceThresholdTest {
   public void testRisingAndFallingThresholds() {
     UpfrontAllocatingPageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), MemoryUnit.KILOBYTES.toBytes(1), MemoryUnit.KILOBYTES.toBytes(1));
     final AtomicBoolean rising64 = new AtomicBoolean();
-    source.addAllocationThreshold(ThresholdDirection.RISING, 64, new Runnable() {
-
-      @Override
-      public void run() {
-        rising64.set(true);
-      }
-    });
+    source.addAllocationThreshold(ThresholdDirection.RISING, 64, () -> rising64.set(true));
     final AtomicBoolean falling64 = new AtomicBoolean();
-    source.addAllocationThreshold(ThresholdDirection.FALLING, 64, new Runnable() {
-
-      @Override
-      public void run() {
-        falling64.set(true);
-      }
-    });
+    source.addAllocationThreshold(ThresholdDirection.FALLING, 64, () -> falling64.set(true));
 
     Page a = source.allocate(32, false, false, null);
     assertThat(rising64.getAndSet(false), is(false));
@@ -213,21 +165,9 @@ public class UpfrontAllocatingPageSourceThresholdTest {
     owner.bind(storage);
 
     final AtomicBoolean rising512 = new AtomicBoolean();
-    source.addAllocationThreshold(ThresholdDirection.RISING, 512, new Runnable() {
-
-      @Override
-      public void run() {
-        rising512.set(true);
-      }
-    });
+    source.addAllocationThreshold(ThresholdDirection.RISING, 512, () -> rising512.set(true));
     final AtomicBoolean falling64 = new AtomicBoolean();
-    source.addAllocationThreshold(ThresholdDirection.FALLING, 64, new Runnable() {
-
-      @Override
-      public void run() {
-        falling64.set(true);
-      }
-    });
+    source.addAllocationThreshold(ThresholdDirection.FALLING, 64, () -> falling64.set(true));
 
     long victim = storage.allocate(128);
     assertThat(victim, OrderingComparison.greaterThanOrEqualTo(0L));
@@ -256,12 +196,8 @@ public class UpfrontAllocatingPageSourceThresholdTest {
   @Test
   public void testActionThatThrows() {
     UpfrontAllocatingPageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), MemoryUnit.KILOBYTES.toBytes(1), MemoryUnit.KILOBYTES.toBytes(1));
-    source.addAllocationThreshold(ThresholdDirection.RISING, 128, new Runnable() {
-
-      @Override
-      public void run() {
-        throw new Error();
-      }
+    source.addAllocationThreshold(ThresholdDirection.RISING, 128, () -> {
+      throw new Error();
     });
 
     Page a = source.allocate(256, false, false, null);

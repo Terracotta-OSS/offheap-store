@@ -622,25 +622,12 @@ public abstract class AbstractOffHeapMapIT {
     final SpecialInteger valueA1 = generator.generate(rndm.nextInt());
     final SpecialInteger valueA2 = generator.generate(valueA1.value() + 1);
 
-    assertThat(doComputeIfPresentWithMetadata(map, keyA, new BiFunction<SpecialInteger, MetadataTuple<SpecialInteger>, MetadataTuple<SpecialInteger>>() {
-      @Override
-      public MetadataTuple<SpecialInteger> apply(SpecialInteger t, MetadataTuple<SpecialInteger> u) {
-        throw new AssertionError("Unexpected function invocation");
-      }
+    assertThat(doComputeIfPresentWithMetadata(map, keyA, (t, u) -> {
+      throw new AssertionError("Unexpected function invocation");
     }), nullValue());
-    assertThat(doComputeIfAbsentWithMetadata(map, keyA, new Function<SpecialInteger, MetadataTuple<SpecialInteger>>() {
-      @Override
-      public MetadataTuple<SpecialInteger> apply(SpecialInteger t) {
-        return metadataTuple(valueA1, 0);
-      }
-    }), is(metadataTuple(valueA1, 0)));
+    assertThat(doComputeIfAbsentWithMetadata(map, keyA, t -> metadataTuple(valueA1, 0)), is(metadataTuple(valueA1, 0)));
 
-    assertThat(doComputeIfPresentWithMetadata(map, keyA, new BiFunction<SpecialInteger, MetadataTuple<SpecialInteger>, MetadataTuple<SpecialInteger>>() {
-      @Override
-      public MetadataTuple<SpecialInteger> apply(SpecialInteger t, MetadataTuple<SpecialInteger> u) {
-        return metadataTuple(generator.generate(u.value().value() + 1), 16);
-      }
-    }), is(metadataTuple(valueA2, 16)));
+    assertThat(doComputeIfPresentWithMetadata(map, keyA, (t, u) -> metadataTuple(generator.generate(u.value().value() + 1), 16)), is(metadataTuple(valueA2, 16)));
     assertThat(map.get(keyA), is(valueA2));
     assertThat(map.size(), is(1));
 
@@ -649,54 +636,31 @@ public abstract class AbstractOffHeapMapIT {
       keyB = generator.generate(rndm.nextInt());
     } while (keyB.equals(keyA));
     final SpecialInteger valueB1 = generator.generate(rndm.nextInt());
-    assertThat(doComputeWithMetadata(map, keyB, new BiFunction<SpecialInteger, MetadataTuple<SpecialInteger>, MetadataTuple<SpecialInteger>>() {
-      @Override
-      public MetadataTuple<SpecialInteger> apply(SpecialInteger t, MetadataTuple<SpecialInteger> u) {
-        assertThat(u, nullValue());
-        return metadataTuple(valueB1, 0);
-      }
+    assertThat(doComputeWithMetadata(map, keyB, (t, u) -> {
+      assertThat(u, nullValue());
+      return metadataTuple(valueB1, 0);
     }), is(metadataTuple(valueB1, 0)));
     assertThat(map.get(keyB), is(valueB1));
     assertThat(map.get(keyA), is(valueA2));
     assertThat(map.size(), is(2));
 
     final SpecialInteger valueB2 = generator.generate(rndm.nextInt());
-    assertThat(doComputeWithMetadata(map, keyB, new BiFunction<SpecialInteger, MetadataTuple<SpecialInteger>, MetadataTuple<SpecialInteger>>() {
-      @Override
-      public MetadataTuple<SpecialInteger> apply(SpecialInteger t, MetadataTuple<SpecialInteger> u) {
-        return metadataTuple(valueB2, 32);
-      }
-    }), is(metadataTuple(valueB2, 32)));
+    assertThat(doComputeWithMetadata(map, keyB, (t, u) -> metadataTuple(valueB2, 32)), is(metadataTuple(valueB2, 32)));
     assertThat(map.get(keyB), is(valueB2));
     assertThat(map.get(keyA), is(valueA2));
     assertThat(map.size(), is(2));
 
-    assertThat(doComputeWithMetadata(map, keyA, new BiFunction<SpecialInteger, MetadataTuple<SpecialInteger>, MetadataTuple<SpecialInteger>>() {
-      @Override
-      public MetadataTuple<SpecialInteger> apply(SpecialInteger t, MetadataTuple<SpecialInteger> u) {
-        return null;
-      }
-    }), nullValue());
+    assertThat(doComputeWithMetadata(map, keyA, (t, u) -> null), nullValue());
     assertThat(map.get(keyB), is(valueB2));
     assertThat(map.get(keyA), nullValue());
     assertThat(map.size(), is(1));
 
-    assertThat(doComputeIfPresentWithMetadata(map, keyB, new BiFunction<SpecialInteger, MetadataTuple<SpecialInteger>, MetadataTuple<SpecialInteger>>() {
-      @Override
-      public MetadataTuple<SpecialInteger> apply(SpecialInteger t, MetadataTuple<SpecialInteger> u) {
-        return null;
-      }
-    }), nullValue());
+    assertThat(doComputeIfPresentWithMetadata(map, keyB, (t, u) -> null), nullValue());
     assertThat(map.get(keyB), nullValue());
     assertThat(map.get(keyA), nullValue());
     assertThat(map.size(), is(0));
 
-    assertThat(doComputeIfPresentWithMetadata(map, keyA, new BiFunction<SpecialInteger, MetadataTuple<SpecialInteger>, MetadataTuple<SpecialInteger>>() {
-      @Override
-      public MetadataTuple<SpecialInteger> apply(SpecialInteger t, MetadataTuple<SpecialInteger> u) {
-        return null;
-      }
-    }), nullValue());
+    assertThat(doComputeIfPresentWithMetadata(map, keyA, (t, u) -> null), nullValue());
     assertThat(map.get(keyB), nullValue());
     assertThat(map.get(keyA), nullValue());
     assertThat(map.size(), is(0));

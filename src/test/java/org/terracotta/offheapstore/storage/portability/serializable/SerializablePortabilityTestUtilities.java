@@ -82,12 +82,7 @@ public final class SerializablePortabilityTestUtilities {
     }
   }
 
-  private static final ThreadLocal<Deque<ClassLoader>> tcclStacks = new ThreadLocal<Deque<ClassLoader>>() {
-    @Override
-    protected Deque<ClassLoader> initialValue() {
-      return new LinkedList<>();
-    }
-  };
+  private static final ThreadLocal<Deque<ClassLoader>> tcclStacks = ThreadLocal.withInitial(() -> new LinkedList<>());
 
   public static void pushTccl(ClassLoader loader) {
     tcclStacks.get().push(Thread.currentThread().getContextClassLoader());

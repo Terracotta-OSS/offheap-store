@@ -51,14 +51,10 @@ public class PhantomReferenceLimitedPageSourceTest {
 
     testExhaustion(source);
 
-    assertBy(30, TimeUnit.SECONDS, new Callable<Page>() {
-      @Override
-      public Page call() throws Exception {
-        System.gc();
-        System.runFinalization();
-        return source.allocate(64, false, false, null);
-      }
-
+    assertBy(30, TimeUnit.SECONDS, () -> {
+      System.gc();
+      System.runFinalization();
+      return source.allocate(64, false, false, null);
     }, notNullValue());
   }
 
@@ -87,14 +83,10 @@ public class PhantomReferenceLimitedPageSourceTest {
 
     testExhaustion(source);
 
-    assertBy(30, TimeUnit.SECONDS, new Callable<Page>() {
-      @Override
-      public Page call() throws Exception {
-        System.gc();
-        System.runFinalization();
-        return source.allocate(64, false, false, null);
-      }
-
+    assertBy(30, TimeUnit.SECONDS, () -> {
+      System.gc();
+      System.runFinalization();
+      return source.allocate(64, false, false, null);
     }, notNullValue());
     Assert.assertNotNull(p);
   }
