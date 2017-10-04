@@ -101,11 +101,11 @@ public class VariablePageSizeIT extends AbstractConcurrentOffHeapMapIT {
 
   @Override
   protected Map<Integer, byte[]> createOffHeapBufferMap(PageSource source) {
-    return new ConcurrentOffHeapClockCache<Integer, byte[]>(source, createStorageEngineFactory(source));
+    return new ConcurrentOffHeapClockCache<>(source, createStorageEngineFactory(source));
   }
 
   protected Map<Serializable, Serializable> createSerializableMap(PageSource source) {
-    return new ConcurrentOffHeapClockCache<Serializable, Serializable>(source, createStorageEngineFactory(source));
+    return new ConcurrentOffHeapClockCache<>(source, createStorageEngineFactory(source));
   }
 
   private Factory<OffHeapBufferStorageEngine<Serializable, Serializable>> createStorageEngineFactory(PageSource source) {

@@ -46,7 +46,7 @@ import org.terracotta.offheapstore.util.FindbugsSuppressWarnings;
 public class SerializablePortability implements Portability<Serializable> {
 
   protected int nextStreamIndex = 0;
-  protected final ConcurrentMap<Object, Object> lookup = new ConcurrentHashMap<Object, Object>();
+  protected final ConcurrentMap<Object, Object> lookup = new ConcurrentHashMap<>();
   private final ClassLoader loader;
 
   public SerializablePortability() {
@@ -61,11 +61,8 @@ public class SerializablePortability implements Portability<Serializable> {
   public ByteBuffer encode(Serializable object) {
     try {
       ByteArrayOutputStream bout = new ByteArrayOutputStream();
-      ObjectOutputStream oout = getObjectOutputStream(bout);
-      try {
+      try (ObjectOutputStream oout = getObjectOutputStream(bout)) {
         oout.writeObject(object);
-      } finally {
-        oout.close();
       }
       return ByteBuffer.wrap(bout.toByteArray());
     } catch (IOException e) {
@@ -76,15 +73,10 @@ public class SerializablePortability implements Portability<Serializable> {
   @Override
   public Serializable decode(ByteBuffer buffer) {
     try {
-      ObjectInputStream oin = getObjectInputStream(new ByteBufferInputStream(buffer));
-      try {
+      try (ObjectInputStream oin = getObjectInputStream(new ByteBufferInputStream(buffer))) {
         return (Serializable) oin.readObject();
-      } finally {
-        oin.close();
       }
-    } catch (ClassNotFoundException e) {
-      throw new AssertionError(e);
-    } catch (IOException e) {
+    } catch (ClassNotFoundException | IOException e) {
       throw new AssertionError(e);
     }
   }
@@ -219,7 +211,7 @@ public class SerializablePortability implements Portability<Serializable> {
         if (store) {
           throw new AssertionError("Must not store ObjectStreamClass instances with strong references to classes");
         } else if (ObjectStreamClass.lookup(forClass) == desc) {
-          this.klazz = new WeakReference<Class<?>>(forClass);
+          this.klazz = new WeakReference<>(forClass);
         }
       }
       this.hashCode = (3 * desc.getName().hashCode()) ^ (7 * (int) (desc.getSerialVersionUID() >>> 32))
@@ -246,7 +238,7 @@ public class SerializablePortability implements Portability<Serializable> {
     }
 
     public void setClass(Class<?> clazz) {
-      klazz = new WeakReference<Class<?>>(clazz);
+      klazz = new WeakReference<>(clazz);
     }
 
     public ObjectStreamClass getObjectStreamClass() {
@@ -297,9 +289,7 @@ public class SerializablePortability implements Portability<Serializable> {
       };
 
       return (ObjectStreamClass) oin.readObject();
-    } catch (ClassNotFoundException e) {
-      throw new AssertionError(e);
-    } catch (IOException e) {
+    } catch (ClassNotFoundException | IOException e) {
       throw new AssertionError(e);
     }
   }
@@ -307,11 +297,8 @@ public class SerializablePortability implements Portability<Serializable> {
   private static byte[] getSerializedForm(ObjectStreamClass desc) throws IOException {
     ByteArrayOutputStream bout = new ByteArrayOutputStream();
     try {
-      ObjectOutputStream oout = new ObjectOutputStream(bout);
-      try {
+      try (ObjectOutputStream oout = new ObjectOutputStream(bout)) {
         oout.writeObject(desc);
-      } finally {
-        oout.close();
       }
     } finally {
       bout.close();

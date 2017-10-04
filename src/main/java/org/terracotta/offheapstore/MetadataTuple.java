@@ -50,6 +50,6 @@ public final class MetadataTuple<V> {
 
 
   public static <T> MetadataTuple<T> metadataTuple(T value, int metadata) {
-    return new MetadataTuple<T>(value, metadata);
+    return new MetadataTuple<>(value, metadata);
   }
 }

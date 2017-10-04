@@ -79,7 +79,7 @@ public final class CacheTestRoutines {
 
   public static void testFillBehavior(Map<Integer, byte[]> cache) {
     for (int i = 0; i < 100000; i++) {
-      Set<Integer> keySetCopy = new HashSet<Integer>(cache.keySet());
+      Set<Integer> keySetCopy = new HashSet<>(cache.keySet());
       AbstractOffHeapMapIT.doFill(cache, i, new byte[i % 1024]);
       if (cache.containsKey(i)) {
         Assert.assertNotNull(cache.get(i));
@@ -94,7 +94,7 @@ public final class CacheTestRoutines {
 
     assertThat(cache.isEmpty(), is(false));
 
-    Set<Integer> keySetCopy = new HashSet<Integer>(cache.keySet());
+    Set<Integer> keySetCopy = new HashSet<>(cache.keySet());
 
     for (Integer k : keySetCopy) {
       if (AbstractOffHeapMapIT.doFill(cache, k, new byte[(k % 1024) + 1]) == null) {

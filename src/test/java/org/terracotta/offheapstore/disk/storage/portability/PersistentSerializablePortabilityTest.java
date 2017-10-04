@@ -34,21 +34,15 @@ public class PersistentSerializablePortabilityTest {
     PersistentSerializablePortability portability = new PersistentSerializablePortability();
     portability.encode(0);
     ByteArrayOutputStream bout = new ByteArrayOutputStream();
-    ObjectOutputStream oout = new ObjectOutputStream(bout);
-    try {
+    try (ObjectOutputStream oout = new ObjectOutputStream(bout)) {
       portability.persist(oout);
-    } finally {
-      oout.close();
     }
     byte[] persisted = bout.toByteArray();
 
     PersistentSerializablePortability recovered = new PersistentSerializablePortability();
     ByteArrayInputStream bin = new ByteArrayInputStream(persisted);
-    ObjectInputStream oin = new ObjectInputStream(bin);
-    try {
+    try (ObjectInputStream oin = new ObjectInputStream(bin)) {
       recovered.bootstrap(oin);
-    } finally {
-      oin.close();
     }
 
     recovered.encode(0L);

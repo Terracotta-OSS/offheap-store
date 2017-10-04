@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -52,12 +52,13 @@ public class ConcurrentWriteLockedOffHeapHashMapIT extends AbstractConcurrentOff
 
   @Override
   protected ConcurrentMap<SpecialInteger, SpecialInteger> createMap(Generator generator) {
-    return new ConcurrentWriteLockedOffHeapHashMap<SpecialInteger, SpecialInteger>(new UnlimitedPageSource(new OffHeapBufferSource()), generator.factory(), 1, 16);
+    return new ConcurrentWriteLockedOffHeapHashMap<>(new UnlimitedPageSource(new OffHeapBufferSource()), generator.factory(), 1, 16);
   }
 
   @Override
   protected Map<Integer, byte[]> createOffHeapBufferMap(PageSource source) {
     assumeThat(generator, is(GOOD_GENERATOR));
-    return new ConcurrentWriteLockedOffHeapHashMap<Integer, byte[]>(source, SplitStorageEngine.createFactory(IntegerStorageEngine.createFactory(), OffHeapBufferHalfStorageEngine.createFactory(source, 1024, ByteArrayPortability.INSTANCE)));
+    return new ConcurrentWriteLockedOffHeapHashMap<>(source, SplitStorageEngine.createFactory(IntegerStorageEngine.createFactory(), OffHeapBufferHalfStorageEngine
+      .createFactory(source, 1024, ByteArrayPortability.INSTANCE)));
   }
 }

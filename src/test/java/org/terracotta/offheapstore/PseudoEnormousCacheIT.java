@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -81,7 +81,7 @@ public class PseudoEnormousCacheIT {
     public Segment<Integer, Integer> newInstance() {
       if (!done) {
         done = true;
-        return new ReadWriteLockedOffHeapHashMap<Integer, Integer>(new UnlimitedPageSource(new HeapBufferSource()), new SplitStorageEngine<Integer, Integer>(new IntegerStorageEngine(), new IntegerStorageEngine()));
+        return new ReadWriteLockedOffHeapHashMap<>(new UnlimitedPageSource(new HeapBufferSource()), new SplitStorageEngine<>(new IntegerStorageEngine(), new IntegerStorageEngine()));
       } else {
         return DEMENTED_SEGMENT;
       }

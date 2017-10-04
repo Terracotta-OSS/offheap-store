@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,7 +42,7 @@ public class ConcurrentWriteLockedOffHeapHashMap<K, V> extends AbstractConcurren
    * @param storageEngineFactory factory for the segment storage engines
    */
   public ConcurrentWriteLockedOffHeapHashMap(PageSource tableSource, Factory<? extends StorageEngine<? super K, ? super V>> storageEngineFactory) {
-    super(new WriteLockedOffHeapHashMapFactory<K, V>(tableSource, storageEngineFactory));
+    super(new WriteLockedOffHeapHashMapFactory<>(tableSource, storageEngineFactory));
   }
 
   /**
@@ -56,6 +56,6 @@ public class ConcurrentWriteLockedOffHeapHashMap<K, V> extends AbstractConcurren
    */
   public ConcurrentWriteLockedOffHeapHashMap(PageSource tableSource, Factory<? extends StorageEngine<? super K, ? super V>> storageEngineFactory, long tableSize,
       int concurrency) {
-    super(new WriteLockedOffHeapHashMapFactory<K, V>(tableSource, storageEngineFactory, (int) (tableSize / concurrency)), concurrency);
+    super(new WriteLockedOffHeapHashMapFactory<>(tableSource, storageEngineFactory, (int) (tableSize / concurrency)), concurrency);
   }
 }

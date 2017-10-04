@@ -65,7 +65,7 @@ public class CrossedStealingDeadlockIT extends OffHeapAndDiskStorageEngineDepend
 
     PageSource source = createPageSource(4, MEGABYTES);
 
-    Collection<Thread> threads = new ArrayList<Thread>();
+    Collection<Thread> threads = new ArrayList<>();
     for (int i = 0; i < 4; i++) {
       threads.add(new Thread(new Loader(createSingleStripedCache(source), 5, TimeUnit.SECONDS)));
     }
@@ -84,7 +84,7 @@ public class CrossedStealingDeadlockIT extends OffHeapAndDiskStorageEngineDepend
 
   private Map<String, String> createSingleStripedCache(PageSource source) {
     StorageEngine<String, String> storageEngine = create(source, StringPortability.INSTANCE, StringPortability.INSTANCE, true, true);
-    return new WriteLockedOffHeapClockCache<String, String>(source, true, storageEngine);
+    return new WriteLockedOffHeapClockCache<>(source, true, storageEngine);
   }
 
   static class Loader implements Runnable {
@@ -116,7 +116,7 @@ public class CrossedStealingDeadlockIT extends OffHeapAndDiskStorageEngineDepend
     private final Collection<Thread> interest;
 
     public DeadlockDetector(Collection<Thread> interest) {
-      this.interest = new ArrayList<Thread>(interest);
+      this.interest = new ArrayList<>(interest);
     }
 
     @SuppressWarnings("deprecation")

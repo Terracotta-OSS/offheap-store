@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,7 +47,8 @@ public class CrossSegmentEvictionIT {
   @Test
   public void testSingleLargeCacheEntry() {
     PageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), 16 * 1024 * 1024, 16 * 1024 * 1024);
-    ConcurrentOffHeapClockCache<Integer, byte[]> test = new ConcurrentOffHeapClockCache<Integer, byte[]>(source, SplitStorageEngine.createFactory(IntegerStorageEngine.createFactory(), OffHeapBufferHalfStorageEngine.createFactory(source, 4096, ByteArrayPortability.INSTANCE)));
+    ConcurrentOffHeapClockCache<Integer, byte[]> test = new ConcurrentOffHeapClockCache<>(source, SplitStorageEngine.createFactory(IntegerStorageEngine
+      .createFactory(), OffHeapBufferHalfStorageEngine.createFactory(source, 4096, ByteArrayPortability.INSTANCE)));
 
     //put a very large mapping that fills the cache on its own
     Assert.assertNull(test.put(-1, new byte[15 * 1024 * 1024]));
@@ -92,7 +93,8 @@ public class CrossSegmentEvictionIT {
   @Test
   public void testReallyOversize() {
     PageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), 16 * 1024 * 1024, 16 * 1024 * 1024);
-    ConcurrentOffHeapClockCache<Integer, byte[]> test = new ConcurrentOffHeapClockCache<Integer, byte[]>(source, SplitStorageEngine.createFactory(IntegerStorageEngine.createFactory(), OffHeapBufferHalfStorageEngine.createFactory(source, 4096, ByteArrayPortability.INSTANCE)));
+    ConcurrentOffHeapClockCache<Integer, byte[]> test = new ConcurrentOffHeapClockCache<>(source, SplitStorageEngine.createFactory(IntegerStorageEngine
+      .createFactory(), OffHeapBufferHalfStorageEngine.createFactory(source, 4096, ByteArrayPortability.INSTANCE)));
 
     try {
       test.put(-1, new byte[16 * 1024 * 1024]);
@@ -106,7 +108,8 @@ public class CrossSegmentEvictionIT {
   @Test
   public void testMultiThreadedOversize() throws InterruptedException {
     PageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), 4 * 1024 * 1024, 4 * 1024 * 1024);
-    final ConcurrentOffHeapClockCache<Integer, byte[]> test = new ConcurrentOffHeapClockCache<Integer, byte[]>(source, SplitStorageEngine.createFactory(IntegerStorageEngine.createFactory(), OffHeapBufferHalfStorageEngine.createFactory(source, 4096, ByteArrayPortability.INSTANCE)));
+    final ConcurrentOffHeapClockCache<Integer, byte[]> test = new ConcurrentOffHeapClockCache<>(source, SplitStorageEngine
+      .createFactory(IntegerStorageEngine.createFactory(), OffHeapBufferHalfStorageEngine.createFactory(source, 4096, ByteArrayPortability.INSTANCE)));
 
     Runnable oversize = new Runnable() {
       @Override

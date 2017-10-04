@@ -33,7 +33,7 @@ public class SplitStorageEngine<K, V> implements StorageEngine<K, V> {
 
       @Override
       public SplitStorageEngine<K, V> newInstance() {
-        return new SplitStorageEngine<K, V>(keyFactory.newInstance(), valueFactory.newInstance());
+        return new SplitStorageEngine<>(keyFactory.newInstance(), valueFactory.newInstance());
       }
     };
   }

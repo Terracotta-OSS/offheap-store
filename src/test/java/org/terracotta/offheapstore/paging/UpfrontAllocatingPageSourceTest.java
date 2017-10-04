@@ -100,9 +100,10 @@ public class UpfrontAllocatingPageSourceTest {
 
   @Test
   public void testUpfrontAllocationResizing() {
-    Map<String, String> map = new ConcurrentOffHeapHashMap<String, String>(new UnlimitedPageSource(new OffHeapBufferSource()), new Factory<StringStorageEngine>() {
+    Map<String, String> map = new ConcurrentOffHeapHashMap<>(new UnlimitedPageSource(new OffHeapBufferSource()), new Factory<StringStorageEngine>() {
 
       private final PageSource source = new UpfrontAllocatingPageSource(new OffHeapBufferSource(), 1024 * 1024, 128 * 1024);
+
       @Override
       public StringStorageEngine newInstance() {
         return new StringStorageEngine(PointerSize.INT, source, 1);
@@ -127,7 +128,7 @@ public class UpfrontAllocatingPageSourceTest {
 
   @Test
   public void testVariableChunkSizesSuccess() {
-    Map<Integer, Integer> chunks = new HashMap<Integer, Integer>();
+    Map<Integer, Integer> chunks = new HashMap<>();
 
     //Allocate 128k successfully
     chunks.put(64 * 1024, 1);
@@ -140,7 +141,7 @@ public class UpfrontAllocatingPageSourceTest {
 
   @Test
   public void testVariableChunkSizesFailureDueToLimitation() {
-    Map<Integer, Integer> chunks = new HashMap<Integer, Integer>();
+    Map<Integer, Integer> chunks = new HashMap<>();
 
     //Allocate 128k successfully
     chunks.put(64 * 1024, 1);
@@ -158,7 +159,7 @@ public class UpfrontAllocatingPageSourceTest {
 
   @Test
   public void testVariableChunkSizesFailureDueToExhaustion() {
-    Map<Integer, Integer> chunks = new HashMap<Integer, Integer>();
+    Map<Integer, Integer> chunks = new HashMap<>();
 
     //Allocate 128k successfully
     chunks.put(64 * 1024, 1);
@@ -190,8 +191,7 @@ public class UpfrontAllocatingPageSourceTest {
 
     File[] files = logLocation.listFiles();
     Assert.assertThat(files, array(anything()));
-    LineNumberReader reader = new LineNumberReader(new InputStreamReader(new FileInputStream(files[0]), "US-ASCII"));
-    try {
+    try (LineNumberReader reader = new LineNumberReader(new InputStreamReader(new FileInputStream(files[0]), "US-ASCII"))) {
       Assert.assertThat(reader.readLine(), startsWith("Timestamp: "));
       Assert.assertThat(reader.readLine(), equalTo("Allocating: 128KB"));
       Assert.assertThat(reader.readLine(), equalTo("Max Chunk: 1KB"));
@@ -215,14 +215,12 @@ public class UpfrontAllocatingPageSourceTest {
           });
         }
       }
-    } finally {
-      reader.close();
     }
   }
 
   @Test
   public void testInterruption() throws InterruptedException {
-    final AtomicReference<UpfrontAllocatingPageSource> pageSourceAtomicReference = new AtomicReference<UpfrontAllocatingPageSource>();
+    final AtomicReference<UpfrontAllocatingPageSource> pageSourceAtomicReference = new AtomicReference<>();
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicBoolean wasInterrupted = new AtomicBoolean(false);
 

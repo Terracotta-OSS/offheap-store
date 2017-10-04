@@ -304,7 +304,7 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
   public final void testConcurrentIterationAndMutationWithHalfOffHeapStorageEngine() {
     final Map<Integer, byte[]> m = createOffHeapBufferMap(new UnlimitedPageSource(new HeapBufferSource()));
 
-    final AtomicReference<Throwable> mutatorExceptionRef = new AtomicReference<Throwable>();
+    final AtomicReference<Throwable> mutatorExceptionRef = new AtomicReference<>();
     final AtomicBoolean stopped = new AtomicBoolean(false);
     Thread mutator = new Thread() {
 
@@ -379,7 +379,7 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
   public final void testConcurrentIterationMutationAndClearingWithHalfOffHeapStorageEngine() {
     final Map<Integer, byte[]> m = createOffHeapBufferMap(new UnlimitedPageSource(new HeapBufferSource()));
 
-    final AtomicReference<Throwable> mutatorExceptionRef = new AtomicReference<Throwable>();
+    final AtomicReference<Throwable> mutatorExceptionRef = new AtomicReference<>();
     final AtomicBoolean stopped = new AtomicBoolean(false);
     Thread mutator = new Thread() {
 
@@ -462,7 +462,7 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
     m.put(generator.generate(1024), generator.generate(1024));
     m.put(generator.generate(1), generator.generate(1));
 
-    List<Iterator<SpecialInteger>> iterators = new ArrayList<Iterator<SpecialInteger>>(1024);
+    List<Iterator<SpecialInteger>> iterators = new ArrayList<>(1024);
     for (int i = 0; i < 1024; i++) {
       iterators.add(m.keySet().iterator());
       m.put(generator.generate(i), generator.generate(i));

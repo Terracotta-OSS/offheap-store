@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,7 +48,7 @@ public class PowerOfTwoAllocatorTest {
   public void testUniformSizedFreesFromLeft() {
     PowerOfTwoAllocator test = new PowerOfTwoAllocator(100);
 
-    List<Integer> allocated = new ArrayList<Integer>();
+    List<Integer> allocated = new ArrayList<>();
 
     for (int i = 0; i < 100; i++) {
       allocated.add(test.allocate(1, FLOOR));
@@ -66,7 +66,7 @@ public class PowerOfTwoAllocatorTest {
     PowerOfTwoAllocator test = new PowerOfTwoAllocator(16 * 1024);
 
     for (int i = 1; i < 1024; i <<= 1) {
-      List<Integer> pointers = new ArrayList<Integer>();
+      List<Integer> pointers = new ArrayList<>();
       for (int k = 0; k < 16; k++) {
         int p = test.allocate(i, FLOOR);
         pointers.add(p);
@@ -93,7 +93,7 @@ public class PowerOfTwoAllocatorTest {
   public void testUniformSizedFreesFromRight() {
     PowerOfTwoAllocator test = new PowerOfTwoAllocator(100);
 
-    List<Integer> allocated = new ArrayList<Integer>();
+    List<Integer> allocated = new ArrayList<>();
 
     for (int i = 0; i < 100; i++) {
       allocated.add(test.allocate(1, CEILING));
@@ -111,7 +111,7 @@ public class PowerOfTwoAllocatorTest {
     PowerOfTwoAllocator test = new PowerOfTwoAllocator(16 * 1024);
 
     for (int i = 1; i < 1024; i <<= 1) {
-      List<Integer> pointers = new ArrayList<Integer>();
+      List<Integer> pointers = new ArrayList<>();
       for (int k = 0; k < 16; k++) {
         int p = test.allocate(i, CEILING);
         pointers.add(p);
@@ -127,7 +127,7 @@ public class PowerOfTwoAllocatorTest {
   public void testRandomAllocFree() {
     PowerOfTwoAllocator test = new PowerOfTwoAllocator(100 * 1024 * 1024);
 
-    List<AllocatedRegion> allocated = new ArrayList<AllocatedRegion>();
+    List<AllocatedRegion> allocated = new ArrayList<>();
     Random rndm = new Random();
 
     for (int i = 0; i < 1000; i++) {
@@ -162,7 +162,7 @@ public class PowerOfTwoAllocatorTest {
     PowerOfTwoAllocator test = new PowerOfTwoAllocator(100 * 1024 * 1024);
     PowerOfTwoAllocator reference = new PowerOfTwoAllocator(100 * 1024 * 1024);
 
-    List<AllocatedRegion> allocated = new ArrayList<AllocatedRegion>();
+    List<AllocatedRegion> allocated = new ArrayList<>();
     Random rndm = new Random();
 
     for (int i = 0; i < 1000; i++) {

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,7 +39,7 @@ import org.junit.Test;
 public class SerializablePortabilityClassUnloadingTest {
 
   private static final int PACKING_UNIT = 512 * 1024;
-  
+
   public volatile WeakReference<Class<?>> classRef;
   public volatile Serializable specialObject;
 
@@ -49,7 +49,7 @@ public class SerializablePortabilityClassUnloadingTest {
 
     @SuppressWarnings("unchecked")
     Class<? extends Serializable> special = (Class<? extends Serializable>) duplicate.loadClass(SpecialClass.class.getName());
-    classRef = new WeakReference<Class<?>>(special);
+    classRef = new WeakReference<>(special);
 
     specialObject = special.newInstance();
   }
@@ -84,7 +84,7 @@ public class SerializablePortabilityClassUnloadingTest {
       specialObject = null;
       Thread.currentThread().setContextClassLoader(null);
     }
-    
+
     for (int i = 0; i < 10; i++) {
       if (classRef.get() == null) {
         return;
@@ -94,20 +94,20 @@ public class SerializablePortabilityClassUnloadingTest {
     }
     throw new AssertionError();
   }
-  
+
   private static void packHeap() {
-    List<SoftReference<?>> packing = new ArrayList<SoftReference<?>>();
-    ReferenceQueue<byte[]> queue = new ReferenceQueue<byte[]>();
-    packing.add(new SoftReference<byte[]>(new byte[PACKING_UNIT], queue));
+    List<SoftReference<?>> packing = new ArrayList<>();
+    ReferenceQueue<byte[]> queue = new ReferenceQueue<>();
+    packing.add(new SoftReference<>(new byte[PACKING_UNIT], queue));
     while (queue.poll() == null) {
-      packing.add(new SoftReference<byte[]>(new byte[PACKING_UNIT]));
+      packing.add(new SoftReference<>(new byte[PACKING_UNIT]));
     }
   }
 
   public static class SpecialClass implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    
+
     //empty impl
   }
 

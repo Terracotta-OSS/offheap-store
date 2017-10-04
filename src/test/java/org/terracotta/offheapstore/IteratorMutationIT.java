@@ -48,7 +48,7 @@ public class IteratorMutationIT {
   @Test
   public void testConcurrentUpdateDoesntMiss() {
     PageSource source = new UnlimitedPageSource(new HeapBufferSource());
-    ReadWriteLockedOffHeapHashMap<Value, Value> map = new ReadWriteLockedOffHeapHashMap<Value, Value>(source, ValueStorage.INSTANCE, 8);
+    ReadWriteLockedOffHeapHashMap<Value, Value> map = new ReadWriteLockedOffHeapHashMap<>(source, ValueStorage.INSTANCE, 8);
 
     map.put(new Value(0), new Value(0));
     map.put(new Value(1), new Value(1));
@@ -75,7 +75,7 @@ public class IteratorMutationIT {
   @Test
   public void testConcurrentUpdateDoesntDuplicate() {
     PageSource source = new UnlimitedPageSource(new HeapBufferSource());
-    ReadWriteLockedOffHeapHashMap<Value, Value> map = new ReadWriteLockedOffHeapHashMap<Value, Value>(source, ValueStorage.INSTANCE, 4);
+    ReadWriteLockedOffHeapHashMap<Value, Value> map = new ReadWriteLockedOffHeapHashMap<>(source, ValueStorage.INSTANCE, 4);
 
     map.put(new Value(0), new Value(0));
     map.put(new Value(1), new Value(1));
@@ -106,7 +106,7 @@ public class IteratorMutationIT {
   @Test
   public void testConcurrentResizeAndUpdate() {
     PageSource source = new UnlimitedPageSource(new HeapBufferSource());
-    ReadWriteLockedOffHeapHashMap<Value, Value> map = new ReadWriteLockedOffHeapHashMap<Value, Value>(source, new OffHeapBufferStorageEngine<Value, Value>(PointerSize.INT, source, 1024, new SerializablePortability(), new SerializablePortability()), 2);
+    ReadWriteLockedOffHeapHashMap<Value, Value> map = new ReadWriteLockedOffHeapHashMap<>(source, new OffHeapBufferStorageEngine<>(PointerSize.INT, source, 1024, new SerializablePortability(), new SerializablePortability()), 2);
 
     map.put(new Value(0), new Value(0));
     map.put(new Value(1), new Value(1));
@@ -123,7 +123,7 @@ public class IteratorMutationIT {
     assertThat(map.getAtTableOffset(2 * OffHeapHashMap.ENTRY_SIZE), is(new Value(0)));
     assertThat(map.getAtTableOffset(3 * OffHeapHashMap.ENTRY_SIZE), is(new Value(1)));
 
-    Collection<Value> iteratorKeys = new ArrayList<Value>();
+    Collection<Value> iteratorKeys = new ArrayList<>();
     while (keyIterator.hasNext()) {
       iteratorKeys.add(keyIterator.next());
     }
@@ -169,7 +169,7 @@ public class IteratorMutationIT {
   static class ValueStorage implements HalfStorageEngine<Value> {
 
     private static final ValueStorage HALF_INSTANCE = new ValueStorage();
-    public static final StorageEngine<Value, Value> INSTANCE = new SplitStorageEngine<IteratorMutationIT.Value, IteratorMutationIT.Value>(HALF_INSTANCE, HALF_INSTANCE);
+    public static final StorageEngine<Value, Value> INSTANCE = new SplitStorageEngine<>(HALF_INSTANCE, HALF_INSTANCE);
 
     @Override
     public Integer write(Value object, int hash) {

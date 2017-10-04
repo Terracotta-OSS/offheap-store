@@ -49,7 +49,7 @@ public class VictimThiefStealingIT {
   public void testDataSpaceIsStolen() {
     PageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), 1024 * 1024, 1024 * 1024);
 
-    Map<Integer, byte[]> victim = new WriteLockedOffHeapClockCache<Integer, byte[]>(new UnlimitedPageSource(new HeapBufferSource()), new SplitStorageEngine<Integer, byte[]>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<byte[]>(source, 16 * 1024, ByteArrayPortability.INSTANCE, false, true)));
+    Map<Integer, byte[]> victim = new WriteLockedOffHeapClockCache<>(new UnlimitedPageSource(new HeapBufferSource()), new SplitStorageEngine<>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<>(source, 16 * 1024, ByteArrayPortability.INSTANCE, false, true)));
 
     for (int key = 0; ; key++) {
       int size = victim.size();
@@ -64,7 +64,7 @@ public class VictimThiefStealingIT {
 
     System.err.println("Fitted " + victim.size() + " mappings in victim");
 
-    Map<Integer, byte[]> thief = new OffHeapHashMap<Integer, byte[]>(new UnlimitedPageSource(new HeapBufferSource()), new SplitStorageEngine<Integer, byte[]>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<byte[]>(source, 16 * 1024, ByteArrayPortability.INSTANCE, true, false)));
+    Map<Integer, byte[]> thief = new OffHeapHashMap<>(new UnlimitedPageSource(new HeapBufferSource()), new SplitStorageEngine<>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<>(source, 16 * 1024, ByteArrayPortability.INSTANCE, true, false)));
 
     try {
       for (int key = 0; ; key++) {
@@ -82,7 +82,7 @@ public class VictimThiefStealingIT {
   public void testBigDataPagesAreStolen() {
     PageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), 1024 * 1024, 1024 * 1024);
 
-    Map<Integer, byte[]> victim = new WriteLockedOffHeapClockCache<Integer, byte[]>(new UnlimitedPageSource(new HeapBufferSource()), new SplitStorageEngine<Integer, byte[]>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<byte[]>(source, 8 * 1024, ByteArrayPortability.INSTANCE, false, true)));
+    Map<Integer, byte[]> victim = new WriteLockedOffHeapClockCache<>(new UnlimitedPageSource(new HeapBufferSource()), new SplitStorageEngine<>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<>(source, 8 * 1024, ByteArrayPortability.INSTANCE, false, true)));
 
     for (int key = 0; ; key++) {
       int size = victim.size();
@@ -97,7 +97,7 @@ public class VictimThiefStealingIT {
 
     System.err.println("Fitted " + victim.size() + " mappings in victim");
 
-    Map<Integer, byte[]> thief = new OffHeapHashMap<Integer, byte[]>(new UnlimitedPageSource(new HeapBufferSource()), new SplitStorageEngine<Integer, byte[]>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<byte[]>(source, 16 * 1024, ByteArrayPortability.INSTANCE, true, false)));
+    Map<Integer, byte[]> thief = new OffHeapHashMap<>(new UnlimitedPageSource(new HeapBufferSource()), new SplitStorageEngine<>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<>(source, 16 * 1024, ByteArrayPortability.INSTANCE, true, false)));
 
     try {
       for (int key = 0; ; key++) {
@@ -115,7 +115,7 @@ public class VictimThiefStealingIT {
   public void testDataPagesAreStolenForTables() {
     PageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), 1024 * 1024, 1024 * 1024);
 
-    Map<Integer, byte[]> victim = new WriteLockedOffHeapClockCache<Integer, byte[]>(new UnlimitedPageSource(new HeapBufferSource()), new SplitStorageEngine<Integer, byte[]>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<byte[]>(source, 8 * 1024, ByteArrayPortability.INSTANCE, false, true)));
+    Map<Integer, byte[]> victim = new WriteLockedOffHeapClockCache<>(new UnlimitedPageSource(new HeapBufferSource()), new SplitStorageEngine<>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<>(source, 8 * 1024, ByteArrayPortability.INSTANCE, false, true)));
 
     for (int key = 0; ; key++) {
       int size = victim.size();
@@ -130,7 +130,7 @@ public class VictimThiefStealingIT {
 
     System.err.println("Fitted " + victim.size() + " mappings in victim");
 
-    Map<Integer, byte[]> thief = new OffHeapHashMap<Integer, byte[]>(source, true, new SplitStorageEngine<Integer, byte[]>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<byte[]>(new UnlimitedPageSource(new HeapBufferSource()), 16 * 1024, ByteArrayPortability.INSTANCE, true, false)));
+    Map<Integer, byte[]> thief = new OffHeapHashMap<>(source, true, new SplitStorageEngine<>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<>(new UnlimitedPageSource(new HeapBufferSource()), 16 * 1024, ByteArrayPortability.INSTANCE, true, false)));
 
     try {
       for (int key = 0; ; key++) {
@@ -148,7 +148,7 @@ public class VictimThiefStealingIT {
   public void testEverythingIsStolen() {
     PageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), 1024 * 1024, 1024 * 1024);
 
-    WriteLockedOffHeapClockCache<Integer, byte[]> victim = new WriteLockedOffHeapClockCache<Integer, byte[]>(source, new SplitStorageEngine<Integer, byte[]>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<byte[]>(source, 16 * 1024, ByteArrayPortability.INSTANCE, false, true)));
+    WriteLockedOffHeapClockCache<Integer, byte[]> victim = new WriteLockedOffHeapClockCache<>(source, new SplitStorageEngine<>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<>(source, 16 * 1024, ByteArrayPortability.INSTANCE, false, true)));
 
     for (int key = 0; ; key++) {
       int size = victim.size();
@@ -162,7 +162,7 @@ public class VictimThiefStealingIT {
 
     System.err.println("Fitted " + victim.size() + " mappings in victim");
 
-    Map<Integer, byte[]> thief = new OffHeapHashMap<Integer, byte[]>(source, true, new SplitStorageEngine<Integer, byte[]>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<byte[]>(source, 16 * 1024, ByteArrayPortability.INSTANCE, true, false)));
+    Map<Integer, byte[]> thief = new OffHeapHashMap<>(source, true, new SplitStorageEngine<>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<>(source, 16 * 1024, ByteArrayPortability.INSTANCE, true, false)));
 
     try {
       for (int key = 0; ; key++) {
@@ -179,7 +179,8 @@ public class VictimThiefStealingIT {
   public void testEverythingIsStolenUsingConcurrentMaps() {
     PageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), 16 * 1024 * 1024, 16 * 1024 * 1024);
 
-    Map<Integer, byte[]> victim = new ConcurrentOffHeapClockCache<Integer, byte[]>(source, SplitStorageEngine.createFactory(IntegerStorageEngine.createFactory(), OffHeapBufferHalfStorageEngine.createFactory(source, 16 * 1024, ByteArrayPortability.INSTANCE, false, true)));
+    Map<Integer, byte[]> victim = new ConcurrentOffHeapClockCache<>(source, SplitStorageEngine.createFactory(IntegerStorageEngine
+      .createFactory(), OffHeapBufferHalfStorageEngine.createFactory(source, 16 * 1024, ByteArrayPortability.INSTANCE, false, true)));
 
     for (int key = 0; ; key++) {
       int size = victim.size();
@@ -193,7 +194,8 @@ public class VictimThiefStealingIT {
 
     System.err.println("Fitted " + victim.size() + " mappings in victim");
 
-    Map<Integer, byte[]> thief = new ConcurrentOffHeapHashMap<Integer, byte[]>(source, true, SplitStorageEngine.createFactory(IntegerStorageEngine.createFactory(), OffHeapBufferHalfStorageEngine.createFactory(source, 16 * 1024, ByteArrayPortability.INSTANCE, true, false)));
+    Map<Integer, byte[]> thief = new ConcurrentOffHeapHashMap<>(source, true, SplitStorageEngine.createFactory(IntegerStorageEngine
+      .createFactory(), OffHeapBufferHalfStorageEngine.createFactory(source, 16 * 1024, ByteArrayPortability.INSTANCE, true, false)));
 
     try {
       for (int key = 0; ; key++) {
@@ -210,7 +212,8 @@ public class VictimThiefStealingIT {
   public void testAccessingVictimWhileStealing() throws Throwable {
     PageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), 16 * 1024 * 1024, 16 * 1024 * 1024);
 
-    final Map<Integer, byte[]> victim = new ConcurrentOffHeapClockCache<Integer, byte[]>(source, SplitStorageEngine.createFactory(IntegerStorageEngine.createFactory(), OffHeapBufferHalfStorageEngine.createFactory(source, 16 * 1024, ByteArrayPortability.INSTANCE, false, true)));
+    final Map<Integer, byte[]> victim = new ConcurrentOffHeapClockCache<>(source, SplitStorageEngine.createFactory(IntegerStorageEngine
+      .createFactory(), OffHeapBufferHalfStorageEngine.createFactory(source, 16 * 1024, ByteArrayPortability.INSTANCE, false, true)));
 
     for (int key = 0; ; key++) {
       int size = victim.size();
@@ -248,7 +251,8 @@ public class VictimThiefStealingIT {
     ExecutorService executor = Executors.newSingleThreadExecutor();
     executor.submit(accessor);
     try {
-      Map<Integer, byte[]> thief = new ConcurrentOffHeapHashMap<Integer, byte[]>(source, true, SplitStorageEngine.createFactory(IntegerStorageEngine.createFactory(), OffHeapBufferHalfStorageEngine.createFactory(source, 16 * 1024, ByteArrayPortability.INSTANCE, true, false)));
+      Map<Integer, byte[]> thief = new ConcurrentOffHeapHashMap<>(source, true, SplitStorageEngine.createFactory(IntegerStorageEngine
+        .createFactory(), OffHeapBufferHalfStorageEngine.createFactory(source, 16 * 1024, ByteArrayPortability.INSTANCE, true, false)));
 
       try {
         for (int key = 0; ; key++) {
@@ -269,7 +273,8 @@ public class VictimThiefStealingIT {
   public void testTerracottaL2LikeSetup() {
     PageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), 16 * 1024 * 1024, 16 * 1024 * 1024);
 
-    Map<Long, byte[]> victim = new ConcurrentOffHeapClockCache<Long, byte[]>(source, LongStorageEngine.createFactory(OffHeapBufferHalfStorageEngine.createFactory(source, 16 * 1024, ByteArrayPortability.INSTANCE, false, true)));
+    Map<Long, byte[]> victim = new ConcurrentOffHeapClockCache<>(source, LongStorageEngine.createFactory(OffHeapBufferHalfStorageEngine
+      .createFactory(source, 16 * 1024, ByteArrayPortability.INSTANCE, false, true)));
 
     for (long key = 0; ; key++) {
       int size = victim.size();
@@ -283,7 +288,8 @@ public class VictimThiefStealingIT {
 
     System.err.println("Fitted " + victim.size() + " mappings in victim");
 
-    Map<Integer, byte[]> thief = new ConcurrentOffHeapHashMap<Integer, byte[]>(source, true, SplitStorageEngine.createFactory(IntegerStorageEngine.createFactory(), OffHeapBufferHalfStorageEngine.createFactory(source, 16 * 1024, ByteArrayPortability.INSTANCE, true, false)));
+    Map<Integer, byte[]> thief = new ConcurrentOffHeapHashMap<>(source, true, SplitStorageEngine.createFactory(IntegerStorageEngine
+      .createFactory(), OffHeapBufferHalfStorageEngine.createFactory(source, 16 * 1024, ByteArrayPortability.INSTANCE, true, false)));
 
     try {
       for (int key = 0; ; key++) {
@@ -300,7 +306,7 @@ public class VictimThiefStealingIT {
   public void testStealWithMultiPageValue() {
     PageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), 1024 * 1024, 1024 * 1024);
 
-    Map<Integer, byte[]> victim = new WriteLockedOffHeapClockCache<Integer, byte[]>(new UnlimitedPageSource(new HeapBufferSource()), new SplitStorageEngine<Integer, byte[]>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<byte[]>(source, 1024, ByteArrayPortability.INSTANCE, false, true)));
+    Map<Integer, byte[]> victim = new WriteLockedOffHeapClockCache<>(new UnlimitedPageSource(new HeapBufferSource()), new SplitStorageEngine<>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<>(source, 1024, ByteArrayPortability.INSTANCE, false, true)));
 
     for (int key = 0; ; key++) {
       int size = victim.size();
@@ -314,7 +320,7 @@ public class VictimThiefStealingIT {
 
     System.err.println("Fitted " + victim.size() + " mappings in victim");
 
-    Map<Integer, byte[]> thief = new OffHeapHashMap<Integer, byte[]>(new UnlimitedPageSource(new HeapBufferSource()), new SplitStorageEngine<Integer, byte[]>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<byte[]>(source, 16 * 1024, ByteArrayPortability.INSTANCE, true, false)));
+    Map<Integer, byte[]> thief = new OffHeapHashMap<>(new UnlimitedPageSource(new HeapBufferSource()), new SplitStorageEngine<>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<>(source, 16 * 1024, ByteArrayPortability.INSTANCE, true, false)));
 
     try {
       for (int key = 0; ; key++) {
@@ -332,7 +338,8 @@ public class VictimThiefStealingIT {
   public void testStealFromPageGrowthArea() {
     PageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), 1024 * 1024, 1024 * 1024);
 
-    Map<Integer, byte[]> victim = new WriteLockedOffHeapClockCache<Integer, byte[]>(new UnlimitedPageSource(new HeapBufferSource()), new SplitStorageEngine<Integer, byte[]>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<byte[]>(source, 1, Integer.highestOneBit(Integer.MAX_VALUE), ByteArrayPortability.INSTANCE, false, true)));
+    Map<Integer, byte[]> victim = new WriteLockedOffHeapClockCache<>(new UnlimitedPageSource(new HeapBufferSource()), new SplitStorageEngine<>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<>(source, 1, Integer
+      .highestOneBit(Integer.MAX_VALUE), ByteArrayPortability.INSTANCE, false, true)));
 
     for (int key = 0; ; key++) {
       int size = victim.size();
@@ -347,7 +354,7 @@ public class VictimThiefStealingIT {
 
     System.err.println("Fitted " + victim.size() + " mappings in victim");
 
-    Map<Integer, byte[]> thief = new OffHeapHashMap<Integer, byte[]>(new UnlimitedPageSource(new HeapBufferSource()), new SplitStorageEngine<Integer, byte[]>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<byte[]>(source, 16 * 1024, ByteArrayPortability.INSTANCE, true, false)));
+    Map<Integer, byte[]> thief = new OffHeapHashMap<>(new UnlimitedPageSource(new HeapBufferSource()), new SplitStorageEngine<>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<>(source, 16 * 1024, ByteArrayPortability.INSTANCE, true, false)));
 
     try {
       for (int key = 0; ; key++) {

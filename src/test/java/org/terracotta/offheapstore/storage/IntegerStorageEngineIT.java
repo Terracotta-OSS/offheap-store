@@ -53,7 +53,7 @@ public class IntegerStorageEngineIT {
 
   @Test
   public void testMapUsage() {
-    Map<Integer, Integer> map = new OffHeapHashMap<Integer, Integer>(new UnlimitedPageSource(new HeapBufferSource()), new SplitStorageEngine<Integer, Integer>(new IntegerStorageEngine(), new IntegerStorageEngine()));
+    Map<Integer, Integer> map = new OffHeapHashMap<>(new UnlimitedPageSource(new HeapBufferSource()), new SplitStorageEngine<>(new IntegerStorageEngine(), new IntegerStorageEngine()));
 
     Random rndm = new Random();
 
@@ -76,13 +76,13 @@ public class IntegerStorageEngineIT {
 
   @Test
   public void testKeysAreReadable() {
-    Map<Integer, Integer> map = new OffHeapHashMap<Integer, Integer>(new UnlimitedPageSource(new HeapBufferSource()), new SplitStorageEngine<Integer, Integer>(new IntegerStorageEngine(), new IntegerStorageEngine()));
+    Map<Integer, Integer> map = new OffHeapHashMap<>(new UnlimitedPageSource(new HeapBufferSource()), new SplitStorageEngine<>(new IntegerStorageEngine(), new IntegerStorageEngine()));
 
     for (Integer k : TEST_CASES) {
       Assert.assertNull(map.put(k, k));
     }
 
-    Collection<Integer> copy = new ArrayList<Integer>(Arrays.asList(TEST_CASES));
+    Collection<Integer> copy = new ArrayList<>(Arrays.asList(TEST_CASES));
 
     for (Integer k : map.keySet()) {
       Assert.assertTrue(copy.remove(k));

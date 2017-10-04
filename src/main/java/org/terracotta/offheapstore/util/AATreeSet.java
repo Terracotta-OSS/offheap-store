@@ -184,7 +184,7 @@ public class AATreeSet<T extends Comparable<? super T>> extends AbstractSet<T> i
     if (data instanceof Node<?>) {
       return (Node<T>) data;
     } else {
-      return new TreeNode<T>(data);
+      return new TreeNode<>(data);
     }
   }
 
@@ -519,7 +519,7 @@ public class AATreeSet<T extends Comparable<? super T>> extends AbstractSet<T> i
 
   class TreeIterator implements Iterator<T> {
 
-    private final java.util.Stack<Node<T>> path = new Stack<Node<T>>();
+    private final java.util.Stack<Node<T>> path = new Stack<>();
     private Node<T>                        next;
 
     TreeIterator() {

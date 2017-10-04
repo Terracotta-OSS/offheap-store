@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -55,7 +55,7 @@ public class ConcurrentOffHeapClockCache<K, V> extends AbstractConcurrentOffHeap
    * @param storageEngineFactory factory for the segment storage engines
    */
   public ConcurrentOffHeapClockCache(PageSource tableSource, Factory<? extends StorageEngine<? super K, ? super V>> storageEngineFactory) {
-    super(new ReadWriteLockedOffHeapClockCacheFactory<K, V>(tableSource, storageEngineFactory));
+    super(new ReadWriteLockedOffHeapClockCacheFactory<>(tableSource, storageEngineFactory));
   }
 
   /**
@@ -67,7 +67,7 @@ public class ConcurrentOffHeapClockCache<K, V> extends AbstractConcurrentOffHeap
    * @param evictionListener  listener notified on evictions
    */
   public ConcurrentOffHeapClockCache(PageSource tableSource, Factory<? extends StorageEngine<? super K, ? super V>> storageEngineFactory, EvictionListener<K, V> evictionListener) {
-    super(new ReadWriteLockedOffHeapClockCacheFactory<K, V>(tableSource, storageEngineFactory, evictionListener));
+    super(new ReadWriteLockedOffHeapClockCacheFactory<>(tableSource, storageEngineFactory, evictionListener));
   }
 
   /**
@@ -81,7 +81,7 @@ public class ConcurrentOffHeapClockCache<K, V> extends AbstractConcurrentOffHeap
    */
   public ConcurrentOffHeapClockCache(PageSource tableSource, Factory<? extends StorageEngine<? super K, ? super V>> storageEngineFactory, long tableSize,
       int concurrency) {
-    super(new ReadWriteLockedOffHeapClockCacheFactory<K, V>(tableSource, storageEngineFactory, (int) (tableSize / concurrency)), concurrency);
+    super(new ReadWriteLockedOffHeapClockCacheFactory<>(tableSource, storageEngineFactory, (int) (tableSize / concurrency)), concurrency);
   }
 
   /**
@@ -96,6 +96,6 @@ public class ConcurrentOffHeapClockCache<K, V> extends AbstractConcurrentOffHeap
    */
   public ConcurrentOffHeapClockCache(PageSource tableSource, Factory<? extends StorageEngine<? super K, ? super V>> storageEngineFactory, EvictionListener<K, V> evictionListener,
           long tableSize, int concurrency) {
-    super(new ReadWriteLockedOffHeapClockCacheFactory<K, V>(tableSource, storageEngineFactory, evictionListener, (int) (tableSize / concurrency)), concurrency);
+    super(new ReadWriteLockedOffHeapClockCacheFactory<>(tableSource, storageEngineFactory, evictionListener, (int) (tableSize / concurrency)), concurrency);
   }
 }

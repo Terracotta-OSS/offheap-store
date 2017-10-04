@@ -69,7 +69,8 @@ public class OffHeapHashMapIT extends AbstractOffHeapMapIT {
 
   @Test
   public void testDoublePut() {
-    Map<SpecialInteger, SpecialInteger> map = new OffHeapHashMap<SpecialInteger, SpecialInteger>(new UnlimitedPageSource(new OffHeapBufferSource()), generator.engine(), 1);
+    Map<SpecialInteger, SpecialInteger> map = new OffHeapHashMap<>(new UnlimitedPageSource(new OffHeapBufferSource()), generator
+      .engine(), 1);
     map.put(generator.generate(1), generator.generate(1));
     Assert.assertEquals(1, map.size());
     map.put(generator.generate(2), generator.generate(2));
@@ -83,12 +84,12 @@ public class OffHeapHashMapIT extends AbstractOffHeapMapIT {
   @Test
   public void testTableAllocationOomeOutput() {
     expectedException.expect(IllegalArgumentException.class);
-    new OffHeapHashMap<Integer, Integer>(new UpfrontAllocatingPageSource(new OffHeapBufferSource(), 96, 96), new SplitStorageEngine<Integer, Integer>(new IntegerStorageEngine(), new IntegerStorageEngine()), 8);
+    new OffHeapHashMap<>(new UpfrontAllocatingPageSource(new OffHeapBufferSource(), 96, 96), new SplitStorageEngine<>(new IntegerStorageEngine(), new IntegerStorageEngine()), 8);
   }
 
   @Test
   public void testEncodingSet() {
-    final Set<Long> encodings = new HashSet<Long>();
+    final Set<Long> encodings = new HashSet<>();
     PageSource pageSource = new UpfrontAllocatingPageSource(new OffHeapBufferSource(), 10485760, 8192);
     StringStorageEngine storageEngine = new StringStorageEngine(PointerSize.INT, pageSource, 64);
     storageEngine.registerListener(new RuntimeStorageEngineListener<String, String>() {
@@ -98,20 +99,20 @@ public class OffHeapHashMapIT extends AbstractOffHeapMapIT {
       @Override public void written(String key, String value, ByteBuffer binaryKey, ByteBuffer binaryValue, int hash, int metadata, long encoding) { encodings.add(encoding); }
     });
 
-    OffHeapHashMap<String, String> map = new OffHeapHashMap<String, String>(pageSource, storageEngine);
+    OffHeapHashMap<String, String> map = new OffHeapHashMap<>(pageSource, storageEngine);
     Assert.assertEquals(0, map.encodingSet().size());
 
     for (int i = 0; i < 10; i++) {
       map.put(String.valueOf(i), "");
     }
 
-    Assert.assertEquals("encodings="+encodings.toString() + ", mapEncodings=" + map.encodingSet(), new TreeSet<Long>(map.encodingSet()), new TreeSet<Long>(encodings));
+    Assert.assertEquals("encodings="+encodings.toString() + ", mapEncodings=" + map.encodingSet(), new TreeSet<>(map.encodingSet()), new TreeSet<>(encodings));
 
     for (int i = 0; i < 5; i++) {
       map.remove(String.valueOf(i));
     }
 
-    Assert.assertEquals("encodings="+encodings.toString() + ", mapEncodings=" + map.encodingSet(), new TreeSet<Long>(map.encodingSet()), new TreeSet<Long>(encodings));
+    Assert.assertEquals("encodings="+encodings.toString() + ", mapEncodings=" + map.encodingSet(), new TreeSet<>(map.encodingSet()), new TreeSet<>(encodings));
 
     map.clear();
 
@@ -128,9 +129,9 @@ public class OffHeapHashMapIT extends AbstractOffHeapMapIT {
 
   @Test
   public void testTableResizeOomeOutput() {
-    Map<Integer, Integer> map = new OffHeapHashMap<Integer, Integer>(new UpfrontAllocatingPageSource(
+    Map<Integer, Integer> map = new OffHeapHashMap<>(new UpfrontAllocatingPageSource(
       new OffHeapBufferSource(), 96, 96),
-      new SplitStorageEngine<Integer, Integer>(new IntegerStorageEngine(), new IntegerStorageEngine()), 4);
+      new SplitStorageEngine<>(new IntegerStorageEngine(), new IntegerStorageEngine()), 4);
 
     map.put(1, 1);
     map.put(2, 2);
@@ -143,9 +144,9 @@ public class OffHeapHashMapIT extends AbstractOffHeapMapIT {
 
   @Test
   public void testDataExpansionOomeOutput() {
-    Map<String, String> map = new OffHeapHashMap<String, String>(new UnlimitedPageSource(new OffHeapBufferSource()),
+    Map<String, String> map = new OffHeapHashMap<>(new UnlimitedPageSource(new OffHeapBufferSource()),
       new StringStorageEngine(PointerSize.INT, new UpfrontAllocatingPageSource(
-          new OffHeapBufferSource(), 256, 128, 32), 32), 4);
+        new OffHeapBufferSource(), 256, 128, 32), 32), 4);
 
     expectedException.expect(OversizeMappingException.class);
     for (int i = 0; i < 100; i++) {
@@ -155,13 +156,13 @@ public class OffHeapHashMapIT extends AbstractOffHeapMapIT {
 
   @Override
   protected Map<SpecialInteger, SpecialInteger> createMap(Generator generator) {
-    return new OffHeapHashMap<SpecialInteger, SpecialInteger>(new UnlimitedPageSource(new OffHeapBufferSource()), generator.engine(), 1);
+    return new OffHeapHashMap<>(new UnlimitedPageSource(new OffHeapBufferSource()), generator.engine(), 1);
   }
 
   @Override
   protected Map<Integer, byte[]> createOffHeapBufferMap(PageSource source) {
     assumeThat(generator, is(GOOD_GENERATOR));
-    return new OffHeapHashMap<Integer, byte[]>(source, new SplitStorageEngine<Integer, byte[]>(new IntegerStorageEngine(),
-      new OffHeapBufferHalfStorageEngine<byte[]>(source, 1024, ByteArrayPortability.INSTANCE)));
+    return new OffHeapHashMap<>(source, new SplitStorageEngine<>(new IntegerStorageEngine(),
+      new OffHeapBufferHalfStorageEngine<>(source, 1024, ByteArrayPortability.INSTANCE)));
   }
 }

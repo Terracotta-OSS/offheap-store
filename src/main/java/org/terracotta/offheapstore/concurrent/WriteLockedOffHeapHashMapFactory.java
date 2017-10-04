@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,7 +35,7 @@ public class WriteLockedOffHeapHashMapFactory<K, V> implements Factory<WriteLock
   private final Factory<? extends StorageEngine<? super K, ? super V>> storageEngineFactory;
   private final PageSource tableSource;
   private final int tableSize;
-  
+
   /**
    * Creates segments using the given table buffer source and storage engine
    * factory.
@@ -71,7 +71,7 @@ public class WriteLockedOffHeapHashMapFactory<K, V> implements Factory<WriteLock
   public WriteLockedOffHeapHashMap<K, V> newInstance() {
     StorageEngine<? super K, ? super V> storageEngine = storageEngineFactory.newInstance();
     try {
-      return new WriteLockedOffHeapHashMap<K, V>(tableSource, storageEngine, tableSize);
+      return new WriteLockedOffHeapHashMap<>(tableSource, storageEngine, tableSize);
     } catch (RuntimeException e) {
       storageEngine.destroy();
       throw e;

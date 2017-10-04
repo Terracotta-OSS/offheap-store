@@ -31,7 +31,7 @@ public class LongStorageEngine<V> implements StorageEngine<Long, V> {
     return new Factory<LongStorageEngine<V>>() {
       @Override
       public LongStorageEngine<V> newInstance() {
-        return new LongStorageEngine<V>(valueFactory.newInstance());
+        return new LongStorageEngine<>(valueFactory.newInstance());
       }
     };
   }

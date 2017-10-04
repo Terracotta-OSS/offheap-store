@@ -59,8 +59,8 @@ public class MappedPageSource implements PageSource {
   private final FileChannel channel;
   private final PowerOfTwoFileAllocator allocator;
 
-  private final IdentityHashMap<MappedPage, Long> pages = new IdentityHashMap<MappedPage, Long>();
-  private final Map<Long, AllocatedRegion> allocated = new HashMap<Long, AllocatedRegion>();
+  private final IdentityHashMap<MappedPage, Long> pages = new IdentityHashMap<>();
+  private final Map<Long, AllocatedRegion> allocated = new HashMap<>();
 
   public MappedPageSource(File file) throws IOException {
     this(file, true);

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -144,7 +144,7 @@ public class OffHeapStorageAreaTest extends PointerSizeParameterizedTest {
   public void testRecoveryOfPages() {
     GettablePageSource source = new GettablePageSource();
 
-    Map<Integer, byte[]> test = new WriteLockedOffHeapClockCache<Integer, byte[]>(new UnlimitedPageSource(new OffHeapBufferSource()), new SplitStorageEngine<Integer, byte[]>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<byte[]>(source, 1024, ByteArrayPortability.INSTANCE)));
+    Map<Integer, byte[]> test = new WriteLockedOffHeapClockCache<>(new UnlimitedPageSource(new OffHeapBufferSource()), new SplitStorageEngine<>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<>(source, 1024, ByteArrayPortability.INSTANCE)));
 
     int put = 0;
     while (source.allocated.size() < 2) {
@@ -174,7 +174,7 @@ public class OffHeapStorageAreaTest extends PointerSizeParameterizedTest {
 
     OffHeapStorageArea storage = new OffHeapStorageArea(getPointerSize(), null, source, 1, 1024, false, false);
 
-    Map<Integer, Long> locations = new HashMap<Integer, Long>();
+    Map<Integer, Long> locations = new HashMap<>();
 
     for (int i = 0; i < 2048; i++) {
       long pointer = storage.allocate(Integer.SIZE / Byte.SIZE);
@@ -227,7 +227,7 @@ public class OffHeapStorageAreaTest extends PointerSizeParameterizedTest {
 
     final Random rndm = new Random();
     final PageSource delegate = new UnlimitedPageSource(new OffHeapBufferSource());
-    final List<Page> allocated = new LinkedList<Page>();
+    final List<Page> allocated = new LinkedList<>();
 
     @Override
     public Page allocate(int size, boolean thief, boolean victim, OffHeapStorageArea owner) {
@@ -244,7 +244,7 @@ public class OffHeapStorageAreaTest extends PointerSizeParameterizedTest {
 
     public void release() {
       Page p = allocated.get(rndm.nextInt(allocated.size()));
-      p.binding().release(new LinkedList<Page>(Collections.singleton(p)));
+      p.binding().release(new LinkedList<>(Collections.singleton(p)));
       free(p);
     }
   }

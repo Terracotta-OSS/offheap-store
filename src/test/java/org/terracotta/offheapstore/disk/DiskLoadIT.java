@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,16 +47,16 @@ public class DiskLoadIT {
   private static final int PAYLOAD = 750;
   private static final int SIZE = 1000000;
   private static final int SEGMENTS = 1;
-  
+
   @Test
   public void testConcurrentMapLoading() throws IOException, InterruptedException, ExecutionException {
     File dataFile = new File("loadtest.data");
     dataFile.deleteOnExit();
     final MappedPageSource source = new MappedPageSource(dataFile);
-    final ConcurrentOffHeapHashMap<Integer, byte[]> map = new ConcurrentOffHeapHashMap<Integer, byte[]>(source, new Factory<StorageEngine<Integer, byte[]>>() {
+    final ConcurrentOffHeapHashMap<Integer, byte[]> map = new ConcurrentOffHeapHashMap<>(source, new Factory<StorageEngine<Integer, byte[]>>() {
       @Override
       public StorageEngine<Integer, byte[]> newInstance() {
-        ThreadPoolExecutor e = new ThreadPoolExecutor(1, 1, 0, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(1000), new RejectedExecutionHandler() {
+        ThreadPoolExecutor e = new ThreadPoolExecutor(1, 1, 0, TimeUnit.SECONDS, new LinkedBlockingQueue<>(1000), new RejectedExecutionHandler() {
 
           @Override
           public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
@@ -77,7 +77,7 @@ public class DiskLoadIT {
             }
           }
         });
-        return new FileBackedStorageEngine<Integer, byte[]>(source, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), PersistentByteArrayPortability.INSTANCE, e);
+        return new FileBackedStorageEngine<>(source, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), PersistentByteArrayPortability.INSTANCE, e);
       }
     }, 1, SEGMENTS);
     try {

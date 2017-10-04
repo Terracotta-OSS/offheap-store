@@ -47,7 +47,7 @@ public class EvictionListeningWriteLockedPinningIT extends AbstractPinningIT {
   @SuppressWarnings("unchecked")
   @Override
   protected PinnableCache<Integer, byte[]> createPinnedByteArrayCache(PageSource source) {
-    StorageEngine<Integer, byte[]> storageEngine = new OffHeapBufferStorageEngine<Integer, byte[]>(getPointerSize(), source, KILOBYTES.toBytes(1), new SerializablePortability(), ByteArrayPortability.INSTANCE);
+    StorageEngine<Integer, byte[]> storageEngine = new OffHeapBufferStorageEngine<>(getPointerSize(), source, KILOBYTES.toBytes(1), new SerializablePortability(), ByteArrayPortability.INSTANCE);
     return new EvictionListeningWriteLockedOffHeapClockCache<Integer, byte[]>(new NullEvictionListener(), source, storageEngine);
   }
 

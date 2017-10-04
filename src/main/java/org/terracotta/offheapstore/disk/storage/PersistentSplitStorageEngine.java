@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,7 +36,7 @@ public class PersistentSplitStorageEngine<K, V> extends SplitStorageEngine<K, V>
 
       @Override
       public PersistentSplitStorageEngine<K, V> newInstance() {
-        return new PersistentSplitStorageEngine<K, V>(keyFactory.newInstance(), valueFactory.newInstance());
+        return new PersistentSplitStorageEngine<>(keyFactory.newInstance(), valueFactory.newInstance());
       }
     };
   }

@@ -59,7 +59,7 @@ public class OffHeapBufferStorageEngine<K, V> extends PortabilityBasedStorageEng
 
       @Override
       public OffHeapBufferStorageEngine<K, V> newInstance() {
-        return new OffHeapBufferStorageEngine<K, V>(width, source, pageSize, keyPortability, valuePortability, thief, victim);
+        return new OffHeapBufferStorageEngine<>(width, source, pageSize, keyPortability, valuePortability, thief, victim);
       }
     };
   }
@@ -69,7 +69,7 @@ public class OffHeapBufferStorageEngine<K, V> extends PortabilityBasedStorageEng
 
       @Override
       public OffHeapBufferStorageEngine<K, V> newInstance() {
-        return new OffHeapBufferStorageEngine<K, V>(width, source, pageSize, keyPortability, valuePortability, thief, victim, compressThreshold);
+        return new OffHeapBufferStorageEngine<>(width, source, pageSize, keyPortability, valuePortability, thief, victim, compressThreshold);
       }
     };
   }
@@ -79,7 +79,7 @@ public class OffHeapBufferStorageEngine<K, V> extends PortabilityBasedStorageEng
 
       @Override
       public OffHeapBufferStorageEngine<K, V> newInstance() {
-        return new OffHeapBufferStorageEngine<K, V>(width, source, initialPageSize, maximalPageSize, keyPortability, valuePortability, thief, victim);
+        return new OffHeapBufferStorageEngine<>(width, source, initialPageSize, maximalPageSize, keyPortability, valuePortability, thief, victim);
       }
     };
   }
@@ -89,7 +89,7 @@ public class OffHeapBufferStorageEngine<K, V> extends PortabilityBasedStorageEng
 
       @Override
       public OffHeapBufferStorageEngine<K, V> newInstance() {
-        return new OffHeapBufferStorageEngine<K, V>(width, source, initialPageSize, maximalPageSize, keyPortability, valuePortability, thief, victim, compressThreshold);
+        return new OffHeapBufferStorageEngine<>(width, source, initialPageSize, maximalPageSize, keyPortability, valuePortability, thief, victim, compressThreshold);
       }
     };
   }

@@ -53,7 +53,7 @@ public class BasicSerializationTest {
   public void testComplexObject() {
     Portability<Serializable> test = new SerializablePortability();
 
-    HashMap<Integer, String> input = new HashMap<Integer, String>();
+    HashMap<Integer, String> input = new HashMap<>();
     input.put(1, "one");
     input.put(2, "two");
     input.put(3, "three");

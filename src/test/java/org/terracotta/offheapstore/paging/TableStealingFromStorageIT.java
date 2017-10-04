@@ -56,7 +56,8 @@ public class TableStealingFromStorageIT {
   public void testStealingFromOwnStorage() {
     PageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), MEGABYTES.toBytes(1), MEGABYTES.toBytes(1));
 
-    OffHeapHashMap<Integer, byte[]> selfStealer = new WriteLockedOffHeapClockCache<Integer, byte[]>(source, true, new SplitStorageEngine<Integer, byte[]>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<byte[]>(source, KILOBYTES.toBytes(16), ByteArrayPortability.INSTANCE, false, true)));
+    OffHeapHashMap<Integer, byte[]> selfStealer = new WriteLockedOffHeapClockCache<>(source, true, new SplitStorageEngine<>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<>(source, KILOBYTES
+      .toBytes(16), ByteArrayPortability.INSTANCE, false, true)));
 
     long seed = System.nanoTime();
     System.err.println("Random Seed = " + seed);
@@ -102,7 +103,8 @@ public class TableStealingFromStorageIT {
   public void testSelfStealingIsStable() throws IOException {
     PageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), MEGABYTES.toBytes(2), MEGABYTES.toBytes(1));
 
-    OffHeapHashMap<Integer, byte[]> selfStealer = new WriteLockedOffHeapClockCache<Integer, byte[]>(source, true, new SplitStorageEngine<Integer, byte[]>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<byte[]>(source, KILOBYTES.toBytes(16), ByteArrayPortability.INSTANCE, false, true)));
+    OffHeapHashMap<Integer, byte[]> selfStealer = new WriteLockedOffHeapClockCache<>(source, true, new SplitStorageEngine<>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<>(source, KILOBYTES
+      .toBytes(16), ByteArrayPortability.INSTANCE, false, true)));
 
     // failing seed value
     //long seed = 1302292028471110000L;
@@ -113,8 +115,8 @@ public class TableStealingFromStorageIT {
     int payloadSize = rndm.nextInt(KILOBYTES.toBytes(1));
     System.err.println("Payload Size = " + payloadSize);
 
-    List<Long> sizes = new ArrayList<Long>();
-    List<Long> tableSizes = new ArrayList<Long>();
+    List<Long> sizes = new ArrayList<>();
+    List<Long> tableSizes = new ArrayList<>();
 
     int terminalKey = 0;
     for (int key = 0; true; key++) {
@@ -151,7 +153,7 @@ public class TableStealingFromStorageIT {
     }
 
     if (shrinkCount != 0) {
-      Map<String, List<? extends Number>> data = new HashMap<String, List<? extends Number>>();
+      Map<String, List<? extends Number>> data = new HashMap<>();
       data.put("actual size", sizes);
       data.put("table size", tableSizes);
 
@@ -170,8 +172,8 @@ public class TableStealingFromStorageIT {
     private final List<List<? extends Number>> data;
 
     public LongListXYDataset(Map<String, List<? extends Number>> series) {
-      keys = new ArrayList<String>(series.size());
-      data = new ArrayList<List<? extends Number>>(series.size());
+      keys = new ArrayList<>(series.size());
+      data = new ArrayList<>(series.size());
 
       for (Entry<String, List<? extends Number>> e : series.entrySet()) {
         keys.add(e.getKey());

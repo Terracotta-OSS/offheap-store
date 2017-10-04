@@ -426,7 +426,7 @@ public abstract class AbstractOffHeapMapIT {
   public final void testDestroyFreesResources() {
     UpfrontAllocatingPageSource source = new UpfrontAllocatingPageSource(new OffHeapBufferSource(), 4 * 1024 * 1024, 4 * 1024 * 1024);
 
-    Collection<Map<Integer, byte[]>> maps = new ArrayList<Map<Integer, byte[]>>();
+    Collection<Map<Integer, byte[]>> maps = new ArrayList<>();
 
     int count = 0;
     while (true) {
@@ -437,8 +437,6 @@ public abstract class AbstractOffHeapMapIT {
           m.put(i, new byte[1024]);
         }
         count++;
-      } catch (OversizeMappingException e) {
-        break;
       } catch (IllegalArgumentException e) {
         break;
       }
@@ -598,7 +596,7 @@ public abstract class AbstractOffHeapMapIT {
     Map<Integer, byte[]> m = createOffHeapBufferMap(source);
 
     for (int i = 0; i < 100000; i++) {
-      Set<Integer> keySetCopy = new HashSet<Integer>(m.keySet());
+      Set<Integer> keySetCopy = new HashSet<>(m.keySet());
       doFill(m, i, new byte[i % 1024]);
       if (m.containsKey(i)) {
         Assert.assertNotNull(m.get(i));

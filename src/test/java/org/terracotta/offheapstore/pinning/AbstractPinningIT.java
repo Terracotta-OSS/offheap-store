@@ -367,7 +367,7 @@ public abstract class AbstractPinningIT extends PointerSizeParameterizedTest {
       }
     }
 
-    Collection<Callable<Void>> readers = new ArrayList<Callable<Void>>();
+    Collection<Callable<Void>> readers = new ArrayList<>();
     readers.add(new CacheAccessor(cache, lastPut + 1, lastPut * 10));
     readers.add(new CacheAccessor(cache, (lastPut * 10) + 1, lastPut * 20));
 

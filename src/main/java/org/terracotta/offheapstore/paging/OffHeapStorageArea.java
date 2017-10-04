@@ -64,7 +64,7 @@ public class OffHeapStorageArea {
   private final Allocator allocator;
   private final Random random = new Random();
 
-  private Deque<Collection<Page>> released = new LinkedList<Collection<Page>>();
+  private Deque<Collection<Page>> released = new LinkedList<>();
 
   /*
    * This map is only accessed by one thread on write due to write exclusion at
@@ -72,7 +72,7 @@ public class OffHeapStorageArea {
    * sufficient. Switching to a Hashtable/Collections.synchronizedMap(...) would
    * be bad however as we need concurrent read access still.
    */
-  private final Map<Integer, Page> pages = new ConcurrentHashMap<Integer, Page>(1, 0.75f, 1);
+  private final Map<Integer, Page> pages = new ConcurrentHashMap<>(1, 0.75f, 1);
 
   private final boolean thief;
   private final boolean victim;
@@ -244,7 +244,7 @@ public class OffHeapStorageArea {
               .slice().asReadOnlyBuffer();
       return new ByteBuffer[] { buffer };
     } else {
-      List<ByteBuffer> buffers = new ArrayList<ByteBuffer>(length / pageSize);
+      List<ByteBuffer> buffers = new ArrayList<>(length / pageSize);
       int remaining = length;
       while (remaining > 0) {
         ByteBuffer pageBuffer = pages.get(pageIndex).asByteBuffer().duplicate();
@@ -552,8 +552,8 @@ public class OffHeapStorageArea {
       ownerLock.lock();
     }
     try {
-      Collection<Page> recovered = new LinkedList<Page>();
-      Collection<Page> freed = new LinkedList<Page>();
+      Collection<Page> recovered = new LinkedList<>();
+      Collection<Page> freed = new LinkedList<>();
       /*
        * iterate backwards from top, and free until top is beneath tail page.
        */
@@ -573,7 +573,7 @@ public class OffHeapStorageArea {
           validatePages();
           break;
         } else {
-          Collection<Page> releasedPages = new ArrayList<Page>();
+          Collection<Page> releasedPages = new ArrayList<>();
           released.push(releasedPages);
           try {
             if (owner.evictAtAddress(remove, true) || moveAddressDown(remove)) {
@@ -678,7 +678,7 @@ public class OffHeapStorageArea {
         return false;
       } else {
         int initialSize = pages.size();
-        for (Page p : release(new LinkedList<Page>(Collections.singletonList(pages.get(pages.size() - 1))))) {
+        for (Page p : release(new LinkedList<>(Collections.singletonList(pages.get(pages.size() - 1))))) {
           freePage(p);
         }
         return pages.size() < initialSize;
@@ -714,7 +714,7 @@ public class OffHeapStorageArea {
     if (VALIDATING) {
       for (int i = 0; i < pages.size(); i++) {
         if (pages.get(i) == null) {
-          List<Integer> pageIndices = new ArrayList<Integer>(pages.keySet());
+          List<Integer> pageIndices = new ArrayList<>(pages.keySet());
           Collections.sort(pageIndices);
           throw new AssertionError("Page Indices " + pageIndices);
         }

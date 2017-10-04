@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,7 +42,7 @@ public class PersistentReadWriteLockedOffHeapHashMapFactory<K, V> implements Fac
   public PersistentReadWriteLockedOffHeapHashMapFactory(MappedPageSource tableSource, Factory<? extends PersistentStorageEngine<? super K, ? super V>> storageEngineFactory, int tableSize) {
     this(tableSource, storageEngineFactory, tableSize, true);
   }
-  
+
   public PersistentReadWriteLockedOffHeapHashMapFactory(MappedPageSource tableSource, Factory<? extends PersistentStorageEngine<? super K, ? super V>> storageEngineFactory, int tableSize, boolean bootstrap) {
     this.storageEngineFactory = storageEngineFactory;
     this.tableSource = tableSource;
@@ -54,7 +54,7 @@ public class PersistentReadWriteLockedOffHeapHashMapFactory<K, V> implements Fac
   public PersistentReadWriteLockedOffHeapHashMap<K, V> newInstance() {
     PersistentStorageEngine<? super K, ? super V> storageEngine = storageEngineFactory.newInstance();
     try {
-      return new PersistentReadWriteLockedOffHeapHashMap<K, V>(tableSource, storageEngine, tableSize, bootstrap);
+      return new PersistentReadWriteLockedOffHeapHashMap<>(tableSource, storageEngine, tableSize, bootstrap);
     } catch (RuntimeException e) {
       storageEngine.destroy();
       throw e;

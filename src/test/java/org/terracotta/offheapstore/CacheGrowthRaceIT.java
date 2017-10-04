@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -51,15 +51,15 @@ public class CacheGrowthRaceIT extends OffHeapAndDiskStorageEngineDependentTest 
   @Test
   public void testCrossSegmentGrowthCompetition() throws Exception {
     final int TASK_COUNT = 8;
-    
+
     PageSource source = createPageSource(1, MEGABYTES);
     Factory<? extends StorageEngine<Integer, byte[]>> factory = createFactory(source, new SerializablePortability(), ByteArrayPortability.INSTANCE);
-    final Map<Integer, byte[]> cache = new ConcurrentOffHeapClockCache<Integer, byte[]>(new UnlimitedPageSource(new OffHeapBufferSource()), factory);
+    final Map<Integer, byte[]> cache = new ConcurrentOffHeapClockCache<>(new UnlimitedPageSource(new OffHeapBufferSource()), factory);
     final byte[] large = new byte[KILOBYTES.toBytes(768)];
 
     ExecutorService executor = Executors.newCachedThreadPool();
-    
-    Collection<Callable<Void>> tasks = new ArrayList<Callable<Void>>();
+
+    Collection<Callable<Void>> tasks = new ArrayList<>();
     for (int i = 0; i < TASK_COUNT; i++) {
       final int index = i;
       tasks.add(new Callable<Void>() {
@@ -69,24 +69,24 @@ public class CacheGrowthRaceIT extends OffHeapAndDiskStorageEngineDependentTest 
           return null;
         }});
     }
-    
+
     for (Future<?> result : executor.invokeAll(tasks, 100000, SECONDS)) {
       result.get();
     }
   }
-  
+
   @Test
   public void testExpectedFailureCrossSegmentGrowthCompetition() throws Exception {
     final int TASK_COUNT = 8;
-    
+
     PageSource source = createPageSource(1, MEGABYTES);
     Factory<? extends StorageEngine<String, byte[]>> factory = createFactory(source, StringPortability.INSTANCE, ByteArrayPortability.INSTANCE);
-    final Map<String, byte[]> cache = new ConcurrentOffHeapClockCache<String, byte[]>(source, factory);
+    final Map<String, byte[]> cache = new ConcurrentOffHeapClockCache<>(source, factory);
     final byte[] large = new byte[MEGABYTES.toBytes(2)];
 
     ExecutorService executor = Executors.newCachedThreadPool();
-    
-    Collection<Callable<Void>> tasks = new ArrayList<Callable<Void>>();
+
+    Collection<Callable<Void>> tasks = new ArrayList<>();
     for (int i = 0; i < TASK_COUNT; i++) {
       final int index = i;
       tasks.add(new Callable<Void>() {
@@ -101,7 +101,7 @@ public class CacheGrowthRaceIT extends OffHeapAndDiskStorageEngineDependentTest 
           return null;
         }});
     }
-    
+
     for (Future<?> result : executor.invokeAll(tasks, 100000, SECONDS)) {
       result.get();
     }

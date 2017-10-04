@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,19 +31,19 @@ import java.util.concurrent.atomic.AtomicLong;
  * references to the allocated buffers and an associated reference queue.  An
  * {@link AtomicLong} is then used to track number of available bytes for
  * allocation.
- * 
+ *
  * @author Chris Dennis
  */
 public class PhantomReferenceLimitedPageSource implements PageSource {
 
-  private final ReferenceQueue<ByteBuffer> allocatedBuffers = new ReferenceQueue<ByteBuffer>();
-  private final Map<PhantomReference<ByteBuffer>, Integer> bufferSizes = new ConcurrentHashMap<PhantomReference<ByteBuffer>, Integer>();
+  private final ReferenceQueue<ByteBuffer> allocatedBuffers = new ReferenceQueue<>();
+  private final Map<PhantomReference<ByteBuffer>, Integer> bufferSizes = new ConcurrentHashMap<>();
 
   private final AtomicLong max;
 
   /**
    * Create a source that will allocate at most {@code max} bytes.
-   * 
+   *
    * @param max the maximum total size of all available buffers
    */
   public PhantomReferenceLimitedPageSource(long max) {
@@ -70,7 +70,7 @@ public class PhantomReferenceLimitedPageSource implements PageSource {
             } catch (OutOfMemoryError e) {
               return null;
             }
-            bufferSizes.put(new PhantomReference<ByteBuffer>(buffer, allocatedBuffers), size);
+            bufferSizes.put(new PhantomReference<>(buffer, allocatedBuffers), size);
             return new Page(buffer, owner);
           }
       }
@@ -91,7 +91,7 @@ public class PhantomReferenceLimitedPageSource implements PageSource {
   private void processQueue() {
       while (true) {
           Reference<?> ref = allocatedBuffers.poll();
-          
+
           if (ref == null) {
               return;
           } else {

@@ -38,13 +38,13 @@ public class ConcurrentWriteLockedPinningIT extends AbstractPinningIT {
   protected PinnableCache<Integer, Integer> createPinnedIntegerCache(PageSource source) {
     Assume.assumeThat(getPointerSize(), Is.is(PointerSize.INT));
     Factory<? extends StorageEngine<Integer, Integer>> storageEngineFactory = SplitStorageEngine.createFactory(IntegerStorageEngine.createFactory(), IntegerStorageEngine.createFactory());
-    return new ConcurrentWriteLockedOffHeapClockCache<Integer, Integer>(source, storageEngineFactory);
+    return new ConcurrentWriteLockedOffHeapClockCache<>(source, storageEngineFactory);
   }
 
   @Override
   protected PinnableCache<Integer, byte[]> createPinnedByteArrayCache(PageSource source) {
     Factory<OffHeapBufferStorageEngine<Integer, byte[]>> storageEngineFactory = OffHeapBufferStorageEngine.createFactory(getPointerSize(), source, KILOBYTES.toBytes(1), new SerializablePortability(), ByteArrayPortability.INSTANCE, false, false);
-    return new ConcurrentWriteLockedOffHeapClockCache<Integer, byte[]>(source, storageEngineFactory);
+    return new ConcurrentWriteLockedOffHeapClockCache<>(source, storageEngineFactory);
   }
 
   @Override

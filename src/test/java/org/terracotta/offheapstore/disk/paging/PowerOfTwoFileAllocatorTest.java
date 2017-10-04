@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,7 +44,7 @@ public class PowerOfTwoFileAllocatorTest {
   public void testUniformSizedFrees() {
     PowerOfTwoFileAllocator test = new PowerOfTwoFileAllocator();
 
-    List<Long> allocated = new ArrayList<Long>();
+    List<Long> allocated = new ArrayList<>();
 
     for (int i = 0; i < 100; i++) {
       allocated.add(test.allocate(1));
@@ -60,9 +60,9 @@ public class PowerOfTwoFileAllocatorTest {
   @Test
   public void testUniformRepeatedAllocFree() {
     PowerOfTwoFileAllocator test = new PowerOfTwoFileAllocator();
-    
+
     for (long i = 1; i < Integer.highestOneBit(Integer.MAX_VALUE); i <<= 1) {
-      List<Long> pointers = new ArrayList<Long>();
+      List<Long> pointers = new ArrayList<>();
       for (int k = 0; k < 16; k++) {
         long p = test.allocate(i);
         pointers.add(p);
@@ -78,7 +78,7 @@ public class PowerOfTwoFileAllocatorTest {
   public void testRandomAllocFree() {
     PowerOfTwoFileAllocator test = new PowerOfTwoFileAllocator();
 
-    List<AllocatedRegion> allocated = new ArrayList<AllocatedRegion>();
+    List<AllocatedRegion> allocated = new ArrayList<>();
     Random rndm = new Random();
 
     for (int i = 0; i < 100; i++) {

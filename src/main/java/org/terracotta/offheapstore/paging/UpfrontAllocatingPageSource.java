@@ -79,13 +79,13 @@ public class UpfrontAllocatingPageSource implements PageSource {
       }
     };
 
-    private final SortedMap<Long, Runnable> risingThresholds = new TreeMap<Long, Runnable>();
-    private final SortedMap<Long, Runnable> fallingThresholds = new TreeMap<Long, Runnable>();
+    private final SortedMap<Long, Runnable> risingThresholds = new TreeMap<>();
+    private final SortedMap<Long, Runnable> fallingThresholds = new TreeMap<>();
 
-    private final List<PowerOfTwoAllocator> sliceAllocators = new ArrayList<PowerOfTwoAllocator>();
-    private final List<PowerOfTwoAllocator> victimAllocators = new ArrayList<PowerOfTwoAllocator>();
+    private final List<PowerOfTwoAllocator> sliceAllocators = new ArrayList<>();
+    private final List<PowerOfTwoAllocator> victimAllocators = new ArrayList<>();
 
-    private final List<ByteBuffer> buffers = new ArrayList<ByteBuffer>();
+    private final List<ByteBuffer> buffers = new ArrayList<>();
 
     /*
      * TODO : currently the TreeSet along with the comparator above works for the
@@ -94,7 +94,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
      * to using an AATreeSet subclass - that would also require me to finish
      * writing the subSet implementation for that class.
      */
-    private final List<NavigableSet<Page>> victims = new ArrayList<NavigableSet<Page>>();
+    private final List<NavigableSet<Page>> victims = new ArrayList<>();
 
     private volatile int availableSet = ~0;
 
@@ -156,7 +156,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
         for (ByteBuffer buffer : allocateBackingBuffers(source, toAllocate, maxChunk, minChunk, fixed)) {
           sliceAllocators.add(new PowerOfTwoAllocator(buffer.capacity()));
           victimAllocators.add(new PowerOfTwoAllocator(buffer.capacity()));
-          victims.add(new TreeSet<Page>(REGION_COMPARATOR));
+          victims.add(new TreeSet<>(REGION_COMPARATOR));
           buffers.add(buffer);
         }
     }
@@ -203,8 +203,8 @@ public class UpfrontAllocatingPageSource implements PageSource {
       PowerOfTwoAllocator victimAllocator = null;
       PowerOfTwoAllocator sliceAllocator = null;
       List<Page> targets = Collections.emptyList();
-      Collection<AllocatedRegion> tempHolds = new ArrayList<AllocatedRegion>();
-      Map<OffHeapStorageArea, Collection<Page>> releases = new IdentityHashMap<OffHeapStorageArea, Collection<Page>>();
+      Collection<AllocatedRegion> tempHolds = new ArrayList<>();
+      Map<OffHeapStorageArea, Collection<Page>> releases = new IdentityHashMap<>();
 
       synchronized (this) {
         for (int i = 0; i < victimAllocators.size(); i++) {
@@ -240,7 +240,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
           OffHeapStorageArea a = p.binding();
           Collection<Page> c = releases.get(a);
           if (c == null) {
-            c = new LinkedList<Page>();
+            c = new LinkedList<>();
             c.add(p);
             releases.put(a, c);
           } else {
@@ -253,14 +253,14 @@ public class UpfrontAllocatingPageSource implements PageSource {
        * Drop the page source synchronization here to prevent deadlock against
        * map/cache threads.
        */
-      Collection<Page> results = new LinkedList<Page>();
+      Collection<Page> results = new LinkedList<>();
       for (Entry<OffHeapStorageArea, Collection<Page>> e : releases.entrySet()) {
         OffHeapStorageArea a = e.getKey();
         Collection<Page> p = e.getValue();
         results.addAll(a.release(p));
       }
 
-      List<Page> failedReleases = new ArrayList<Page>();
+      List<Page> failedReleases = new ArrayList<>();
       synchronized (this) {
         for (AllocatedRegion r : tempHolds) {
           sliceAllocator.free(r.address, r.size);
@@ -300,8 +300,8 @@ public class UpfrontAllocatingPageSource implements PageSource {
     }
 
     private List<Page> findVictimPages(int chunk, int address, int size) {
-      return new ArrayList<Page>(victims.get(chunk).subSet(new Page(null, -1, address, null),
-                                                     new Page(null, -1, address + size, null)));
+      return new ArrayList<>(victims.get(chunk).subSet(new Page(null, -1, address, null),
+        new Page(null, -1, address + size, null)));
     }
 
     private Page allocateFromFree(int size, boolean victim, OffHeapStorageArea owner) {
@@ -500,14 +500,14 @@ public class UpfrontAllocatingPageSource implements PageSource {
 
       final PrintStream allocatorLog = createAllocatorLog(toAllocate, maxChunk, minChunk);
 
-      final Collection<ByteBuffer> buffers = new ArrayList<ByteBuffer>((int)(toAllocate / maxChunk + 10)); // guess the number of buffers and add some padding just in case
+      final Collection<ByteBuffer> buffers = new ArrayList<>((int) (toAllocate / maxChunk + 10)); // guess the number of buffers and add some padding just in case
 
       try {
         if (allocatorLog != null) {
           allocatorLog.printf("timestamp,threadid,duration,size,physfree,totalswap,freeswap,committed%n");
         }
 
-        List<Future<Collection<ByteBuffer>>> futures = new ArrayList<Future<Collection<ByteBuffer>>>((int)(toAllocate / maxChunk + 1));
+        List<Future<Collection<ByteBuffer>>> futures = new ArrayList<>((int) (toAllocate / maxChunk + 1));
 
         ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         try {
@@ -560,7 +560,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
     long allocated = 0;
     long currentChunkSize = toAllocate;
 
-    Collection<ByteBuffer> buffers = new ArrayList<ByteBuffer>();
+    Collection<ByteBuffer> buffers = new ArrayList<>();
 
     while (allocated < toAllocate) {
       long blockStart = System.nanoTime();

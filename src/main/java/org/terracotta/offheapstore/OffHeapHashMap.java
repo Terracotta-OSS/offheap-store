@@ -106,7 +106,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
 
   protected final PageSource tableSource;
 
-  private final WeakIdentityHashMap<IntBuffer, PendingPage> pendingTableFrees = new WeakIdentityHashMap<IntBuffer, PendingPage>(new ReaperTask<PendingPage>() {
+  private final WeakIdentityHashMap<IntBuffer, PendingPage> pendingTableFrees = new WeakIdentityHashMap<>(new ReaperTask<PendingPage>() {
     @Override
     public void reap(PendingPage pending) {
       freeTable(pending.tablePage);
@@ -803,7 +803,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
       return Collections.emptyMap();
     }
 
-    Map<K, V> removed = new HashMap<K, V>();
+    Map<K, V> removed = new HashMap<>();
 
     hashtable.position(indexFor(spread(hash)));
 
