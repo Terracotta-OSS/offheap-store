@@ -63,7 +63,7 @@ public class PowerOfTwoAllocator extends AATreeSet<Region> {
     if (r == null) {
       return -1;
     }
-    Region current = removeAndReturn(Integer.valueOf(r.start()));
+    Region current = removeAndReturn(r.start());
     Region newRange = current.remove(r);
     if (newRange != null) {
       insert(current);
@@ -108,7 +108,7 @@ public class PowerOfTwoAllocator extends AATreeSet<Region> {
   }
 
   public void claim(int address, int size) {
-    Region current = removeAndReturn(Integer.valueOf(address));
+    Region current = removeAndReturn(address);
     Region r = new Region(address, address + size - 1);
     Region newRange = current.remove(r);
     if (newRange != null) {
@@ -147,10 +147,10 @@ public class PowerOfTwoAllocator extends AATreeSet<Region> {
 
   private void free(Region r) {
     // Step 1 : Check if the previous number is present, if so add to the same Range.
-    Region prev = removeAndReturn(Integer.valueOf(r.start() - 1));
+    Region prev = removeAndReturn(r.start() - 1);
     if (prev != null) {
       prev.merge(r);
-      Region next = removeAndReturn(Integer.valueOf(r.end() + 1));
+      Region next = removeAndReturn(r.end() + 1);
       if (next != null) {
         prev.merge(next);
       }
@@ -159,7 +159,7 @@ public class PowerOfTwoAllocator extends AATreeSet<Region> {
     }
 
     // Step 2 : Check if the next number is present, if so add to the same Range.
-    Region next = removeAndReturn(Integer.valueOf(r.end() + 1));
+    Region next = removeAndReturn(r.end() + 1);
     if (next != null) {
       next.merge(r);
       insert(next);
@@ -172,10 +172,10 @@ public class PowerOfTwoAllocator extends AATreeSet<Region> {
 
   private boolean tryFree(Region r) {
     // Step 1 : Check if the previous number is present, if so add to the same Range.
-    Region prev = removeAndReturn(Integer.valueOf(r.start() - 1));
+    Region prev = removeAndReturn(r.start() - 1);
     if (prev != null) {
       if (prev.tryMerge(r)) {
-        Region next = removeAndReturn(Integer.valueOf(r.end() + 1));
+        Region next = removeAndReturn(r.end() + 1);
         if (next != null) {
           prev.merge(next);
         }
@@ -188,7 +188,7 @@ public class PowerOfTwoAllocator extends AATreeSet<Region> {
     }
 
     // Step 2 : Check if the next number is present, if so add to the same Range.
-    Region next = removeAndReturn(Integer.valueOf(r.end() + 1));
+    Region next = removeAndReturn(r.end() + 1);
     if (next != null) {
       if (next.tryMerge(r)) {
         insert(next);

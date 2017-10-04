@@ -89,7 +89,7 @@ public class GetFieldTest {
         throw new Error();
       } catch (IllegalArgumentException ex) {
       }
-      if ((fields.get("z", false) != true)
+      if ((!fields.get("z", false))
               || (fields.get("b", (byte) 0) != 5)
               || (fields.get("c", '0') != '5')
               || (fields.get("s", (short) 0) != 5)
@@ -120,7 +120,7 @@ public class GetFieldTest {
     private void readObject(ObjectInputStream in)
             throws IOException, ClassNotFoundException {
       ObjectInputStream.GetField fields = in.readFields();
-      if ((fields.get("z", false) != true)
+      if ((!fields.get("z", false))
               || (fields.get("b", (byte) 0) != 5)
               || (fields.get("c", '0') != '5')
               || (fields.get("s", (short) 0) != 5)

@@ -40,19 +40,19 @@ public class EnumTest {
   public void basicInstanceSerialization() {
     Portability<Serializable> p = new SerializablePortability();
 
-    Assert.assertThat(p.decode(p.encode(People.Alice)), IsSame.<Serializable>sameInstance(People.Alice));
-    Assert.assertThat(p.decode(p.encode(People.Bob)), IsSame.<Serializable>sameInstance(People.Bob));
-    Assert.assertThat(p.decode(p.encode(People.Eve)), IsSame.<Serializable>sameInstance(People.Eve));
+    Assert.assertThat(p.decode(p.encode(People.Alice)), IsSame.sameInstance(People.Alice));
+    Assert.assertThat(p.decode(p.encode(People.Bob)), IsSame.sameInstance(People.Bob));
+    Assert.assertThat(p.decode(p.encode(People.Eve)), IsSame.sameInstance(People.Eve));
   }
 
   @Test
   public void classSerialization() {
     Portability<Serializable> p = new SerializablePortability();
 
-    Assert.assertThat(p.decode(p.encode(Enum.class)), IsSame.<Serializable>sameInstance(Enum.class));
-    Assert.assertThat(p.decode(p.encode(Dogs.Handel.getClass())), IsSame.<Serializable>sameInstance(Dogs.Handel.getClass()));
-    Assert.assertThat(p.decode(p.encode(Dogs.Cassie.getClass())), IsSame.<Serializable>sameInstance(Dogs.Cassie.getClass()));
-    Assert.assertThat(p.decode(p.encode(Dogs.Penny.getClass())), IsSame.<Serializable>sameInstance(Dogs.Penny.getClass()));
+    Assert.assertThat(p.decode(p.encode(Enum.class)), IsSame.sameInstance(Enum.class));
+    Assert.assertThat(p.decode(p.encode(Dogs.Handel.getClass())), IsSame.sameInstance(Dogs.Handel.getClass()));
+    Assert.assertThat(p.decode(p.encode(Dogs.Cassie.getClass())), IsSame.sameInstance(Dogs.Cassie.getClass()));
+    Assert.assertThat(p.decode(p.encode(Dogs.Penny.getClass())), IsSame.sameInstance(Dogs.Penny.getClass()));
   }
 
   @Test

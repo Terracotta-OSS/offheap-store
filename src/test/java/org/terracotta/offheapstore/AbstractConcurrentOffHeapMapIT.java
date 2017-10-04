@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -87,18 +87,18 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
       //expected
     }
   }
-  
+
   @Test
   public final void testConcurrentMap() {
     long randomSeed = System.nanoTime();
     System.err.println(this.getClass() + ".testConcurrentMap random seed = " + randomSeed);
     Random rndm = new Random(randomSeed);
-    
+
     ConcurrentMap<SpecialInteger, SpecialInteger> m = createMap(generator);
-    
+
     SpecialInteger keyOne = generator.generate(rndm.nextInt());
     SpecialInteger valueOne = generator.generate(rndm.nextInt());
-    
+
     assertThat(m.putIfAbsent(keyOne, valueOne), nullValue());
     assertTrue(m.containsKey(keyOne));
     assertThat(m.putIfAbsent(keyOne, generator.generate(rndm.nextInt())), is(valueOne));
@@ -108,12 +108,12 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
     assertTrue(m.containsKey(keyOne));
     assertTrue(m.containsKey(keyOne));
     assertThat(m.get(keyOne), is(valueOne));
-    
+
     SpecialInteger valueTwo = generator.generate(5555);
     assertTrue(m.replace(keyOne, valueOne, valueTwo));
     assertTrue(m.replace(keyOne, valueTwo, valueOne));
     assertThat(m.get(keyOne), is(valueOne));
-    
+
     SpecialInteger keyTwo;
     do {
       keyTwo = generator.generate(rndm.nextInt());
@@ -130,7 +130,7 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
     do {
       valueThree = generator.generate(rndm.nextInt());
     } while (valueOne.equals(valueThree));
-    
+
     assertFalse(m.remove(keyOne, valueThree));
     assertThat(m.get(keyOne), is(valueOne));
     assertTrue(m.containsKey(keyOne));
@@ -140,7 +140,7 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
     assertThat(m.get(keyOne), nullValue());
     assertFalse(m.containsKey(keyOne));
     assertTrue(m.isEmpty());
-    
+
     SpecialInteger keyThree = generator.generate(rndm.nextInt());
     SpecialInteger valueFour = generator.generate(rndm.nextInt());
     m.putIfAbsent(keyThree, valueFour);
@@ -237,7 +237,7 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
 
     Assert.assertThat(e.getValue(), anyOf(equalTo(generator.generate(2)), equalTo(generator.generate(3))));
   }
-  
+
   @Test
   public final void testConcurrentIterationAndMutation() {
     final ConcurrentMap<SpecialInteger, SpecialInteger> m = createMap(generator);
@@ -263,9 +263,9 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
         }
       }
     };
-    
+
     mutator.start();
-    
+
     boolean interrupted = false;
     try {
       for (int i = 0; i < 10; i++) {
@@ -329,9 +329,9 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
         }
       }
     };
-    
+
     mutator.start();
-    
+
     boolean interrupted = false;
     try {
       for (int i = 0; i < 10; i++) {
@@ -339,7 +339,7 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
         for (Map.Entry<Integer, byte[]> e : m.entrySet()) {
           Integer key = e.getKey();
           byte[] value = e.getValue();
-          Assert.assertEquals(key.intValue() >>> 3, value.length);
+          Assert.assertEquals(key >>> 3, value.length);
           for (int j = 0; j < value.length; j++) {
             Assert.assertEquals(j % 10, value[j]);
           }
@@ -368,7 +368,7 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
         Thread.currentThread().interrupt();
       }
     }
-    
+
     Throwable mutatorException = mutatorExceptionRef.get();
     if (mutatorException != null) {
       throw new AssertionError(mutatorException);
@@ -406,9 +406,9 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
         }
       }
     };
-    
+
     mutator.start();
-    
+
     boolean interrupted = false;
     try {
       for (int i = 0; i < 10; i++) {
@@ -416,7 +416,7 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
         for (Map.Entry<Integer, byte[]> e : m.entrySet()) {
           Integer key = e.getKey();
           byte[] value = e.getValue();
-          Assert.assertEquals(key.intValue() >>> 3, value.length);
+          Assert.assertEquals(key >>> 3, value.length);
           for (int j = 0; j < value.length; j++) {
             Assert.assertEquals(j % 10, value[j]);
           }
@@ -445,20 +445,20 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
         Thread.currentThread().interrupt();
       }
     }
-    
+
     Throwable mutatorException = mutatorExceptionRef.get();
     if (mutatorException != null) {
       throw new AssertionError(mutatorException);
     }
   }
-  
+
   @Test
   public void testConcurrentUpdateOfKeyWhileIterating() {
     final Map<SpecialInteger, SpecialInteger> m = createMap(generator);
 
     assumeThat(m, not(either(instanceOf(AbstractConcurrentOffHeapCache.class))
                     .or(instanceOf(AbstractOffHeapClockCache.class))));
-    
+
     m.put(generator.generate(1024), generator.generate(1024));
     m.put(generator.generate(1), generator.generate(1));
 
@@ -485,7 +485,7 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
     private final Throwable[] failure;
     private final Map<?, ?> map;
     private final int maximumSize;
-    
+
     private int previousSize = 0;
 
     SubCollectionTester(Map<?, ?> map, int max, Throwable[] failure) {
@@ -493,7 +493,7 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
       this.map = map;
       this.maximumSize = max;
     }
-    
+
     private boolean check(int size) {
       if (size < previousSize) throw new AssertionError("Map has shrunk?");
       if (size > maximumSize) throw new AssertionError("Max bigger than possible?");
@@ -517,6 +517,6 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
         failure[0] = t;
       }
     }
-    
+
   }
 }

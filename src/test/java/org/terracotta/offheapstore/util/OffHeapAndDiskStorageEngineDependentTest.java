@@ -94,7 +94,7 @@ public abstract class OffHeapAndDiskStorageEngineDependentTest extends StorageEn
       @Override
       public <K, V> Factory<FileBackedStorageEngine<K, V>> createStorageEngineFactory(PageSource source, Portability<? super K> keyPortability, Portability<? super V> valuePortability, boolean thief, boolean victim) {
         if (!thief && !victim) {
-          return FileBackedStorageEngine.<K, V>createFactory((MappedPageSource) source, 1024, MemoryUnit.BYTES, keyPortability, valuePortability);
+          return FileBackedStorageEngine.createFactory((MappedPageSource) source, 1024, MemoryUnit.BYTES, keyPortability, valuePortability);
         } else {
           throw new AssumptionViolatedException("FileBackedStorageEngine doesn't support stealing");
         }

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -90,7 +90,7 @@ public class AATreeFileAllocator extends AATreeSet<Region> {
       } else if (magic != MAGIC_REGION) {
         throw new IOException("Invalid magic number");
       }
-      
+
       long start = input.readLong();
       long end = input.readLong();
       Region r = new Region(start, end);
@@ -98,7 +98,7 @@ public class AATreeFileAllocator extends AATreeSet<Region> {
       freed(r);
     }
   }
-  
+
   public long allocate(long size) {
     if (Long.bitCount(size) != 1) {
       size = Long.highestOneBit(size) << 1;
@@ -108,7 +108,7 @@ public class AATreeFileAllocator extends AATreeSet<Region> {
     if (r == null) {
       return -1;
     }
-    Region current = removeAndReturn(Long.valueOf(r.start()));
+    Region current = removeAndReturn(r.start());
     Region newRange = current.remove(r);
     if (newRange != null) {
       add(current);
@@ -124,14 +124,14 @@ public class AATreeFileAllocator extends AATreeSet<Region> {
     if (Long.bitCount(length) != 1) {
       length = Long.highestOneBit(length) << 1;
     }
-    
+
     if (length != 0) {
       Region r = new Region(address, address + length - 1);
       free(r);
       freed(r);
     }
   }
-  
+
   @Override
   public Region removeAndReturn(Object o) {
       Region r = super.removeAndReturn(o);
@@ -155,7 +155,7 @@ public class AATreeFileAllocator extends AATreeSet<Region> {
   public long occupied() {
     return occupied;
   }
-  
+
   public long capacity() {
     return capacity;
   }
@@ -170,10 +170,10 @@ public class AATreeFileAllocator extends AATreeSet<Region> {
 
   private void free(Region r) {
     // Step 1 : Check if the previous number is present, if so add to the same Range.
-    Region prev = removeAndReturn(Long.valueOf(r.start() - 1));
+    Region prev = removeAndReturn(r.start() - 1);
     if (prev != null) {
       prev.merge(r);
-      Region next = removeAndReturn(Long.valueOf(r.end() + 1));
+      Region next = removeAndReturn(r.end() + 1);
       if (next != null) {
         prev.merge(next);
       }
@@ -182,7 +182,7 @@ public class AATreeFileAllocator extends AATreeSet<Region> {
     }
 
     // Step 2 : Check if the next number is present, if so add to the same Range.
-    Region next = removeAndReturn(Long.valueOf(r.end() + 1));
+    Region next = removeAndReturn(r.end() + 1);
     if (next != null) {
       next.merge(r);
       add(next);
@@ -192,7 +192,7 @@ public class AATreeFileAllocator extends AATreeSet<Region> {
     // Step 3: Add a new range for just this number.
     add(r);
   }
-  
+
   /**
    * Find a region of the given size.
    */

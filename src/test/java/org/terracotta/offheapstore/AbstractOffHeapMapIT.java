@@ -127,7 +127,7 @@ public abstract class AbstractOffHeapMapIT {
       //expected
     }
     try {
-      map.putAll(Collections.<SpecialInteger, SpecialInteger>singletonMap(null, generator.generate(1)));
+      map.putAll(Collections.singletonMap(null, generator.generate(1)));
       fail("Expected NullPointerException");
     } catch (NullPointerException e) {
       //expected
@@ -517,7 +517,7 @@ public abstract class AbstractOffHeapMapIT {
     }
 
     m.clear();
-    m.putAll(Collections.<SpecialInteger, SpecialInteger>emptyMap());
+    m.putAll(Collections.emptyMap());
 
     try {
       m.put(generator.generate(1), generator.generate(1));

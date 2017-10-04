@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,7 +49,7 @@ public class EvictionListenerIT {
     Map<Long, String> map = new ConcurrentOffHeapClockCache<Long, String>(source, LongStorageEngine.createFactory(OffHeapBufferHalfStorageEngine.createFactory(source, 128, StringPortability.INSTANCE)), listener);
 
     for (long i = 0; i < 2000L; i++) {
-      map.put(Long.valueOf(i), Long.toString(i));
+      map.put(i, Long.toString(i));
     }
 
     Set<Long> evictedKeys = listener.evictedKeys();
@@ -67,7 +67,7 @@ public class EvictionListenerIT {
     Map<Long, String> map = new ConcurrentWriteLockedOffHeapClockCache<Long, String>(source, LongStorageEngine.createFactory(OffHeapBufferHalfStorageEngine.createFactory(source, 128, StringPortability.INSTANCE)), listener);
 
     for (long i = 0; i < 2000L; i++) {
-      map.put(Long.valueOf(i), Long.toString(i));
+      map.put(i, Long.toString(i));
     }
 
     Set<Long> evictedKeys = listener.evictedKeys();
@@ -86,7 +86,7 @@ public class EvictionListenerIT {
 
     for (long i = 0; i < 2000L; i++) {
       try {
-        map.put(Long.valueOf(i), Long.toString(i));
+        map.put(i, Long.toString(i));
       } catch (NullPointerException e) {
         //ignore
       }
@@ -107,7 +107,7 @@ public class EvictionListenerIT {
 
     for (long i = 0; i < 2000L; i++) {
       try {
-        map.put(Long.valueOf(i), Long.toString(i));
+        map.put(i, Long.toString(i));
       } catch (NullPointerException e) {
         //ignore
       }
@@ -128,7 +128,7 @@ public class EvictionListenerIT {
 
     long i = 0;
     while (listener.evictedKeys().isEmpty()) {
-      victim.put(Long.valueOf(i), Long.toString(i));
+      victim.put(i, Long.toString(i));
       i++;
     }
     listener.evictedKeys().clear();
@@ -139,7 +139,7 @@ public class EvictionListenerIT {
     try {
       i = 0;
       while (true) {
-        thief.put(Long.valueOf(i), Long.toString(i));
+        thief.put(i, Long.toString(i));
         i++;
       }
     } catch (OversizeMappingException e) {
@@ -159,7 +159,7 @@ public class EvictionListenerIT {
 
     long i = 0;
     while (listener.evictedKeys().isEmpty()) {
-      victim.put(Long.valueOf(i), Long.toString(i));
+      victim.put(i, Long.toString(i));
       i++;
     }
     listener.evictedKeys().clear();
@@ -170,7 +170,7 @@ public class EvictionListenerIT {
     try {
       i = 0;
       while (true) {
-        thief.put(Long.valueOf(i++), Long.toString(i));
+        thief.put(i++, Long.toString(i));
       }
     } catch (OversizeMappingException e) {
       //ignore

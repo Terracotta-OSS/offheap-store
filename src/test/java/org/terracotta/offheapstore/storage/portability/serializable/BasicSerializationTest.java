@@ -126,9 +126,9 @@ public class BasicSerializationTest {
     public Object invoke(Object proxy, Method method, Object[] args)
             throws Throwable {
       if (method.equals(fooMethod)) {
-        return Integer.valueOf(foo);
+        return foo;
       } else if (method.equals(barMethod)) {
-        return Float.valueOf(bar);
+        return bar;
       } else {
         throw new UnsupportedOperationException();
       }

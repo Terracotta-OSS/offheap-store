@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -62,15 +62,15 @@ public class IntegerStorageEngineIT {
       Assert.assertNull(map.put(k, v));
       Assert.assertTrue(map.containsKey(k));
       Assert.assertEquals(v.intValue(), map.get(k).intValue());
-      Assert.assertTrue(map.containsValue(v.intValue()));
+      Assert.assertTrue(map.containsValue(v));
       Assert.assertTrue(map.keySet().contains(k));
-      Assert.assertTrue(map.values().contains(v.intValue()));
+      Assert.assertTrue(map.values().contains(v));
     }
 
     Assert.assertEquals(TEST_CASES.length, map.size());
 
     for (Integer k : TEST_CASES) {
-      Assert.assertNotNull(map.remove(k).intValue());
+      Assert.assertNotNull(map.remove(k));
     }
   }
 

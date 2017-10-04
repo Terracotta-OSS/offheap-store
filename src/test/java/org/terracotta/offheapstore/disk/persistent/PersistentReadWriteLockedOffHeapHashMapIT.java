@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,7 +47,7 @@ public class PersistentReadWriteLockedOffHeapHashMapIT extends AbstractDiskTest 
     PersistentReadWriteLockedOffHeapHashMap<Integer, Integer> map = new PersistentReadWriteLockedOffHeapHashMap<Integer, Integer>(new MappedPageSource(dataFile), new PersistentSplitStorageEngine<Integer, Integer>(new PersistentIntegerStorageEngine(), new PersistentIntegerStorageEngine()), true);
     try {
       for (int i = 0; i < 100; i++) {
-        map.put(Integer.valueOf(i), Integer.valueOf(i));
+        map.put(i, i);
       }
 
       ByteArrayOutputStream bout = new ByteArrayOutputStream();
@@ -95,7 +95,7 @@ public class PersistentReadWriteLockedOffHeapHashMapIT extends AbstractDiskTest 
     PersistentReadWriteLockedOffHeapHashMap<Integer, byte[]> map = new PersistentReadWriteLockedOffHeapHashMap<Integer, byte[]>(source, new FileBackedStorageEngine<Integer, byte[]>(source, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), PersistentByteArrayPortability.INSTANCE), true);
     try {
       for (int i = 0; i < 100; i++) {
-        map.put(Integer.valueOf(i), new byte[i]);
+        map.put(i, new byte[i]);
       }
 
       ByteArrayOutputStream bout = new ByteArrayOutputStream();
@@ -144,7 +144,7 @@ public class PersistentReadWriteLockedOffHeapHashMapIT extends AbstractDiskTest 
     PersistentReadWriteLockedOffHeapHashMap<Integer, Serializable> map = new PersistentReadWriteLockedOffHeapHashMap<Integer, Serializable>(source, new FileBackedStorageEngine<Serializable, Serializable>(source, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), new PersistentSerializablePortability()), true);
     try {
       for (int i = 0; i < 100; i++) {
-        map.put(Integer.valueOf(i), "Hello World");
+        map.put(i, "Hello World");
       }
 
       ByteArrayOutputStream bout = new ByteArrayOutputStream();
@@ -193,7 +193,7 @@ public class PersistentReadWriteLockedOffHeapHashMapIT extends AbstractDiskTest 
     PersistentReadWriteLockedOffHeapHashMap<Number, Serializable> map = new PersistentReadWriteLockedOffHeapHashMap<Number, Serializable>(source, new FileBackedStorageEngine<Serializable, Serializable>(source, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), new PersistentSerializablePortability()), true);
     try {
       for (int i = 0; i < 100; i++) {
-        map.put(Integer.valueOf(i), "Hello World");
+        map.put(i, "Hello World");
       }
 
       ByteArrayOutputStream bout = new ByteArrayOutputStream();
@@ -227,17 +227,17 @@ public class PersistentReadWriteLockedOffHeapHashMapIT extends AbstractDiskTest 
       for (int i = 0; i < 100; i++) {
         Assert.assertEquals("Hello World", clone.get(i));
       }
-      
+
       for (long i = 0L; i < 100L; i++) {
-        clone.put(Long.valueOf(i), "Hello World");
+        clone.put(i, "Hello World");
       }
-      
+
       Assert.assertEquals(200, clone.size());
-      
+
       for (int i = 0; i < 100; i++) {
         Assert.assertEquals("Hello World", clone.get(i));
       }
-      
+
       for (long i = 0L; i < 100L; i++) {
         Assert.assertEquals("Hello World", clone.get(i));
       }
@@ -247,7 +247,7 @@ public class PersistentReadWriteLockedOffHeapHashMapIT extends AbstractDiskTest 
       }
     }
   }
-  
+
   @Test
   public void testPersistenceOfPrimitiveClassType() throws IOException {
     final Class<?>[] primitives = new Class<?>[]{double.class, long.class, float.class, int.class, char.class,
@@ -259,7 +259,7 @@ public class PersistentReadWriteLockedOffHeapHashMapIT extends AbstractDiskTest 
     PersistentReadWriteLockedOffHeapHashMap<Integer, Serializable> map = new PersistentReadWriteLockedOffHeapHashMap<Integer, Serializable>(source, new FileBackedStorageEngine<Serializable, Serializable>(source, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), new PersistentSerializablePortability()), true);
     try {
       for (int i = 0; i < primitives.length; i++) {
-        map.put(Integer.valueOf(i), primitives[i]);
+        map.put(i, primitives[i]);
       }
 
       ByteArrayOutputStream bout = new ByteArrayOutputStream();

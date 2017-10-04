@@ -715,7 +715,6 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
       int [] entry = tryInstallEntry(offheapBinaryKey, pojoHash, offheapBinaryValue, metadata);
       if (entry == null) {
         storageEngineFailure("<binary-key>");
-        continue;
       } else {
         return entry;
       }

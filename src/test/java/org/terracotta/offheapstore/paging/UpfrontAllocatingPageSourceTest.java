@@ -121,7 +121,7 @@ public class UpfrontAllocatingPageSourceTest {
       new UpfrontAllocatingPageSource(new OffHeapBufferSource(), Long.MAX_VALUE, MemoryUnit.GIGABYTES.toBytes(1));
       Assert.fail("Expected IllegalArgumentException");
     } catch (IllegalArgumentException e) {
-      Assert.assertThat(e.getMessage(), CombinableMatcher.<String>either(containsString("physical memory")).or(containsString("allocate more off-heap memory")));
+      Assert.assertThat(e.getMessage(), CombinableMatcher.either(containsString("physical memory")).or(containsString("allocate more off-heap memory")));
     }
   }
 
@@ -278,7 +278,7 @@ public class UpfrontAllocatingPageSourceTest {
         chunks.remove(size);
         return ByteBuffer.allocate(size);
       } else if (available > 1) {
-        chunks.put(size, available.intValue() - 1);
+        chunks.put(size, available - 1);
         return ByteBuffer.allocate(size);
       } else {
         return null;

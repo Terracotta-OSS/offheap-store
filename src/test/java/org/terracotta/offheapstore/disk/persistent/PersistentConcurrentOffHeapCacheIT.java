@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,7 +47,7 @@ public class PersistentConcurrentOffHeapCacheIT extends AbstractDiskTest {
     PersistentConcurrentOffHeapClockCache<Integer, Integer> map = new PersistentConcurrentOffHeapClockCache<Integer, Integer>(new MappedPageSource(dataFile), PersistentSplitStorageEngine.createPersistentFactory(PersistentIntegerStorageEngine.createPersistentFactory(), PersistentIntegerStorageEngine.createPersistentFactory()));
     try {
       for (int i = 0; i < 100; i++) {
-        map.put(Integer.valueOf(i), Integer.valueOf(i));
+        map.put(i, i);
       }
 
       indexData = persist(map);
@@ -84,12 +84,12 @@ public class PersistentConcurrentOffHeapCacheIT extends AbstractDiskTest {
     byte[] indexData;
 
     long occupiedSize = -1;
-    
+
     MappedPageSource source = new MappedPageSource(dataFile);
     PersistentConcurrentOffHeapClockCache<Integer, byte[]> map = new PersistentConcurrentOffHeapClockCache<Integer, byte[]>(source, FileBackedStorageEngine.createFactory(source, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), PersistentByteArrayPortability.INSTANCE));
     try {
       for (int i = 0; i < 100; i++) {
-        map.put(Integer.valueOf(i), new byte[i]);
+        map.put(i, new byte[i]);
       }
 
       occupiedSize = map.getOccupiedMemory();
@@ -132,7 +132,7 @@ public class PersistentConcurrentOffHeapCacheIT extends AbstractDiskTest {
     PersistentConcurrentOffHeapClockCache<Integer, Serializable> map = new PersistentConcurrentOffHeapClockCache<Integer, Serializable>(source, FileBackedStorageEngine.createFactory(source, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), new PersistentSerializablePortability()));
     try {
       for (int i = 0; i < 100; i++) {
-        map.put(Integer.valueOf(i), "Hello World");
+        map.put(i, "Hello World");
       }
 
       indexData = persist(map);
@@ -173,7 +173,7 @@ public class PersistentConcurrentOffHeapCacheIT extends AbstractDiskTest {
     PersistentConcurrentOffHeapClockCache<Number, Serializable> map = new PersistentConcurrentOffHeapClockCache<Number, Serializable>(source, FileBackedStorageEngine.createFactory(source, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), new PersistentSerializablePortability()));
     try {
       for (int i = 0; i < 100; i++) {
-        map.put(Integer.valueOf(i), "Hello World");
+        map.put(i, "Hello World");
       }
 
       indexData = persist(map);
@@ -199,17 +199,17 @@ public class PersistentConcurrentOffHeapCacheIT extends AbstractDiskTest {
       for (int i = 0; i < 100; i++) {
         Assert.assertEquals("Hello World", clone.get(i));
       }
-      
+
       for (long i = 0L; i < 100L; i++) {
-        clone.put(Long.valueOf(i), "Hello World");
+        clone.put(i, "Hello World");
       }
-      
+
       Assert.assertEquals(200, clone.size());
-      
+
       for (int i = 0; i < 100; i++) {
         Assert.assertEquals("Hello World", clone.get(i));
       }
-      
+
       for (long i = 0L; i < 100L; i++) {
         Assert.assertEquals("Hello World", clone.get(i));
       }
@@ -219,7 +219,7 @@ public class PersistentConcurrentOffHeapCacheIT extends AbstractDiskTest {
       }
     }
   }
-  
+
   @Test
   public void testPersistenceOfPrimitiveClassType() throws IOException {
     final Class<?>[] primitives = new Class<?>[]{double.class, long.class, float.class, int.class, char.class,
@@ -231,7 +231,7 @@ public class PersistentConcurrentOffHeapCacheIT extends AbstractDiskTest {
     PersistentConcurrentOffHeapClockCache<Integer, Serializable> map = new PersistentConcurrentOffHeapClockCache<Integer, Serializable>(source, FileBackedStorageEngine.createFactory(source, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), new PersistentSerializablePortability()));
     try {
       for (int i = 0; i < primitives.length; i++) {
-        map.put(Integer.valueOf(i), primitives[i]);
+        map.put(i, primitives[i]);
       }
 
       indexData = persist(map);
@@ -272,11 +272,11 @@ public class PersistentConcurrentOffHeapCacheIT extends AbstractDiskTest {
     PersistentConcurrentOffHeapClockCache<Integer, byte[]> map = new PersistentConcurrentOffHeapClockCache<Integer, byte[]>(source, FileBackedStorageEngine.createFactory(source, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), PersistentByteArrayPortability.INSTANCE));
     try {
       for (int i = 0; i < 100; i++) {
-        map.put(Integer.valueOf(i), new byte[i]);
+        map.put(i, new byte[i]);
       }
 
       for (int i = 0; i < 100; i+=2) {
-        map.remove(Integer.valueOf(i));
+        map.remove(i);
       }
 
       indexData = persist(map);
