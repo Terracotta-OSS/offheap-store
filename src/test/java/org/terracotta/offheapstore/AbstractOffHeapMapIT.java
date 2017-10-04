@@ -32,9 +32,6 @@ import org.junit.Test;
 import org.terracotta.offheapstore.buffersource.HeapBufferSource;
 import org.terracotta.offheapstore.buffersource.OffHeapBufferSource;
 import org.terracotta.offheapstore.concurrent.AbstractConcurrentOffHeapMap;
-import org.terracotta.offheapstore.exceptions.OversizeMappingException;
-import org.terracotta.offheapstore.jdk8.BiFunction;
-import org.terracotta.offheapstore.jdk8.Function;
 import org.terracotta.offheapstore.paging.PageSource;
 import org.terracotta.offheapstore.paging.UpfrontAllocatingPageSource;
 import org.terracotta.offheapstore.util.Generator;
@@ -45,6 +42,8 @@ import java.util.ConcurrentModificationException;
 import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;

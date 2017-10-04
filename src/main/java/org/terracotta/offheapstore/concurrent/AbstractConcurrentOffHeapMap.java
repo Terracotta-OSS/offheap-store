@@ -27,6 +27,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import org.terracotta.offheapstore.HashingMap;
 import org.terracotta.offheapstore.OffHeapHashMap;
@@ -34,8 +36,6 @@ import org.terracotta.offheapstore.Segment;
 import org.terracotta.offheapstore.MapInternals;
 import org.terracotta.offheapstore.MetadataTuple;
 import org.terracotta.offheapstore.exceptions.OversizeMappingException;
-import org.terracotta.offheapstore.jdk8.BiFunction;
-import org.terracotta.offheapstore.jdk8.Function;
 import org.terracotta.offheapstore.util.Factory;
 
 /**

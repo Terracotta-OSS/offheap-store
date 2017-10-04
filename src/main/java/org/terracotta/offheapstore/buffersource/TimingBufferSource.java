@@ -15,7 +15,6 @@
  */
 package org.terracotta.offheapstore.buffersource;
 
-import org.terracotta.offheapstore.util.FindbugsSuppressWarnings;
 import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 

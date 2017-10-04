@@ -15,8 +15,6 @@
  */
 package org.terracotta.offheapstore.eviction;
 
-import java.util.concurrent.Callable;
-
 import org.terracotta.offheapstore.WriteLockedOffHeapClockCache;
 import org.terracotta.offheapstore.paging.PageSource;
 import org.terracotta.offheapstore.storage.StorageEngine;

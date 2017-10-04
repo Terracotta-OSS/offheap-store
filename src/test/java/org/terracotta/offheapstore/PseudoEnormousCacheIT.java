@@ -18,8 +18,7 @@ package org.terracotta.offheapstore;
 import org.terracotta.offheapstore.ReadWriteLockedOffHeapHashMap;
 import org.terracotta.offheapstore.MapInternals;
 import org.terracotta.offheapstore.Segment;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
+
 import java.lang.reflect.Proxy;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;

@@ -27,14 +27,14 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.terracotta.offheapstore.buffersource.BufferSource;
 import org.terracotta.offheapstore.exceptions.OversizeMappingException;
-import org.terracotta.offheapstore.jdk8.BiFunction;
-import org.terracotta.offheapstore.jdk8.Function;
 import org.terracotta.offheapstore.paging.Page;
 import org.terracotta.offheapstore.paging.PageSource;
 import org.terracotta.offheapstore.storage.BinaryStorageEngine;
@@ -43,7 +43,6 @@ import org.terracotta.offheapstore.util.DebuggingUtils;
 import org.terracotta.offheapstore.util.FindbugsSuppressWarnings;
 import org.terracotta.offheapstore.util.NoOpLock;
 import org.terracotta.offheapstore.util.WeakIdentityHashMap;
-import org.terracotta.offheapstore.util.WeakIdentityHashMap.ReaperTask;
 
 import static org.terracotta.offheapstore.MetadataTuple.metadataTuple;
 

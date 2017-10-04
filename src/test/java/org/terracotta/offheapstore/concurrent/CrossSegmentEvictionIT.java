@@ -21,7 +21,6 @@ import static org.hamcrest.core.Is.is;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Assert;

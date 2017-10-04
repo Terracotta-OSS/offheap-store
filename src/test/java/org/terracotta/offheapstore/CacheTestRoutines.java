@@ -22,7 +22,6 @@ import java.util.Set;
 
 import org.junit.Assert;
 import org.terracotta.offheapstore.exceptions.OversizeMappingException;
-import org.terracotta.offheapstore.jdk8.BiFunction;
 
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.number.OrderingComparison.lessThan;

@@ -129,7 +129,7 @@ public class PersistentReadWriteLockedOffHeapHashMapIT extends AbstractDiskTest 
     byte[] indexData;
 
     MappedPageSource source = new MappedPageSource(dataFile);
-    PersistentReadWriteLockedOffHeapHashMap<Integer, Serializable> map = new PersistentReadWriteLockedOffHeapHashMap<>(source, new FileBackedStorageEngine<Serializable, Serializable>(source, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), new PersistentSerializablePortability()), true);
+    PersistentReadWriteLockedOffHeapHashMap<Integer, Serializable> map = new PersistentReadWriteLockedOffHeapHashMap<>(source, new FileBackedStorageEngine<>(source, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), new PersistentSerializablePortability()), true);
     try {
       for (int i = 0; i < 100; i++) {
         map.put(i, "Hello World");
@@ -151,7 +151,7 @@ public class PersistentReadWriteLockedOffHeapHashMapIT extends AbstractDiskTest 
       ByteArrayInputStream bin = new ByteArrayInputStream(indexData);
       try (ObjectInputStream din = new ObjectInputStream(bin)) {
         MappedPageSource clonedSource = new MappedPageSource(dataFile, false);
-        clone = new PersistentReadWriteLockedOffHeapHashMap<>(clonedSource, new FileBackedStorageEngine<Serializable, Serializable>(clonedSource, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), new PersistentSerializablePortability(), false), false);
+        clone = new PersistentReadWriteLockedOffHeapHashMap<>(clonedSource, new FileBackedStorageEngine<>(clonedSource, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), new PersistentSerializablePortability(), false), false);
         clone.bootstrap(din);
       }
 
@@ -172,7 +172,7 @@ public class PersistentReadWriteLockedOffHeapHashMapIT extends AbstractDiskTest 
     byte[] indexData;
 
     MappedPageSource source = new MappedPageSource(dataFile);
-    PersistentReadWriteLockedOffHeapHashMap<Number, Serializable> map = new PersistentReadWriteLockedOffHeapHashMap<>(source, new FileBackedStorageEngine<Serializable, Serializable>(source, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), new PersistentSerializablePortability()), true);
+    PersistentReadWriteLockedOffHeapHashMap<Number, Serializable> map = new PersistentReadWriteLockedOffHeapHashMap<>(source, new FileBackedStorageEngine<>(source, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), new PersistentSerializablePortability()), true);
     try {
       for (int i = 0; i < 100; i++) {
         map.put(i, "Hello World");
@@ -194,7 +194,7 @@ public class PersistentReadWriteLockedOffHeapHashMapIT extends AbstractDiskTest 
       ByteArrayInputStream bin = new ByteArrayInputStream(indexData);
       try (ObjectInputStream din = new ObjectInputStream(bin)) {
         MappedPageSource clonedSource = new MappedPageSource(dataFile, false);
-        clone = new PersistentReadWriteLockedOffHeapHashMap<>(clonedSource, new FileBackedStorageEngine<Serializable, Serializable>(clonedSource, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), new PersistentSerializablePortability(), false), false);
+        clone = new PersistentReadWriteLockedOffHeapHashMap<>(clonedSource, new FileBackedStorageEngine<>(clonedSource, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), new PersistentSerializablePortability(), false), false);
         clone.bootstrap(din);
       }
 
@@ -232,7 +232,7 @@ public class PersistentReadWriteLockedOffHeapHashMapIT extends AbstractDiskTest 
     byte[] indexData;
 
     MappedPageSource source = new MappedPageSource(dataFile);
-    PersistentReadWriteLockedOffHeapHashMap<Integer, Serializable> map = new PersistentReadWriteLockedOffHeapHashMap<>(source, new FileBackedStorageEngine<Serializable, Serializable>(source, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), new PersistentSerializablePortability()), true);
+    PersistentReadWriteLockedOffHeapHashMap<Integer, Serializable> map = new PersistentReadWriteLockedOffHeapHashMap<>(source, new FileBackedStorageEngine<>(source, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), new PersistentSerializablePortability()), true);
     try {
       for (int i = 0; i < primitives.length; i++) {
         map.put(i, primitives[i]);
@@ -254,7 +254,7 @@ public class PersistentReadWriteLockedOffHeapHashMapIT extends AbstractDiskTest 
       ByteArrayInputStream bin = new ByteArrayInputStream(indexData);
       try (ObjectInputStream din = new ObjectInputStream(bin)) {
         MappedPageSource clonedSource = new MappedPageSource(dataFile, false);
-        clone = new PersistentReadWriteLockedOffHeapHashMap<>(clonedSource, new FileBackedStorageEngine<Serializable, Serializable>(clonedSource, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), new PersistentSerializablePortability(), false), false);
+        clone = new PersistentReadWriteLockedOffHeapHashMap<>(clonedSource, new FileBackedStorageEngine<>(clonedSource, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), new PersistentSerializablePortability(), false), false);
         clone.bootstrap(din);
       }
 
