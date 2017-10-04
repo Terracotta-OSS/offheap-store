@@ -36,7 +36,7 @@ public class ReadWriteLockedPinningIT extends AbstractPinningIT {
   @Override
   protected PinnableCache<Integer, Integer> createPinnedIntegerCache(PageSource source) {
     Assume.assumeThat(getPointerSize(), Is.is(PointerSize.INT));
-    StorageEngine<Integer, Integer> storageEngine = new SplitStorageEngine(new IntegerStorageEngine(), new IntegerStorageEngine());
+    StorageEngine<Integer, Integer> storageEngine = new SplitStorageEngine<>(new IntegerStorageEngine(), new IntegerStorageEngine());
     return new ReadWriteLockedOffHeapClockCache<>(source, storageEngine);
   }
 

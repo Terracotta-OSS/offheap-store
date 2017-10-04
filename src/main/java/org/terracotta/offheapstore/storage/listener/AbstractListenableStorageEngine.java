@@ -28,10 +28,10 @@ public abstract class AbstractListenableStorageEngine<K, V> implements Listenabl
   @Override
   public void registerListener(StorageEngineListener<? super K, ? super V> listener) {
     if (listener instanceof RecoveryStorageEngineListener) {
-      recoveryListeners.add((RecoveryStorageEngineListener) listener);
+      recoveryListeners.add((RecoveryStorageEngineListener<? super K, ? super V>) listener);
     }
     if (listener instanceof RuntimeStorageEngineListener) {
-      runtimeListeners.add((RuntimeStorageEngineListener) listener);
+      runtimeListeners.add((RuntimeStorageEngineListener<? super K, ? super V>) listener);
     }
   }
 

@@ -49,7 +49,7 @@ public interface Generator {
     }
 
     @Override
-    public StorageEngine engine() {
+    public StorageEngine<SpecialInteger, SpecialInteger> engine() {
       return new StorageEngine<SpecialInteger, SpecialInteger>() {
 
         @Override
@@ -153,7 +153,7 @@ public interface Generator {
     }
 
     @Override
-    public StorageEngine engine() {
+    public StorageEngine<SpecialInteger, SpecialInteger> engine() {
       return new StorageEngine<SpecialInteger, SpecialInteger>() {
 
         @Override

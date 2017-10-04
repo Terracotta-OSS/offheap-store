@@ -434,7 +434,9 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
       } else if (isPresent(entry) && keyEquals(key, hash, encoding, entry.get(KEY_HASHCODE))) {
         hit(entry);
         entry.put(STATUS, (entry.get(STATUS) & ~safeMask) | (values & safeMask));
-        return (V) storageEngine.readValue(readLong(entry, ENCODING));
+        @SuppressWarnings("unchecked")
+        V result = (V) storageEngine.readValue(readLong(entry, ENCODING));
+        return result;
       } else {
         hashtable.position(hashtable.position() + ENTRY_SIZE);
       }
@@ -1885,6 +1887,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
             break;
           } else if (isPresent(laterEntry) && keyEquals(key, hash, readLong(laterEntry, ENCODING), laterEntry.get(KEY_HASHCODE))) {
             long encoding = readLong(laterEntry, ENCODING);
+            @SuppressWarnings("unchecked")
             MetadataTuple<V> existingValue = metadataTuple(
                     (V) storageEngine.readValue(encoding),
                     laterEntry.get(STATUS) & ~RESERVED_STATUS_BITS);
@@ -1946,6 +1949,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
       } else if (keyEquals(key, hash, readLong(entry, ENCODING), entry.get(KEY_HASHCODE))) {
         long existingEncoding = readLong(entry, ENCODING);
         int existingStatus = entry.get(STATUS);
+        @SuppressWarnings("unchecked")
         MetadataTuple<V> existingTuple = metadataTuple(
                 (V) storageEngine.readValue(existingEncoding),
                 existingStatus & ~RESERVED_STATUS_BITS);
@@ -2009,9 +2013,11 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
           if (isTerminating(laterEntry)) {
             break;
           } else if (isPresent(laterEntry) && keyEquals(key, hash, readLong(laterEntry, ENCODING), laterEntry.get(KEY_HASHCODE))) {
-            return metadataTuple(
-                    (V) storageEngine.readValue(readLong(laterEntry, ENCODING)),
-                    laterEntry.get(STATUS) & ~RESERVED_STATUS_BITS);
+            @SuppressWarnings("unchecked")
+            MetadataTuple<V> tuple = metadataTuple(
+              (V) storageEngine.readValue(readLong(laterEntry, ENCODING)),
+              laterEntry.get(STATUS) & ~RESERVED_STATUS_BITS);
+            return tuple;
           } else {
             hashtable.position(hashtable.position() + ENTRY_SIZE);
           }
@@ -2042,9 +2048,11 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
         }
         return result;
       } else if (keyEquals(key, hash, readLong(entry, ENCODING), entry.get(KEY_HASHCODE))) {
-        return metadataTuple(
-                (V) storageEngine.readValue(readLong(entry, ENCODING)),
-                entry.get(STATUS) & ~RESERVED_STATUS_BITS);
+        @SuppressWarnings("unchecked")
+        MetadataTuple<V> tuple = metadataTuple(
+          (V) storageEngine.readValue(readLong(entry, ENCODING)),
+          entry.get(STATUS) & ~RESERVED_STATUS_BITS);
+        return tuple;
       } else {
         hashtable.position(hashtable.position() + ENTRY_SIZE);
       }
@@ -2081,6 +2089,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
       } else if (isPresent(entry) && keyEquals(key, hash, readLong(entry, ENCODING), entry.get(KEY_HASHCODE))) {
         long existingEncoding = readLong(entry, ENCODING);
         int existingStatus = entry.get(STATUS);
+        @SuppressWarnings("unchecked")
         MetadataTuple<V> existingValue = metadataTuple(
                 (V) storageEngine.readValue(existingEncoding),
                 existingStatus & ~RESERVED_STATUS_BITS);

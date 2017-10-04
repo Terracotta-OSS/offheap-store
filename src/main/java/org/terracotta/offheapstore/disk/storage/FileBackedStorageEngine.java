@@ -234,13 +234,17 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
         final Thread caller = Thread.currentThread();
         fireRecovered(() -> {
           if (caller == Thread.currentThread()) {
-            return (K) keyPortability.decode(binaryKeyForDecode.duplicate());
+            @SuppressWarnings("unchecked")
+            K result = (K) keyPortability.decode(binaryKeyForDecode.duplicate());
+            return result;
           } else {
             throw new IllegalStateException();
           }
         }, () -> {
           if (caller == Thread.currentThread()) {
-            return (V) valuePortability.decode(binaryValueForDecode.duplicate());
+            @SuppressWarnings("unchecked")
+            V result = (V) valuePortability.decode(binaryValueForDecode.duplicate());
+            return result;
           } else {
             throw new IllegalStateException();
           }

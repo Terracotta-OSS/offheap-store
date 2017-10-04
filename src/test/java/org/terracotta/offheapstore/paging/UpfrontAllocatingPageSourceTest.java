@@ -178,6 +178,7 @@ public class UpfrontAllocatingPageSourceTest {
   @Rule
   public final TemporaryFolder tempFolder = new TemporaryFolder();
 
+  @SuppressWarnings("unchecked")
   @Test
   public void testAllocatorLogging() throws IOException {
     File logLocation = tempFolder.newFolder("testAllocatorLogging");

@@ -54,24 +54,30 @@ public class PhysicalMemory {
   private static <T> T getAttribute(String name) {
     LOGGER.trace("Bean lookup for {}", name);
     for (Class<?> s = OS_BEAN.getClass(); s != null; s = s.getSuperclass()) {
-      try {
-        T result = (T) s.getMethod(name).invoke(OS_BEAN);
-        LOGGER.trace("Bean lookup successful using {}, got {}", s, result);
+      @SuppressWarnings("unchecked")
+      T result = invokeyMethod(name, s);
+      if (result != null) {
         return result;
-      } catch (SecurityException | InvocationTargetException | IllegalArgumentException | IllegalAccessException | NoSuchMethodException e) {
-        LOGGER.trace("Bean lookup failed on {}", s, e);
       }
     }
     for (Class<?> i : OS_BEAN.getClass().getInterfaces()) {
-      try {
-        T result = (T) i.getMethod(name).invoke(OS_BEAN);
-        LOGGER.trace("Bean lookup successful using {}, got {}", i, result);
-        return result;
-      } catch (SecurityException | InvocationTargetException | IllegalArgumentException | IllegalAccessException | NoSuchMethodException e) {
-        LOGGER.trace("Bean lookup failed on {}", i, e);
-      }
+      @SuppressWarnings("unchecked")
+      T result = invokeyMethod(name, i);
+      return result;
     }
     LOGGER.trace("Returning null for {}", name);
+    return null;
+  }
+
+  private static <T> T invokeyMethod(String name, Class<?> s) {
+    try {
+      @SuppressWarnings("unchecked")
+      T result = (T) s.getMethod(name).invoke(OS_BEAN);
+      LOGGER.trace("Bean lookup successful using {}, got {}", s, result);
+      return result;
+    } catch (SecurityException | InvocationTargetException | IllegalArgumentException | IllegalAccessException | NoSuchMethodException e) {
+      LOGGER.trace("Bean lookup failed on {}", s, e);
+    }
     return null;
   }
 
