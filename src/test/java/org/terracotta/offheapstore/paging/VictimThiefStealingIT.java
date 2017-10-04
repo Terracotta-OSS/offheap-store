@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,7 +50,7 @@ public class VictimThiefStealingIT {
     PageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), 1024 * 1024, 1024 * 1024);
 
     Map<Integer, byte[]> victim = new WriteLockedOffHeapClockCache<Integer, byte[]>(new UnlimitedPageSource(new HeapBufferSource()), new SplitStorageEngine<Integer, byte[]>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<byte[]>(source, 16 * 1024, ByteArrayPortability.INSTANCE, false, true)));
-    
+
     for (int key = 0; ; key++) {
       int size = victim.size();
       victim.put(key, new byte[128]);
@@ -207,7 +207,7 @@ public class VictimThiefStealingIT {
   }
 
   @Test
-  public void testAccessingVictimWhileStealing() throws InterruptedException, Throwable {
+  public void testAccessingVictimWhileStealing() throws Throwable {
     PageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), 16 * 1024 * 1024, 16 * 1024 * 1024);
 
     final Map<Integer, byte[]> victim = new ConcurrentOffHeapClockCache<Integer, byte[]>(source, SplitStorageEngine.createFactory(IntegerStorageEngine.createFactory(), OffHeapBufferHalfStorageEngine.createFactory(source, 16 * 1024, ByteArrayPortability.INSTANCE, false, true)));
@@ -326,14 +326,14 @@ public class VictimThiefStealingIT {
       Assert.assertFalse(thief.isEmpty());
     }
   }
-  
+
   @Test
   @Ignore
   public void testStealFromPageGrowthArea() {
     PageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), 1024 * 1024, 1024 * 1024);
 
     Map<Integer, byte[]> victim = new WriteLockedOffHeapClockCache<Integer, byte[]>(new UnlimitedPageSource(new HeapBufferSource()), new SplitStorageEngine<Integer, byte[]>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<byte[]>(source, 1, Integer.highestOneBit(Integer.MAX_VALUE), ByteArrayPortability.INSTANCE, false, true)));
-    
+
     for (int key = 0; ; key++) {
       int size = victim.size();
       victim.put(key, new byte[128]);

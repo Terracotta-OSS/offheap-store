@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,8 @@
  */
 package org.terracotta.offheapstore;
 
-import org.terracotta.offheapstore.OffHeapHashMap;
+import org.junit.Rule;
+import org.junit.rules.ExpectedException;
 import static org.junit.Assert.fail;
 
 import java.nio.ByteBuffer;
@@ -40,18 +41,22 @@ import org.terracotta.offheapstore.storage.StringStorageEngine;
 import org.terracotta.offheapstore.storage.listener.RuntimeStorageEngineListener;
 import org.terracotta.offheapstore.storage.portability.ByteArrayPortability;
 import org.terracotta.offheapstore.util.Generator;
-import static org.terracotta.offheapstore.util.Generator.BAD_GENERATOR;
-import static org.terracotta.offheapstore.util.Generator.GOOD_GENERATOR;
 import org.terracotta.offheapstore.util.Generator.SpecialInteger;
 import org.terracotta.offheapstore.util.ParallelParameterized;
 import java.util.Arrays;
 import java.util.Collection;
+import org.junit.runner.RunWith;
+
+import static org.terracotta.offheapstore.util.Generator.BAD_GENERATOR;
+import static org.terracotta.offheapstore.util.Generator.GOOD_GENERATOR;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assume.assumeThat;
-import org.junit.runner.RunWith;
 
 @RunWith(ParallelParameterized.class)
 public class OffHeapHashMapIT extends AbstractOffHeapMapIT {
+
+  @Rule
+  public ExpectedException expectedException = ExpectedException.none();
 
   @ParallelParameterized.Parameters(name = "generator={0}")
   public static Collection<Object[]> data() {
@@ -61,7 +66,7 @@ public class OffHeapHashMapIT extends AbstractOffHeapMapIT {
   public OffHeapHashMapIT(Generator generator) {
     super(generator);
   }
-  
+
   @Test
   public void testDoublePut() {
     Map<SpecialInteger, SpecialInteger> map = new OffHeapHashMap<SpecialInteger, SpecialInteger>(new UnlimitedPageSource(new OffHeapBufferSource()), generator.engine(), 1);
@@ -77,11 +82,8 @@ public class OffHeapHashMapIT extends AbstractOffHeapMapIT {
 
   @Test
   public void testTableAllocationOomeOutput() {
-    try {
-      new OffHeapHashMap<Integer, Integer>(new UpfrontAllocatingPageSource(new OffHeapBufferSource(), 96, 96), new SplitStorageEngine<Integer, Integer>(new IntegerStorageEngine(), new IntegerStorageEngine()), 8);
-    } catch (IllegalArgumentException e) {
-      System.err.println(e);
-    }
+    expectedException.expect(IllegalArgumentException.class);
+    new OffHeapHashMap<Integer, Integer>(new UpfrontAllocatingPageSource(new OffHeapBufferSource(), 96, 96), new SplitStorageEngine<Integer, Integer>(new IntegerStorageEngine(), new IntegerStorageEngine()), 8);
   }
 
   @Test
@@ -93,7 +95,7 @@ public class OffHeapHashMapIT extends AbstractOffHeapMapIT {
       @Override public void cleared() { }
       @Override public void copied(int hash, long oldEncoding, long newEncoding, int metadata) { }
       @Override public void freed(long encoding, int hash, ByteBuffer key, boolean removed) { encodings.remove(encoding); }
-      @Override public void written(String key, String value, ByteBuffer binaryKey, ByteBuffer binaryValue, int hash, int metadata, long encoding) { encodings.add(encoding); };
+      @Override public void written(String key, String value, ByteBuffer binaryKey, ByteBuffer binaryValue, int hash, int metadata, long encoding) { encodings.add(encoding); }
     });
 
     OffHeapHashMap<String, String> map = new OffHeapHashMap<String, String>(pageSource, storageEngine);
@@ -126,40 +128,28 @@ public class OffHeapHashMapIT extends AbstractOffHeapMapIT {
 
   @Test
   public void testTableResizeOomeOutput() {
-    Map<Integer, Integer> map = new OffHeapHashMap<Integer, Integer>(new UpfrontAllocatingPageSource(new OffHeapBufferSource(), 96, 96), new SplitStorageEngine<Integer, Integer>(new IntegerStorageEngine(), new IntegerStorageEngine()), 4);
+    Map<Integer, Integer> map = new OffHeapHashMap<Integer, Integer>(new UpfrontAllocatingPageSource(
+      new OffHeapBufferSource(), 96, 96),
+      new SplitStorageEngine<Integer, Integer>(new IntegerStorageEngine(), new IntegerStorageEngine()), 4);
 
     map.put(1, 1);
     map.put(2, 2);
     map.put(3, 3);
     map.put(4, 4);
 
-    try {
-      map.put(5, 5);
-    } catch (OversizeMappingException e) {
-      System.err.println(e);
-    }
-  }
-
-  @Test
-  public void testDataAllocationOomeOutput() {
-    try {
-      new OffHeapHashMap<String, String>(new UnlimitedPageSource(new OffHeapBufferSource()), new StringStorageEngine(PointerSize.INT, new UpfrontAllocatingPageSource(new OffHeapBufferSource(), 256, 128, 32), 256), 4);
-    } catch (IllegalArgumentException e) {
-      System.err.println(e);
-    }
+    expectedException.expect(OversizeMappingException.class);
+    map.put(5, 5);
   }
 
   @Test
   public void testDataExpansionOomeOutput() {
-    Map<String, String> map = new OffHeapHashMap<String, String>(new UnlimitedPageSource(new OffHeapBufferSource()), new StringStorageEngine(PointerSize.INT, new UpfrontAllocatingPageSource(new OffHeapBufferSource(), 256, 128, 32), 32), 4);
+    Map<String, String> map = new OffHeapHashMap<String, String>(new UnlimitedPageSource(new OffHeapBufferSource()),
+      new StringStorageEngine(PointerSize.INT, new UpfrontAllocatingPageSource(
+          new OffHeapBufferSource(), 256, 128, 32), 32), 4);
 
+    expectedException.expect(OversizeMappingException.class);
     for (int i = 0; i < 100; i++) {
-      try {
-        map.put(String.valueOf(i), "Hello");
-      } catch (OversizeMappingException e) {
-        System.err.println(e);
-        break;
-      }
+      map.put(String.valueOf(i), "Hello");
     }
   }
 
@@ -171,6 +161,7 @@ public class OffHeapHashMapIT extends AbstractOffHeapMapIT {
   @Override
   protected Map<Integer, byte[]> createOffHeapBufferMap(PageSource source) {
     assumeThat(generator, is(GOOD_GENERATOR));
-    return new OffHeapHashMap<Integer, byte[]>(source, new SplitStorageEngine<Integer, byte[]>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<byte[]>(source, 1024, ByteArrayPortability.INSTANCE)));
+    return new OffHeapHashMap<Integer, byte[]>(source, new SplitStorageEngine<Integer, byte[]>(new IntegerStorageEngine(),
+      new OffHeapBufferHalfStorageEngine<byte[]>(source, 1024, ByteArrayPortability.INSTANCE)));
   }
 }

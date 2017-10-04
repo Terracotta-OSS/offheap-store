@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +15,7 @@
  */
 package org.terracotta.offheapstore.storage.allocator;
 
+import org.terracotta.offheapstore.paging.UpfrontAllocatingPageSource;
 import org.terracotta.offheapstore.util.AATreeSet;
 import org.terracotta.offheapstore.util.DebuggingUtils;
 import static org.terracotta.offheapstore.util.Validation.shouldValidate;
@@ -38,7 +39,7 @@ public class PowerOfTwoAllocator extends AATreeSet<Region> {
   private final int size;
   /**
    * This is volatile because we read it without any locking through
-   * {@link com.terracottatech.offheapstore.paging.UpfrontAllocatingPageSource#getAllocatedSizeUnSync()}
+   * {@link UpfrontAllocatingPageSource#getAllocatedSizeUnSync()}
    */
   private volatile int occupied;
 
@@ -57,7 +58,7 @@ public class PowerOfTwoAllocator extends AATreeSet<Region> {
     if (Integer.bitCount(size) != 1) {
       throw new AssertionError("Size " + size + " is not a power of two");
     }
-    
+
     final Region r = findRegion(size, packing);
     if (r == null) {
       return -1;
@@ -294,7 +295,7 @@ public class PowerOfTwoAllocator extends AATreeSet<Region> {
         return new Region(a, a + size - 1);
       }
     },
-    
+
     CEILING {
 
       @Override

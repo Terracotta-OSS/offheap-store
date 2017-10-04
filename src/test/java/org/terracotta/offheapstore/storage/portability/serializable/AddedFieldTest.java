@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -81,19 +81,19 @@ public class AddedFieldTest {
     Serializable_write(int value) {
       k = value;
     }
-  };
+  }
 
   public static class IncompatibleSerializable_write implements Serializable {
 
     private static long serialVersionUID = 3L;
     int x = 5;
-  };
+  }
 
   public static class IncompatibleSerializable_read implements Serializable {
 
     private static long serialVersionUID = 4L;
     int x = 5;
-  };
+  }
 
   public static class A_write implements Serializable {
     // Version 1.1 of class A.  Added superclass NewSerializableSuper.

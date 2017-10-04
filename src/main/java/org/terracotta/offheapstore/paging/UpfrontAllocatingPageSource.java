@@ -47,7 +47,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.terracotta.offheapstore.storage.allocator.PowerOfTwoAllocator.Packing.CEILING;
 import static org.terracotta.offheapstore.storage.allocator.PowerOfTwoAllocator.Packing.FLOOR;
@@ -321,7 +320,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
                 int address = sliceAllocators.get(i).allocate(size, victim ? CEILING : FLOOR);
                 if (address >= 0) {
                     if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug("Allocating a {}B buffer from chunk {} &{}", new Object[]{DebuggingUtils.toBase2SuffixedString(size), i, address});
+                        LOGGER.debug("Allocating a {}B buffer from chunk {} &{}", DebuggingUtils.toBase2SuffixedString(size), i, address);
                     }
                     ByteBuffer b = ((ByteBuffer) buffers.get(i).limit(address + size).position(address)).slice();
                     Page p = new Page(b, i, address, owner);
@@ -352,7 +351,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
     public synchronized void free(Page page) {
         if (page.isFreeable()) {
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Freeing a {}B buffer from chunk {} &{}", new Object[]{DebuggingUtils.toBase2SuffixedString(page.size()), page.index(), page.address()});
+                LOGGER.debug("Freeing a {}B buffer from chunk {} &{}", DebuggingUtils.toBase2SuffixedString(page.size()), page.index(), page.address());
             }
             markAllAvailable();
             sliceAllocators.get(page.index()).free(page.address(), page.size());
@@ -476,7 +475,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
 
   /**
    * Allocate multiple buffers to fulfill the requested memory {@code toAllocate}. We first divide {@code toAllocate} in
-   * chunks of size {@maxChunk} and try to allocate them in parallel on all available processors. If one chunk fails to be
+   * chunks of size {@code maxChunk} and try to allocate them in parallel on all available processors. If one chunk fails to be
    * allocated, we try to allocate two chunks of {@code maxChunk / 2}. If this allocation fails, we continue dividing until
    * we reach of size of {@code minChunk}. If at that moment, the allocation still fails, an {@code IllegalArgumentException}
    * is thrown.
@@ -644,7 +643,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
     }
 
     public enum ThresholdDirection {
-      RISING, FALLING;
+      RISING, FALLING
     }
 
     static class AllocatedRegion {

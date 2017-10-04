@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,15 +48,15 @@ public class SerializablePortability implements Portability<Serializable> {
   protected int nextStreamIndex = 0;
   protected final ConcurrentMap<Object, Object> lookup = new ConcurrentHashMap<Object, Object>();
   private final ClassLoader loader;
-  
+
   public SerializablePortability() {
     this(null);
   }
-  
+
   public SerializablePortability(ClassLoader loader) {
     this.loader = loader;
   }
-  
+
   @Override
   public ByteBuffer encode(Serializable object) {
     try {
@@ -167,7 +167,7 @@ public class SerializablePortability implements Portability<Serializable> {
     public OOS(OutputStream out) throws IOException {
       super(out);
     }
-    
+
     @Override
     protected void writeClassDescriptor(final ObjectStreamClass desc) throws IOException {
       writeInt(getOrAddMapping(desc));
@@ -182,12 +182,12 @@ public class SerializablePortability implements Portability<Serializable> {
       super(in);
       this.loader = loader;
     }
-    
+
     @Override
     protected ObjectStreamClass readClassDescriptor() throws IOException, ClassNotFoundException {
       return (ObjectStreamClass) lookup.get(readInt());
     }
-    
+
     @Override
     protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
       try {
@@ -206,7 +206,7 @@ public class SerializablePortability implements Portability<Serializable> {
       }
     }
   }
-  
+
   protected static class SerializableDataKey {
     private final ObjectStreamClass osc;
     private final int hashCode;
@@ -229,11 +229,7 @@ public class SerializablePortability implements Portability<Serializable> {
 
     @Override
     public boolean equals(Object o) {
-      if (o instanceof SerializableDataKey) {
-        return SerializablePortability.equals(this, (SerializableDataKey) o);
-      } else {
-        return false;
-      }
+      return o instanceof SerializableDataKey && SerializablePortability.equals(this, (SerializableDataKey) o);
     }
 
     @Override
@@ -288,7 +284,7 @@ public class SerializablePortability implements Portability<Serializable> {
       return false;
     }
   }
-  
+
   protected static ObjectStreamClass disconnect(ObjectStreamClass desc) {
     try {
       ObjectInputStream oin = new ObjectInputStream(new ByteArrayInputStream(getSerializedForm(desc))) {

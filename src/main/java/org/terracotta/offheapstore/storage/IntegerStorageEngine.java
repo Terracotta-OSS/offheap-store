@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,11 +39,11 @@ public class IntegerStorageEngine implements HalfStorageEngine<Integer> {
   public static IntegerStorageEngine instance() {
     return SINGLETON;
   }
-  
+
   public static Factory<IntegerStorageEngine> createFactory() {
     return FACTORY;
   }
-  
+
   @Override
   public Integer read(int address) {
     return address;
@@ -61,11 +61,7 @@ public class IntegerStorageEngine implements HalfStorageEngine<Integer> {
 
   @Override
   public boolean equals(Object key, int address) {
-    if (key instanceof Integer) {
-      return ((Integer) key) == address;
-    } else {
-      return false;
-    }
+    return key instanceof Integer && ((Integer) key) == address;
   }
 
   @Override

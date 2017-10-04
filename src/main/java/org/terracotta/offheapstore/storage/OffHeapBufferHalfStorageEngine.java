@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -124,11 +124,9 @@ public class OffHeapBufferHalfStorageEngine<T> extends PortabilityBasedHalfStora
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("OffHeapBufferStorageEngine ");
-    sb.append("allocated=").append(DebuggingUtils.toBase2SuffixedString(getAllocatedMemory())).append("B ");
-    sb.append("occupied=").append(DebuggingUtils.toBase2SuffixedString(getOccupiedMemory())).append("B\n");
-    sb.append("Allocator: ").append(storageArea);
-    return sb.toString();
+    return "OffHeapBufferStorageEngine " + "allocated=" + DebuggingUtils.toBase2SuffixedString(getAllocatedMemory()) + "B " +
+                "occupied=" + DebuggingUtils.toBase2SuffixedString(getOccupiedMemory()) + "B\n" +
+                "Allocator: " + storageArea;
   }
 
   @Override

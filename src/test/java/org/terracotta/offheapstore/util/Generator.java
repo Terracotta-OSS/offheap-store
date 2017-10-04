@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,7 @@ import org.terracotta.offheapstore.storage.StorageEngine;
 
 public interface Generator {
 
-  public interface SpecialInteger {
+  interface SpecialInteger {
 
     int value();
   }
@@ -30,8 +30,8 @@ public interface Generator {
   StorageEngine<SpecialInteger, SpecialInteger> engine();
 
   Factory<StorageEngine<SpecialInteger, SpecialInteger>> factory();
-  
-  public static final Generator GOOD_GENERATOR = new Generator() {
+
+  Generator GOOD_GENERATOR = new Generator() {
 
     @Override
     public String toString() {
@@ -52,7 +52,7 @@ public interface Generator {
         }
       };
     }
-    
+
     @Override
     public StorageEngine engine() {
       return new StorageEngine<SpecialInteger, SpecialInteger>() {
@@ -140,7 +140,7 @@ public interface Generator {
     }
   };
 
-  public static final Generator BAD_GENERATOR = new Generator() {
+  Generator BAD_GENERATOR = new Generator() {
 
     @Override
     public String toString() {
@@ -161,7 +161,7 @@ public interface Generator {
         }
       };
     }
-    
+
     @Override
     public StorageEngine engine() {
       return new StorageEngine<SpecialInteger, SpecialInteger>() {
@@ -249,14 +249,14 @@ public interface Generator {
     }
   };
 
-  public static final Factory<StorageEngine<SpecialInteger, SpecialInteger>> BAD_FACTORY = new Factory<StorageEngine<SpecialInteger, SpecialInteger>>() {
+  Factory<StorageEngine<SpecialInteger, SpecialInteger>> BAD_FACTORY = new Factory<StorageEngine<SpecialInteger, SpecialInteger>>() {
     @Override
     public StorageEngine<SpecialInteger, SpecialInteger> newInstance() {
       return BAD_GENERATOR.engine();
     }
   };
 
-  static class GoodInteger implements SpecialInteger {
+  class GoodInteger implements SpecialInteger {
 
     private final int n;
 
@@ -271,11 +271,7 @@ public interface Generator {
 
     @Override
     public boolean equals(Object o) {
-      if (o instanceof GoodInteger) {
-        return ((GoodInteger) o).n == n;
-      } else {
-        return false;
-      }
+      return o instanceof GoodInteger && ((GoodInteger) o).n == n;
     }
 
     @Override
@@ -284,7 +280,7 @@ public interface Generator {
     }
   }
 
-  public static class BadInteger implements SpecialInteger {
+  class BadInteger implements SpecialInteger {
     public static final int HASHCODE = 42;
 
     private final int n;
@@ -300,11 +296,7 @@ public interface Generator {
 
     @Override
     public boolean equals(Object o) {
-      if (o instanceof BadInteger) {
-        return ((BadInteger) o).n == n;
-      } else {
-        return false;
-      }
+      return o instanceof BadInteger && ((BadInteger) o).n == n;
     }
 
     @Override

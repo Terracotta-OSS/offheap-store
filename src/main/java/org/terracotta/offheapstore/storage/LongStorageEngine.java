@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -56,7 +56,7 @@ public class LongStorageEngine<V> implements StorageEngine<Long, V> {
   public void attachedMapping(long encoding, int hash, int metadata) {
     //no-op
   }
-  
+
   @Override
   public void freeMapping(long encoding, int hash, boolean removal) {
     valueStorage.free(SplitStorageEngine.valueEncoding(encoding));
@@ -80,11 +80,7 @@ public class LongStorageEngine<V> implements StorageEngine<Long, V> {
 
   @Override
   public boolean equalsKey(Object key, long encoding) {
-    if (key instanceof Long) {
-      return ((Long) key).intValue() == SplitStorageEngine.keyEncoding(encoding);
-    } else {
-      return false;
-    }
+    return key instanceof Long && ((Long) key).intValue() == SplitStorageEngine.keyEncoding(encoding);
   }
 
   @Override

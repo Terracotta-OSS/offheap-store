@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,7 +45,7 @@ public interface StorageEngine<K, V> {
   Long writeMapping(K key, V value, int hash, int metadata);
 
   void attachedMapping(long encoding, int hash, int metadata);
-  
+
   /**
    * Called to indicate that the associated encoded value is no longer needed.
    * <p>
@@ -57,7 +57,7 @@ public interface StorageEngine<K, V> {
    * @param removal marks removal from a map
    */
   void freeMapping(long encoding, int hash, boolean removal);
-  
+
   /**
    * Converts the supplied encoded value into its correct object form.
    *
@@ -80,7 +80,7 @@ public interface StorageEngine<K, V> {
    * @return {@code true} if the value and the encoding are equal
    */
   boolean equalsValue(Object value, long encoding);
-  
+
   /**
    * Converts the supplied encoded key into its correct object form.
    *
@@ -89,7 +89,7 @@ public interface StorageEngine<K, V> {
    * @return a decoded key object
    */
   K readKey(long encoding, int hashCode);
-  
+
   /**
    * Called to determine the equality of the given object against the
    * given encoded form.
@@ -136,7 +136,7 @@ public interface StorageEngine<K, V> {
    *
    * @return size of the stored keys and values in bytes
    */
-  public long getDataSize();
+  long getDataSize();
 
   /**
    * Invalidate any local key/value caches.
@@ -145,31 +145,31 @@ public interface StorageEngine<K, V> {
    * is permitted within a write operation (i.e. to cache around allocation
    * failures during eviction processes).
    */
-  public void invalidateCache();
+  void invalidateCache();
 
-  public void bind(Owner owner);
-  
-  public void destroy();
+  void bind(Owner owner);
 
-  public boolean shrink();
+  void destroy();
 
-  public interface Owner extends ReadWriteLock {
+  boolean shrink();
 
-    public Long getEncodingForHashAndBinary(int hash, ByteBuffer offHeapBinaryKey);
+  interface Owner extends ReadWriteLock {
 
-    public long getSize();
+    Long getEncodingForHashAndBinary(int hash, ByteBuffer offHeapBinaryKey);
 
-    public long installMappingForHashAndEncoding(int pojoHash, ByteBuffer offheapBinaryKey, ByteBuffer offheapBinaryValue, int metadata);
+    long getSize();
 
-    public Iterable<Long> encodingSet();
+    long installMappingForHashAndEncoding(int pojoHash, ByteBuffer offheapBinaryKey, ByteBuffer offheapBinaryValue, int metadata);
 
-    public boolean updateEncoding(int hashCode, long lastAddress, long compressed, long mask);
+    Iterable<Long> encodingSet();
 
-    public Integer getSlotForHashAndEncoding(int hash, long address, long mask);
+    boolean updateEncoding(int hashCode, long lastAddress, long compressed, long mask);
 
-    public boolean evict(int slot, boolean b);
+    Integer getSlotForHashAndEncoding(int hash, long address, long mask);
 
-    public boolean isThiefForTableAllocations();
-    
+    boolean evict(int slot, boolean b);
+
+    boolean isThiefForTableAllocations();
+
   }
 }

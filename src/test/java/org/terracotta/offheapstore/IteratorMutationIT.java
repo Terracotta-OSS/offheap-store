@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -57,15 +57,15 @@ public class IteratorMutationIT {
     assertThat(map.getAtTableOffset(2 * OffHeapHashMap.ENTRY_SIZE), is(new Value(0)));
     assertThat(map.getAtTableOffset(3 * OffHeapHashMap.ENTRY_SIZE), is(new Value(1)));
     assertThat(map.getAtTableOffset(4 * OffHeapHashMap.ENTRY_SIZE), is(new Value(2)));
-    
+
     Iterator<Value> keyIterator = map.keySet().iterator();
-    
+
     assertTrue(keyIterator.hasNext());
     assertThat(keyIterator.next(), is(new Value(0)));
-    
+
     map.remove(new Value(0));
     map.put(new Value(2), new Value(2));
-    
+
     assertTrue(keyIterator.hasNext());
     assertThat(keyIterator.next(), is(new Value(1)));
     assertTrue(keyIterator.hasNext());
@@ -84,16 +84,16 @@ public class IteratorMutationIT {
     assertThat(map.getAtTableOffset(0 * OffHeapHashMap.ENTRY_SIZE), is(new Value(2)));
     assertThat(map.getAtTableOffset(2 * OffHeapHashMap.ENTRY_SIZE), is(new Value(0)));
     assertThat(map.getAtTableOffset(3 * OffHeapHashMap.ENTRY_SIZE), is(new Value(1)));
-    
+
     Iterator<Value> keyIterator = map.keySet().iterator();
-    
+
     assertTrue(keyIterator.hasNext());
     assertThat(keyIterator.next(), is(new Value(2)));
 
-    
+
     map.remove(new Value(1));
     map.put(new Value(2), new Value(2));
-    
+
     assertTrue(keyIterator.hasNext());
     assertThat(keyIterator.next(), is(new Value(0)));
     try {
@@ -102,7 +102,7 @@ public class IteratorMutationIT {
       throw new AssertionError("Expected no next value, seeing : " + keyIterator.next());
     }
   }
-  
+
   @Test
   public void testConcurrentResizeAndUpdate() {
     PageSource source = new UnlimitedPageSource(new HeapBufferSource());
@@ -113,16 +113,16 @@ public class IteratorMutationIT {
 
     assertThat(map.getAtTableOffset(0 * OffHeapHashMap.ENTRY_SIZE), is(new Value(0)));
     assertThat(map.getAtTableOffset(1 * OffHeapHashMap.ENTRY_SIZE), is(new Value(1)));
-    
+
     Iterator<Value> keyIterator = map.keySet().iterator();
-    
+
     map.put(new Value(2), new Value(2));
     map.put(new Value(0), new Value(0));
-    
+
     assertThat(map.getAtTableOffset(0 * OffHeapHashMap.ENTRY_SIZE), is(new Value(2)));
     assertThat(map.getAtTableOffset(2 * OffHeapHashMap.ENTRY_SIZE), is(new Value(0)));
     assertThat(map.getAtTableOffset(3 * OffHeapHashMap.ENTRY_SIZE), is(new Value(1)));
-    
+
     Collection<Value> iteratorKeys = new ArrayList<Value>();
     while (keyIterator.hasNext()) {
       iteratorKeys.add(keyIterator.next());
@@ -139,42 +139,38 @@ public class IteratorMutationIT {
         return new HashSet<Object>(objects).size() == objects.size();
       }});
   }
-  
+
   static class Value implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    
+
     private final int value;
-    
+
     public Value(int value) {
       this.value = value;
     }
-    
+
     @Override
     public boolean equals(Object o) {
-      if (o instanceof Value) {
-        return value == ((Value) o).value;
-      } else {
-        return false;
-      }
+      return o instanceof Value && value == ((Value) o).value;
     }
-    
+
     @Override
     public int hashCode() {
       return 0;
     }
-    
+
     @Override
     public String toString() {
       return "Value(" + value + ")";
     }
   }
-  
+
   static class ValueStorage implements HalfStorageEngine<Value> {
 
     private static final ValueStorage HALF_INSTANCE = new ValueStorage();
     public static final StorageEngine<Value, Value> INSTANCE = new SplitStorageEngine<IteratorMutationIT.Value, IteratorMutationIT.Value>(HALF_INSTANCE, HALF_INSTANCE);
-        
+
     @Override
     public Integer write(Value object, int hash) {
       return object.value;
@@ -192,11 +188,7 @@ public class IteratorMutationIT {
 
     @Override
     public boolean equals(Object object, int encoding) {
-      if (object instanceof Value) {
-        return ((Value) object).value == encoding;
-      } else {
-        return false;
-      }
+      return object instanceof Value && ((Value) object).value == encoding;
     }
 
     @Override

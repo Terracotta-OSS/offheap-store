@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,11 +45,11 @@ public class SerializeAfterEvolutionTest {
     pushTccl(loaderB);
     try {
       Serializable outA = p.decode(encodedA);
-      Assert.assertThat((Integer) outA.getClass().getField("integer").get(outA), Is.is(42));
+      Assert.assertThat(outA.getClass().getField("integer").get(outA), Is.is(42));
 
       Serializable b = (Serializable) loaderB.loadClass(newClassName(A_new.class)).newInstance();
       Serializable outB = p.decode(p.encode(b));
-      Assert.assertThat((Integer) outB.getClass().getField("integer").get(outB), Is.is(42));
+      Assert.assertThat(outB.getClass().getField("integer").get(outB), Is.is(42));
     } finally {
       popTccl();
     }
@@ -58,7 +58,7 @@ public class SerializeAfterEvolutionTest {
   public static class A_old implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    
+
     public Integer integer;
 
     public A_old() {
@@ -69,7 +69,7 @@ public class SerializeAfterEvolutionTest {
   public static class A_new implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    
+
     public Date date;
     public Integer integer;
 

@@ -110,6 +110,6 @@ public abstract class OffHeapAndDiskStorageEngineDependentTest extends StorageEn
           throw new RuntimeException(e);
         }
       }
-    };
+    }
   }
 }

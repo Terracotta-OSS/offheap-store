@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -65,11 +65,11 @@ import static org.terracotta.offheapstore.MetadataTuple.metadataTuple;
 public abstract class AbstractOffHeapMapIT {
 
   public final Generator generator;
-  
+
   public AbstractOffHeapMapIT(Generator generator) {
     this.generator = generator;
   }
-  
+
   protected abstract Map<SpecialInteger, SpecialInteger> createMap(Generator generator);
 
   protected abstract Map<Integer, byte[]> createOffHeapBufferMap(PageSource source);
@@ -133,7 +133,7 @@ public abstract class AbstractOffHeapMapIT {
       //expected
     }
   }
-  
+
   @Test
   public final void testResizing() {
     Map<SpecialInteger, SpecialInteger> map = createMap(generator);
@@ -164,7 +164,7 @@ public abstract class AbstractOffHeapMapIT {
     long randomSeed = System.nanoTime();
     System.err.println(this.getClass() + ".testPopulatedMap random seed = " + randomSeed);
     Random rndm = new Random(randomSeed);
-    
+
     Map<SpecialInteger, SpecialInteger> map = createMap(generator);
     SpecialInteger keyA = generator.generate(rndm.nextInt());
     SpecialInteger valueA = generator.generate(rndm.nextInt());
@@ -175,7 +175,7 @@ public abstract class AbstractOffHeapMapIT {
     assertTrue(map.containsValue(valueA));
     assertTrue(map.values().contains(valueA));
     assertFalse(map.isEmpty());
-    
+
     SpecialInteger keyB;
     do {
       keyB = generator.generate(rndm.nextInt());
@@ -188,7 +188,7 @@ public abstract class AbstractOffHeapMapIT {
     assertTrue(map.containsValue(valueB1));
     assertTrue(map.values().contains(valueB1));
     assertFalse(map.isEmpty());
-    
+
     SpecialInteger valueB2 = generator.generate(rndm.nextInt());
     assertThat(map.put(keyB, valueB2), is(valueB1));
     assertThat(map.get(keyB), is(valueB2));
@@ -197,20 +197,20 @@ public abstract class AbstractOffHeapMapIT {
     assertTrue(map.containsValue(valueB2));
     assertTrue(map.values().contains(valueB2));
     assertFalse(map.isEmpty());
-    
+
     assertThat(map.size(), is(2));
     assertThat(map.entrySet().size(), is(2));
     assertThat(map.values().size(), is(2));
-    
+
     assertFalse(map.isEmpty());
     assertFalse(map.entrySet().isEmpty());
     assertFalse(map.values().isEmpty());
-    
+
     Set<SpecialInteger> keySet = map.keySet();
     //keySet
     assertFalse(keySet.isEmpty());
     assertThat(keySet.size(), is(2));
-    assertTrue(keySet.equals(keySet));;
+    assertTrue(keySet.equals(keySet));
     assertTrue(keySet.containsAll(keySet));
     assertTrue(keySet.containsAll(Arrays.asList(keySet.toArray())));
     assertTrue(keySet.containsAll(Arrays.asList(keySet.toArray(new SpecialInteger[0]))));
@@ -256,12 +256,12 @@ public abstract class AbstractOffHeapMapIT {
       assertThat(a[2], nullValue());
       assertSame(a.getClass(), SpecialInteger[].class);
     }
-    
+
     Set<Map.Entry<SpecialInteger, SpecialInteger>> entrySet = map.entrySet();
     //entrySet
     assertFalse(entrySet.isEmpty());
     assertThat(entrySet.size(), is(2));
-    assertTrue(entrySet.equals(entrySet));;
+    assertTrue(entrySet.equals(entrySet));
     assertTrue(entrySet.containsAll(entrySet));
     assertTrue(entrySet.containsAll(Arrays.asList(entrySet.toArray())));
     assertTrue(entrySet.containsAll(Arrays.asList(entrySet.toArray(new Map.Entry[0]))));
@@ -378,7 +378,7 @@ public abstract class AbstractOffHeapMapIT {
   public final void testTerminalEncodingIterator() {
     Map<SpecialInteger, SpecialInteger> map = createMap(generator);
     assumeThat(map, instanceOf(OffHeapHashMap.class));
-    
+
     OffHeapHashMap<SpecialInteger, SpecialInteger> offheapMap = (OffHeapHashMap<SpecialInteger, SpecialInteger>) map;
     for (int i = 0; i < 20; i++) {
       offheapMap.put(generator.generate(i), generator.generate(i));
@@ -480,7 +480,7 @@ public abstract class AbstractOffHeapMapIT {
   @Test
   public final void testDestroyedMapIsEmpty() {
     Map<SpecialInteger, SpecialInteger> m = createMap(generator);
-    
+
     for (int i = 0; i < 100; i++) {
       m.put(generator.generate(i), generator.generate(i));
     }
@@ -501,7 +501,7 @@ public abstract class AbstractOffHeapMapIT {
   @Test
   public final void testDestroyedMapIsImmutable() {
     Map<SpecialInteger, SpecialInteger> m = createMap(generator);
-    
+
     for (int i = 0; i < 100; i++) {
       m.put(generator.generate(i), generator.generate(i));
     }
@@ -542,17 +542,17 @@ public abstract class AbstractOffHeapMapIT {
     for (int i = 0; i < 10; i++) {
       m.put(i, new byte[128]);
     }
-    
+
     Iterator<Integer> it = m.keySet().iterator();
     for (int i = 0; i < 5; i++) {
       Assert.assertTrue(it.hasNext());
       Assert.assertNotNull(it.next());
     }
-    
+
     Assert.assertTrue(it.hasNext());
 
     m.clear();
-    
+
     if (m instanceof OffHeapHashMap<?, ?>) {
       ((OffHeapHashMap<?, ?>) m).destroy();
     } else if (m instanceof AbstractConcurrentOffHeapMap<?, ?>) {
@@ -591,12 +591,12 @@ public abstract class AbstractOffHeapMapIT {
       }
     }
   }
-  
+
   @Test
   public void testFillBehavior() {
-    PageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), KILOBYTES.toBytes(32), KILOBYTES.toBytes(32)); 
+    PageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), KILOBYTES.toBytes(32), KILOBYTES.toBytes(32));
     Map<Integer, byte[]> m = createOffHeapBufferMap(source);
-    
+
     for (int i = 0; i < 100000; i++) {
       Set<Integer> keySetCopy = new HashSet<Integer>(m.keySet());
       doFill(m, i, new byte[i % 1024]);
@@ -708,11 +708,11 @@ public abstract class AbstractOffHeapMapIT {
     assertThat(m.size(), is(0));
     assertThat(m.entrySet().size(), is(0));
     assertThat(m.values().size(), is(0));
-    
+
     assertTrue(m.isEmpty());
     assertTrue(m.entrySet().isEmpty());
     assertTrue(m.values().isEmpty());
-    
+
     assertThat(m.toString(), is("{}"));
     assertFalse(m.containsValue(g.generate(1)));
     assertFalse(m.containsKey(g.generate(1)));
@@ -727,7 +727,7 @@ public abstract class AbstractOffHeapMapIT {
     assertTrue(keySet.equals(Collections.emptySet()));
     assertTrue(Collections.emptySet().equals(keySet));
     assertTrue(keySet.equals(keySet));
-    
+
     //keySet::iterator
     assertFalse(keySet.iterator().hasNext());
     try {
@@ -736,7 +736,7 @@ public abstract class AbstractOffHeapMapIT {
     } catch (NoSuchElementException e) {
       //expected
     }
-    
+
     //keySet::toArray
     assertThat(keySet.toArray().length, is(0));
     assertSame(keySet.toArray().getClass(), Object[].class);
@@ -747,7 +747,7 @@ public abstract class AbstractOffHeapMapIT {
     assertSame(nullKeyArray.getClass(), SpecialInteger[].class);
     assertThat(nullKeyArray.length, is(1));
     assertThat(nullKeyArray[0], nullValue());
-    
+
     Set<Map.Entry<SpecialInteger, SpecialInteger>> entrySet = m.entrySet();
     //entrySet
     assertTrue(entrySet.isEmpty());
@@ -758,7 +758,7 @@ public abstract class AbstractOffHeapMapIT {
     assertTrue(entrySet.equals(Collections.emptySet()));
     assertTrue(Collections.emptySet().equals(entrySet));
     assertTrue(entrySet.equals(entrySet));
-    
+
     //entrySet::iterator
     assertFalse(entrySet.iterator().hasNext());
     try {
@@ -767,7 +767,7 @@ public abstract class AbstractOffHeapMapIT {
     } catch (NoSuchElementException e) {
       //expected
     }
-    
+
     //entrySet::toArray
     assertThat(entrySet.toArray().length, is(0));
     assertSame(entrySet.toArray().getClass(), Object[].class);
@@ -785,7 +785,7 @@ public abstract class AbstractOffHeapMapIT {
     assertThat(values.size(), is(0));
     assertThat(values.toString(), is("[]"));
     assertTrue(values.containsAll(values));
-    
+
     //values::iterator
     assertFalse(values.iterator().hasNext());
     try {
@@ -794,7 +794,7 @@ public abstract class AbstractOffHeapMapIT {
     } catch (NoSuchElementException e) {
       //expected
     }
-    
+
     //values::toArray
     assertThat(values.toArray().length, is(0));
     assertSame(values.toArray().getClass(), Object[].class);

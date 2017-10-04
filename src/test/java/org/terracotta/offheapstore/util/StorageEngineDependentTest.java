@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,7 +41,7 @@ public abstract class StorageEngineDependentTest {
   public <K, V> Factory<? extends StorageEngine<K, V>> createFactory(PageSource source, Portability<? super K> keyPortability, Portability<? super V> valuePortability) {
     return createFactory(source, keyPortability, valuePortability, false, false);
   }
-  
+
   public <K, V> Factory<? extends StorageEngine<K, V>> createFactory(PageSource source, Portability<? super K> keyPortability, Portability<? super V> valuePortability, boolean thief, boolean victim) {
     return testMode.createStorageEngineFactory(source, keyPortability, valuePortability, thief, victim);
   }
@@ -49,14 +49,14 @@ public abstract class StorageEngineDependentTest {
   public <K,V> StorageEngine<K, V> create(PageSource source, Portability<? super K> keyPortability, Portability<? super V> valuePortability) {
     return create(source, keyPortability, valuePortability, false, false);
   }
-  
+
   public <K,V> StorageEngine<K, V> create(PageSource source, Portability<? super K> keyPortability, Portability<? super V> valuePortability, boolean thief, boolean victim) {
     return testMode.createStorageEngine(source, keyPortability, valuePortability, thief, victim);
   }
 
   public interface TestMode {
-    public abstract PageSource createPageSource(long size, MemoryUnit unit);
-    public abstract <K, V> StorageEngine<K, V> createStorageEngine(PageSource source, Portability<? super K> keyPortability, Portability<? super V> valuePortability, boolean thief, boolean victim);
-    public abstract <K, V> Factory<? extends StorageEngine<K, V>> createStorageEngineFactory(PageSource source, Portability<? super K> keyPortability, Portability<? super V> valuePortability, boolean thief, boolean victim);
+    PageSource createPageSource(long size, MemoryUnit unit);
+    <K, V> StorageEngine<K, V> createStorageEngine(PageSource source, Portability<? super K> keyPortability, Portability<? super V> valuePortability, boolean thief, boolean victim);
+    <K, V> Factory<? extends StorageEngine<K, V>> createStorageEngineFactory(PageSource source, Portability<? super K> keyPortability, Portability<? super V> valuePortability, boolean thief, boolean victim);
   }
 }

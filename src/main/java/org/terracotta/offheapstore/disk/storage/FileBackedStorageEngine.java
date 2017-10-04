@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -375,7 +375,7 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
     }
     return sum;
   }
-  
+
   private FileChunk findChunk(long address) {
     return chunks.floorEntry(address).getValue();
   }
@@ -523,9 +523,7 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
     FileChunk(long size, long baseAddress) {
       Long newOffset = source.allocateRegion(size);
       if (newOffset == null) {
-        StringBuilder sb = new StringBuilder("Storage engine file data area allocation failed:\n");
-        sb.append("Allocator: ").append(source);
-        throw new OutOfMemoryError(sb.toString());
+        throw new OutOfMemoryError("Storage engine file data area allocation failed:\nAllocator: " + source);
       } else {
         this.filePosition = newOffset;
       }

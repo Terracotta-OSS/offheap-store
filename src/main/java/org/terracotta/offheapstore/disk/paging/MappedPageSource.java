@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -69,7 +69,7 @@ public class MappedPageSource implements PageSource {
   public MappedPageSource(File file, long size) throws IOException {
     this(file, true, size);
   }
-  
+
   public MappedPageSource(File file, boolean truncate) throws IOException {
     this(file, truncate, Long.MAX_VALUE);
   }
@@ -92,7 +92,7 @@ public class MappedPageSource implements PageSource {
     }
     this.allocator = new PowerOfTwoFileAllocator(size);
   }
-  
+
   public synchronized Long allocateRegion(long size) {
     Long address = allocator.allocate(size);
     if (address == null) {
@@ -124,7 +124,7 @@ public class MappedPageSource implements PageSource {
       throw new AssertionError();
     } else {
       if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("Freeing a {}B region from {} &{}", new Object[] {DebuggingUtils.toBase2SuffixedString(r.size), file.getName(), r.address});
+        LOGGER.debug("Freeing a {}B region from {} &{}", DebuggingUtils.toBase2SuffixedString(r.size), file.getName(), r.address);
       }
       allocator.free(r.address, r.size);
     }
@@ -162,7 +162,7 @@ public class MappedPageSource implements PageSource {
     if (address == null) {
       return null;
     }
-    
+
     try {
       MappedByteBuffer buffer = channel.map(MapMode.READ_WRITE, address, size);
       MappedPage page = new MappedPage(buffer);
@@ -178,7 +178,7 @@ public class MappedPageSource implements PageSource {
   @Override
   public synchronized void free(final Page page) {
     final Long a = pages.remove(page);
-    
+
     if (a == null) {
       throw new AssertionError();
     } else {

@@ -49,7 +49,7 @@ public final class MetadataTuple<V> {
   }
 
 
-  public static final <T> MetadataTuple<T> metadataTuple(T value, int metadata) {
+  public static <T> MetadataTuple<T> metadataTuple(T value, int metadata) {
     return new MetadataTuple<T>(value, metadata);
   }
 }

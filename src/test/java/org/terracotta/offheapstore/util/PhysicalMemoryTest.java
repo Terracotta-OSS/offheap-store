@@ -60,7 +60,7 @@ public class PhysicalMemoryTest {
         }
 
         // We care only about the test threads, other can do whatever they want
-        if (Thread.currentThread() == testThread && perm.getName().equals(SecurityConstants.CHECK_MEMBER_ACCESS_PERMISSION)) {
+        if (Thread.currentThread() == testThread && perm.getName().equals("accessDeclaredMembers")) {
           // OperatingSystemMXBean should not ask for permissions
           Class<?> stack[] = getClassContext();
           Arrays.stream(stack)

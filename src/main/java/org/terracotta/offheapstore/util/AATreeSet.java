@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -247,27 +247,27 @@ public class AATreeSet<T extends Comparable<? super T>> extends AbstractSet<T> i
     return top;
   }
 
-  public static interface Node<E extends Comparable<? super E>> {
+  public interface Node<E extends Comparable<? super E>> {
 
-    public void setLeft(Node<E> node);
+    void setLeft(Node<E> node);
 
-    public void setRight(Node<E> node);
+    void setRight(Node<E> node);
 
-    public Node<E> getLeft();
+    Node<E> getLeft();
 
-    public Node<E> getRight();
+    Node<E> getRight();
 
-    public int getLevel();
+    int getLevel();
 
-    public void setLevel(int value);
+    void setLevel(int value);
 
-    public int decrementLevel();
+    int decrementLevel();
 
-    public int incrementLevel();
+    int incrementLevel();
 
-    public void swapPayload(Node<E> with);
+    void swapPayload(Node<E> with);
 
-    public E getPayload();
+    E getPayload();
   }
 
   public static abstract class AbstractTreeNode<E extends Comparable<? super E>> implements Node<E> {
@@ -431,11 +431,7 @@ public class AATreeSet<T extends Comparable<? super T>> extends AbstractSet<T> i
     @Override
     @SuppressWarnings("unchecked")
     public boolean remove(Object o) {
-      if (inRange((T) o)) {
-        return remove(o);
-      } else {
-        return false;
-      }
+      return inRange((T) o) && remove(o);
     }
 
     @Override
