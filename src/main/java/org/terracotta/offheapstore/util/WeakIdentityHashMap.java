@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,33 +30,33 @@ import java.util.Map.Entry;
  */
 public class WeakIdentityHashMap<K, V> {
 
-  private final Map<WeakReference<K>, V> map = new HashMap<WeakReference<K>, V>();
-  private final ReferenceQueue<K> queue = new ReferenceQueue<K>();
+  private final Map<WeakReference<K>, V> map = new HashMap<>();
+  private final ReferenceQueue<K> queue = new ReferenceQueue<>();
   private final ReaperTask<V> reaperTask;
-  
+
   public WeakIdentityHashMap() {
     this(null);
   }
-  
+
   public WeakIdentityHashMap(ReaperTask<V> reaperTask) {
     this.reaperTask = reaperTask;
   }
 
   public V put(K key, V value) {
     reap();
-    WeakReference<K> keyRef = new IdentityWeakReference<K>(key, queue);
+    WeakReference<K> keyRef = new IdentityWeakReference<>(key, queue);
     return map.put(keyRef, value);
   }
 
   public V get(K key) {
     reap();
-    WeakReference<K> keyRef = new IdentityWeakReference<K>(key);
+    WeakReference<K> keyRef = new IdentityWeakReference<>(key);
     return map.get(keyRef);
   }
-  
+
   public V remove(K key) {
     reap();
-    return map.remove(new IdentityWeakReference<K>(key));
+    return map.remove(new IdentityWeakReference<>(key));
   }
 
   public Iterator<Entry<K, V>> entries() {
@@ -77,7 +77,7 @@ public class WeakIdentityHashMap<K, V> {
         if (key == null) {
           return null;
         } else {
-          return new SimpleEntry<K, V>(key, value);
+          return new SimpleEntry<>(key, value);
         }
       }
 
@@ -91,7 +91,7 @@ public class WeakIdentityHashMap<K, V> {
   public Iterator<V> values() {
     return map.values().iterator();
   }
-  
+
   public void reap() {
     Reference<? extends K> ref;
     while ((ref = queue.poll()) != null) {
@@ -159,9 +159,9 @@ public class WeakIdentityHashMap<K, V> {
     public V setValue(V v) {
       throw new UnsupportedOperationException();
     }
-    
+
   }
-  
+
   public interface ReaperTask<T> {
     void reap(T object);
   }

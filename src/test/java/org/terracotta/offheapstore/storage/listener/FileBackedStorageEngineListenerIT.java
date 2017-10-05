@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,11 +40,11 @@ public class FileBackedStorageEngineListenerIT extends AbstractListenerIT {
   public void destroyDataFile() {
     dataFile.delete();
   }
-  
+
   @Override
   protected ListenableStorageEngine<String, String> createStorageEngine() {
     try {
-      return new FileBackedStorageEngine<String, String>(new MappedPageSource(dataFile), Long.MAX_VALUE, MemoryUnit.BYTES, StringPortability.INSTANCE, StringPortability.INSTANCE);
+      return new FileBackedStorageEngine<>(new MappedPageSource(dataFile), Long.MAX_VALUE, MemoryUnit.BYTES, StringPortability.INSTANCE, StringPortability.INSTANCE);
     } catch (IOException e) {
       throw new AssertionError(e);
     }

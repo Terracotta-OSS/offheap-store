@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,6 @@
  */
 package org.terracotta.offheapstore.buffersource;
 
-import org.terracotta.offheapstore.util.FindbugsSuppressWarnings;
 import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 
@@ -23,21 +22,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class TimingBufferSource implements BufferSource {
-  
+
   private static final Logger LOGGER = LoggerFactory.getLogger(TimingBufferSource.class);
 
   private final BufferSource delegate;
   private final long slowNanos;
   private final long criticalNanos;
   private final boolean haltOnCritical;
-  
+
   public TimingBufferSource(BufferSource source, long slow, TimeUnit slowUnit, long critical, TimeUnit criticalUnit, boolean haltOnCritical) {
     this.delegate = source;
     this.slowNanos = slowUnit.toNanos(slow);
     this.criticalNanos = criticalUnit.toNanos(critical);
     this.haltOnCritical = haltOnCritical;
   }
-  
+
   @Override
   public ByteBuffer allocateBuffer(int size) {
     long beforeAllocationTime = System.nanoTime();
@@ -65,27 +64,23 @@ public class TimingBufferSource implements BufferSource {
    * @param msg an error message which may end up being reported.
    */
   private static void commitSuicide(String msg) {
-    Thread t = new Thread() {
-      @Override
-      @FindbugsSuppressWarnings("DM_EXIT")
-      public void run() {
-        // halt the JVM immediately unless the security manager prevents this
-        try {
-          System.exit(-1);
-        } catch (SecurityException ex) {
-          LOGGER.info("SecurityException prevented system exit", ex);
-        }
-        // log an error stating that the JVM should be manually aborted
-        try {
-          while (true) {
-            Thread.sleep(5000L);
-            LOGGER.error("VM is in an unreliable state - please abort it!");
-          }
-        } catch (InterruptedException e) {
-          LOGGER.info("JVM Instability logger terminated by interrupt");
-        }
+    Thread t = new Thread(() -> {
+      // halt the JVM immediately unless the security manager prevents this
+      try {
+        System.exit(-1);
+      } catch (SecurityException ex) {
+        LOGGER.info("SecurityException prevented system exit", ex);
       }
-    };
+      // log an error stating that the JVM should be manually aborted
+      try {
+        while (true) {
+          Thread.sleep(5000L);
+          LOGGER.error("VM is in an unreliable state - please abort it!");
+        }
+      } catch (InterruptedException e) {
+        LOGGER.info("JVM Instability logger terminated by interrupt");
+      }
+    });
     t.setDaemon(true);
     // spawn a thread here to avoid provoking deadlocks
     t.start();

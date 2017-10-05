@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,10 +28,10 @@ import org.junit.runner.RunWith;
  */
 @RunWith(ParallelParameterized.class)
 public abstract class PointerSizeParameterizedTest {
-  
+
   @ParallelParameterized.Parameters(name = "pointer-size={0}")
   public static Collection<Object[]> data() {
-    Collection<Object[]> widths = new ArrayList<Object[]>();
+    Collection<Object[]> widths = new ArrayList<>();
     for (PointerSize width : PointerSize.values()) {
       widths.add(new Object[] {width});
     }
@@ -40,7 +40,7 @@ public abstract class PointerSizeParameterizedTest {
 
   @ParallelParameterized.Parameter(0)
   public volatile PointerSize pointerSize;
-  
+
   protected PointerSize getPointerSize() {
     return pointerSize;
   }

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -62,7 +62,7 @@ public class ConcurrentWriteLockedOffHeapClockCacheIT extends AbstractConcurrent
   public void testCacheEviction() {
     assumeThat(generator, is(GOOD_GENERATOR));
     CapacityLimitedIntegerStorageEngineFactory factory = new CapacityLimitedIntegerStorageEngineFactory();
-    CacheTestRoutines.testCacheEviction(new ConcurrentWriteLockedOffHeapClockCache<Integer, Integer>(new UnlimitedPageSource(new OffHeapBufferSource()), factory, 1, 16), factory);
+    CacheTestRoutines.testCacheEviction(new ConcurrentWriteLockedOffHeapClockCache<>(new UnlimitedPageSource(new OffHeapBufferSource()), factory, 1, 16), factory);
   }
 
   @Test
@@ -82,12 +82,13 @@ public class ConcurrentWriteLockedOffHeapClockCacheIT extends AbstractConcurrent
 
   @Override
   protected ConcurrentMap<SpecialInteger, SpecialInteger> createMap(Generator generator) {
-    return new ConcurrentWriteLockedOffHeapClockCache<SpecialInteger, SpecialInteger>(new UnlimitedPageSource(new OffHeapBufferSource()), generator.factory(), 1, 16);
+    return new ConcurrentWriteLockedOffHeapClockCache<>(new UnlimitedPageSource(new OffHeapBufferSource()), generator.factory(), 1, 16);
   }
 
   @Override
   protected Map<Integer, byte[]> createOffHeapBufferMap(PageSource source) {
     assumeThat(generator, is(GOOD_GENERATOR));
-    return new ConcurrentWriteLockedOffHeapClockCache<Integer, byte[]>(source, SplitStorageEngine.createFactory(IntegerStorageEngine.createFactory(), OffHeapBufferHalfStorageEngine.createFactory(source, 1024, ByteArrayPortability.INSTANCE)));
+    return new ConcurrentWriteLockedOffHeapClockCache<>(source, SplitStorageEngine.createFactory(IntegerStorageEngine.createFactory(), OffHeapBufferHalfStorageEngine
+      .createFactory(source, 1024, ByteArrayPortability.INSTANCE)));
   }
 }

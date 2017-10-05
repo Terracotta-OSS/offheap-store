@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,9 +23,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
-import org.terracotta.offheapstore.jdk8.BiFunction;
-import org.terracotta.offheapstore.jdk8.Function;
 import org.terracotta.offheapstore.paging.PageSource;
 import org.terracotta.offheapstore.storage.StorageEngine;
 
@@ -114,7 +114,7 @@ public abstract class AbstractLockedOffHeapHashMap<K, V> extends OffHeapHashMap<
       l.unlock();
     }
   }
-  
+
   @Override
   public long installMappingForHashAndEncoding(int pojoHash, ByteBuffer offheapBinaryKey, ByteBuffer offheapBinaryValue, int metadata) {
     Lock l = writeLock();
@@ -125,7 +125,7 @@ public abstract class AbstractLockedOffHeapHashMap<K, V> extends OffHeapHashMap<
       l.unlock();
     }
   }
-  
+
   @Override
   public V put(K key, V value) {
     Lock l = writeLock();
@@ -158,7 +158,7 @@ public abstract class AbstractLockedOffHeapHashMap<K, V> extends OffHeapHashMap<
       l.unlock();
     }
   }
-  
+
   @Override
   public V fill(K key, V value, int metadata) {
     Lock l = writeLock();
@@ -169,7 +169,7 @@ public abstract class AbstractLockedOffHeapHashMap<K, V> extends OffHeapHashMap<
       l.unlock();
     }
   }
-  
+
   @Override
   public V remove(Object key) {
     Lock l = writeLock();
@@ -191,7 +191,7 @@ public abstract class AbstractLockedOffHeapHashMap<K, V> extends OffHeapHashMap<
       l.unlock();
     }
   }
-  
+
   @Override
   public void clear() {
     Lock l = writeLock();
@@ -289,7 +289,7 @@ public abstract class AbstractLockedOffHeapHashMap<K, V> extends OffHeapHashMap<
       l.unlock();
     }
   }
-  
+
   @Override
   public Integer getAndSetMetadata(Object key, int mask, int values) {
     Lock l = writeLock();
@@ -490,7 +490,7 @@ public abstract class AbstractLockedOffHeapHashMap<K, V> extends OffHeapHashMap<
       //no-op
     }
   }
-  
+
   @Override
   public Collection<V> values() {
     if (values == null) {
@@ -567,7 +567,7 @@ public abstract class AbstractLockedOffHeapHashMap<K, V> extends OffHeapHashMap<
 
   @Override
   public abstract Lock readLock();
-  
+
   @Override
   public abstract Lock writeLock();
 

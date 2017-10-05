@@ -18,7 +18,8 @@ package org.terracotta.offheapstore.util;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import org.junit.internal.AssumptionViolatedException;
+
+import org.junit.AssumptionViolatedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.terracotta.offheapstore.buffersource.OffHeapBufferSource;
@@ -70,7 +71,7 @@ public abstract class OffHeapAndDiskStorageEngineDependentTest extends StorageEn
 
     @Override
     public <K,V> OffHeapBufferStorageEngine<K, V> createStorageEngine(PageSource source, Portability<? super K> keyPortability, Portability<? super V> valuePortability, boolean thief, boolean victim) {
-      return new OffHeapBufferStorageEngine<K, V>(pointerSize, source, 1024, keyPortability, valuePortability, thief, victim, compressionThreshold);
+      return new OffHeapBufferStorageEngine<>(pointerSize, source, 1024, keyPortability, valuePortability, thief, victim, compressionThreshold);
     }
 
     @Override
@@ -84,7 +85,7 @@ public abstract class OffHeapAndDiskStorageEngineDependentTest extends StorageEn
       @Override
       public <K, V> FileBackedStorageEngine<K, V> createStorageEngine(PageSource source, Portability<? super K> keyPortability, Portability<? super V> valuePortability, boolean thief, boolean victim) {
         if (!thief && !victim) {
-          return new FileBackedStorageEngine<K, V>((MappedPageSource) source, 1024, MemoryUnit.BYTES, keyPortability, valuePortability);
+          return new FileBackedStorageEngine<>((MappedPageSource) source, 1024, MemoryUnit.BYTES, keyPortability, valuePortability);
         } else {
           throw new AssumptionViolatedException("FileBackedStorageEngine doesn't support stealing");
         }
@@ -93,7 +94,7 @@ public abstract class OffHeapAndDiskStorageEngineDependentTest extends StorageEn
       @Override
       public <K, V> Factory<FileBackedStorageEngine<K, V>> createStorageEngineFactory(PageSource source, Portability<? super K> keyPortability, Portability<? super V> valuePortability, boolean thief, boolean victim) {
         if (!thief && !victim) {
-          return FileBackedStorageEngine.<K, V>createFactory((MappedPageSource) source, 1024, MemoryUnit.BYTES, keyPortability, valuePortability);
+          return FileBackedStorageEngine.createFactory((MappedPageSource) source, 1024, MemoryUnit.BYTES, keyPortability, valuePortability);
         } else {
           throw new AssumptionViolatedException("FileBackedStorageEngine doesn't support stealing");
         }
@@ -109,6 +110,6 @@ public abstract class OffHeapAndDiskStorageEngineDependentTest extends StorageEn
           throw new RuntimeException(e);
         }
       }
-    };
+    }
   }
 }

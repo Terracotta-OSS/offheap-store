@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,7 +43,7 @@ public class OffHeapHashMapTableResizeIT {
     Level oldLevel = logger.getLevel();
     logger.setLevel(Level.ALL);
     try {
-      Map<Integer, Integer> map = new OffHeapHashMap<Integer, Integer>(new UpfrontAllocatingPageSource(new OffHeapBufferSource(), 32 * 1024 * 1024, 32 * 1024 * 1024), new SplitStorageEngine<Integer, Integer>(new IntegerStorageEngine(), new IntegerStorageEngine()), 1);
+      Map<Integer, Integer> map = new OffHeapHashMap<>(new UpfrontAllocatingPageSource(new OffHeapBufferSource(), 32 * 1024 * 1024, 32 * 1024 * 1024), new SplitStorageEngine<>(new IntegerStorageEngine(), new IntegerStorageEngine()), 1);
 
       for (int i = 0; i < 500000; i++) {
         map.put(i, i);

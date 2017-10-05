@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,9 +46,9 @@ public abstract class AbstractListenerIT {
   public void testListeningForPuts() {
     ListenableStorageEngine<String, String> storageEngine = createStorageEngine();
 
-    TrackingListener<String, String> listener = new TrackingListener<String, String>();
+    TrackingListener<String, String> listener = new TrackingListener<>();
     storageEngine.registerListener(listener);
-    Map<String, String> map = new OffHeapHashMap<String, String>(new UnlimitedPageSource(new HeapBufferSource()), (StorageEngine<? super String, ? super String>) storageEngine);
+    Map<String, String> map = new OffHeapHashMap<>(new UnlimitedPageSource(new HeapBufferSource()), (StorageEngine<? super String, ? super String>) storageEngine);
 
     for (int i = 0; i < 100; i++) {
       map.put(Integer.toString(i), Integer.toHexString(i));
@@ -60,11 +60,11 @@ public abstract class AbstractListenerIT {
   public void testListeningForRemoves() {
     ListenableStorageEngine<String, String> storageEngine = createStorageEngine();
 
-    TrackingListener<String, String> listener = new TrackingListener<String, String>();
+    TrackingListener<String, String> listener = new TrackingListener<>();
     storageEngine.registerListener(listener);
-    Map<String, String> map = new OffHeapHashMap<String, String>(new UnlimitedPageSource(new HeapBufferSource()), (StorageEngine<? super String, ? super String>) storageEngine);
+    Map<String, String> map = new OffHeapHashMap<>(new UnlimitedPageSource(new HeapBufferSource()), (StorageEngine<? super String, ? super String>) storageEngine);
 
-    HashMap<String, String> values = new HashMap<String, String>();
+    HashMap<String, String> values = new HashMap<>();
     for (int i = 0; i < 100; i++) {
       values.put(Integer.toString(i), Integer.toHexString(i));
     }
@@ -82,11 +82,11 @@ public abstract class AbstractListenerIT {
   public void testListeningForClears() {
     ListenableStorageEngine<String, String> storageEngine = createStorageEngine();
 
-    TrackingListener<String, String> listener = new TrackingListener<String, String>();
+    TrackingListener<String, String> listener = new TrackingListener<>();
     storageEngine.registerListener(listener);
-    Map<String, String> map = new OffHeapHashMap<String, String>(new UnlimitedPageSource(new HeapBufferSource()), (StorageEngine<? super String, ? super String>) storageEngine);
+    Map<String, String> map = new OffHeapHashMap<>(new UnlimitedPageSource(new HeapBufferSource()), (StorageEngine<? super String, ? super String>) storageEngine);
 
-    HashMap<String, String> values = new HashMap<String, String>();
+    HashMap<String, String> values = new HashMap<>();
     for (int i = 0; i < 100; i++) {
       values.put(Integer.toString(i), Integer.toHexString(i));
     }
@@ -102,14 +102,14 @@ public abstract class AbstractListenerIT {
 
   static class TrackingListener<K, V> implements RuntimeStorageEngineListener<K, V>, RecoveryStorageEngineListener<K, V> {
 
-    private final Map<Long, Entry<K, V>> trackingMap = new HashMap<Long, Map.Entry<K,V>>();
-    private final Set<Long> pinnedEncodings = new HashSet<Long>();
+    private final Map<Long, Entry<K, V>> trackingMap = new HashMap<>();
+    private final Set<Long> pinnedEncodings = new HashSet<>();
 
     @Override
     public void written(K key, V value, ByteBuffer binaryKey, ByteBuffer binaryValue, int hash, int metadata,
                         long encoding) {
       Assert.assertThat(key.hashCode(), Is.is(hash));
-      Entry<K, V> previous = trackingMap.put(encoding, new SimpleEntry<K, V>(key, value));
+      Entry<K, V> previous = trackingMap.put(encoding, new SimpleEntry<>(key, value));
       Assert.assertThat(previous, IsNull.nullValue());
     }
 
@@ -141,7 +141,7 @@ public abstract class AbstractListenerIT {
     }
 
     public Map<K, V> getTrackingMap() {
-      Map<K, V> result = new HashMap<K, V>();
+      Map<K, V> result = new HashMap<>();
       for (Entry<K, V> entry : trackingMap.values()) {
         V previous = result.put(entry.getKey(), entry.getValue());
         Assert.assertThat(previous, IsNull.nullValue());

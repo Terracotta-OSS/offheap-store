@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,11 +15,9 @@
  */
 package org.terracotta.offheapstore.pinning;
 
-import org.terracotta.offheapstore.pinning.PinnableCache;
 import static org.terracotta.offheapstore.util.MemoryUnit.KILOBYTES;
 
-import org.junit.internal.AssumptionViolatedException;
-
+import org.junit.AssumptionViolatedException;
 import org.terracotta.offheapstore.concurrent.ConcurrentOffHeapClockCache;
 import org.terracotta.offheapstore.paging.PageSource;
 import org.terracotta.offheapstore.storage.IntegerStorageEngine;
@@ -40,17 +38,17 @@ public class ConcurrentPinningIT extends AbstractPinningIT {
   protected PinnableCache<Integer, Integer> createPinnedIntegerCache(PageSource source) {
     Assume.assumeThat(getPointerSize(), Is.is(PointerSize.INT));
     Factory<? extends StorageEngine<Integer, Integer>> storageEngineFactory = SplitStorageEngine.createFactory(IntegerStorageEngine.createFactory(), IntegerStorageEngine.createFactory());
-    return new ConcurrentOffHeapClockCache<Integer, Integer>(source, storageEngineFactory);
+    return new ConcurrentOffHeapClockCache<>(source, storageEngineFactory);
   }
 
   @Override
   protected PinnableCache<Integer, byte[]> createPinnedByteArrayCache(PageSource source) {
     Factory<OffHeapBufferStorageEngine<Integer, byte[]>> storageEngineFactory = OffHeapBufferStorageEngine.createFactory(getPointerSize(), source, KILOBYTES.toBytes(1), new SerializablePortability(), ByteArrayPortability.INSTANCE, false, false);
-    return new ConcurrentOffHeapClockCache<Integer, byte[]>(source, storageEngineFactory);
+    return new ConcurrentOffHeapClockCache<>(source, storageEngineFactory);
   }
 
   @Override
   protected PinnableCache<Integer, byte[]> createSharingPinnedByteArrayCache(PageSource source) {
     throw new AssumptionViolatedException("Cannot create sharing concurrent cache");
-  }  
+  }
 }

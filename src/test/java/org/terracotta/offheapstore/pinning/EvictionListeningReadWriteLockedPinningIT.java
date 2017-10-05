@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,13 +15,11 @@
  */
 package org.terracotta.offheapstore.pinning;
 
-import org.terracotta.offheapstore.pinning.PinnableCache;
 import static org.terracotta.offheapstore.util.MemoryUnit.KILOBYTES;
 
 import java.util.concurrent.Callable;
 
-import org.junit.internal.AssumptionViolatedException;
-
+import org.junit.AssumptionViolatedException;
 import org.terracotta.offheapstore.eviction.EvictionListener;
 import org.terracotta.offheapstore.eviction.EvictionListeningReadWriteLockedOffHeapClockCache;
 import org.terracotta.offheapstore.paging.PageSource;
@@ -49,7 +47,7 @@ public class EvictionListeningReadWriteLockedPinningIT extends AbstractPinningIT
   @SuppressWarnings("unchecked")
   @Override
   protected PinnableCache<Integer, byte[]> createPinnedByteArrayCache(PageSource source) {
-    StorageEngine<Integer, byte[]> storageEngine = new OffHeapBufferStorageEngine<Integer, byte[]>(getPointerSize(), source, KILOBYTES.toBytes(1), new SerializablePortability(), ByteArrayPortability.INSTANCE);
+    StorageEngine<Integer, byte[]> storageEngine = new OffHeapBufferStorageEngine<>(getPointerSize(), source, KILOBYTES.toBytes(1), new SerializablePortability(), ByteArrayPortability.INSTANCE);
     return new EvictionListeningReadWriteLockedOffHeapClockCache<Integer, byte[]>(new NullEvictionListener(), source, storageEngine);
   }
 
@@ -57,7 +55,7 @@ public class EvictionListeningReadWriteLockedPinningIT extends AbstractPinningIT
   protected PinnableCache<Integer, byte[]> createSharingPinnedByteArrayCache(PageSource source) {
     throw new AssumptionViolatedException("Cannot create sharing eviction listening cache");
   }
-  
+
   @SuppressWarnings("rawtypes")
   static class NullEvictionListener implements EvictionListener {
 

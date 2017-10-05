@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +27,7 @@ import org.junit.Test;
 import static org.junit.Assert.assertThat;
 
 /**
- * 
+ *
  * @author cdennis
  */
 public class AATreeFileAllocatorTest {
@@ -40,7 +40,7 @@ public class AATreeFileAllocatorTest {
   @Test
   public void testAllocatorCorrectness() {
     AATreeFileAllocator allocator = new AATreeFileAllocator(Integer.MAX_VALUE);
-    Map<Integer, AllocatedRegion> allocated = new HashMap<Integer, AllocatedRegion>();
+    Map<Integer, AllocatedRegion> allocated = new HashMap<>();
 
     long occupied = 0;
     Random rndm = new Random();
@@ -68,7 +68,7 @@ public class AATreeFileAllocatorTest {
   @Ignore("performance test")
   public void testFragmentation() {
     AATreeFileAllocator allocator = new AATreeFileAllocator(Integer.MAX_VALUE);
-    Map<Integer, AllocatedRegion> allocated = new HashMap<Integer, AllocatedRegion>();
+    Map<Integer, AllocatedRegion> allocated = new HashMap<>();
 
     long total = 0;
 

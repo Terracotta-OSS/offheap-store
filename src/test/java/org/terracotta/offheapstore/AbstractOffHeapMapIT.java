@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,9 +32,6 @@ import org.junit.Test;
 import org.terracotta.offheapstore.buffersource.HeapBufferSource;
 import org.terracotta.offheapstore.buffersource.OffHeapBufferSource;
 import org.terracotta.offheapstore.concurrent.AbstractConcurrentOffHeapMap;
-import org.terracotta.offheapstore.exceptions.OversizeMappingException;
-import org.terracotta.offheapstore.jdk8.BiFunction;
-import org.terracotta.offheapstore.jdk8.Function;
 import org.terracotta.offheapstore.paging.PageSource;
 import org.terracotta.offheapstore.paging.UpfrontAllocatingPageSource;
 import org.terracotta.offheapstore.util.Generator;
@@ -45,6 +42,8 @@ import java.util.ConcurrentModificationException;
 import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
@@ -65,11 +64,11 @@ import static org.terracotta.offheapstore.MetadataTuple.metadataTuple;
 public abstract class AbstractOffHeapMapIT {
 
   public final Generator generator;
-  
+
   public AbstractOffHeapMapIT(Generator generator) {
     this.generator = generator;
   }
-  
+
   protected abstract Map<SpecialInteger, SpecialInteger> createMap(Generator generator);
 
   protected abstract Map<Integer, byte[]> createOffHeapBufferMap(PageSource source);
@@ -127,13 +126,13 @@ public abstract class AbstractOffHeapMapIT {
       //expected
     }
     try {
-      map.putAll(Collections.<SpecialInteger, SpecialInteger>singletonMap(null, generator.generate(1)));
+      map.putAll(Collections.singletonMap(null, generator.generate(1)));
       fail("Expected NullPointerException");
     } catch (NullPointerException e) {
       //expected
     }
   }
-  
+
   @Test
   public final void testResizing() {
     Map<SpecialInteger, SpecialInteger> map = createMap(generator);
@@ -164,7 +163,7 @@ public abstract class AbstractOffHeapMapIT {
     long randomSeed = System.nanoTime();
     System.err.println(this.getClass() + ".testPopulatedMap random seed = " + randomSeed);
     Random rndm = new Random(randomSeed);
-    
+
     Map<SpecialInteger, SpecialInteger> map = createMap(generator);
     SpecialInteger keyA = generator.generate(rndm.nextInt());
     SpecialInteger valueA = generator.generate(rndm.nextInt());
@@ -175,7 +174,7 @@ public abstract class AbstractOffHeapMapIT {
     assertTrue(map.containsValue(valueA));
     assertTrue(map.values().contains(valueA));
     assertFalse(map.isEmpty());
-    
+
     SpecialInteger keyB;
     do {
       keyB = generator.generate(rndm.nextInt());
@@ -188,7 +187,7 @@ public abstract class AbstractOffHeapMapIT {
     assertTrue(map.containsValue(valueB1));
     assertTrue(map.values().contains(valueB1));
     assertFalse(map.isEmpty());
-    
+
     SpecialInteger valueB2 = generator.generate(rndm.nextInt());
     assertThat(map.put(keyB, valueB2), is(valueB1));
     assertThat(map.get(keyB), is(valueB2));
@@ -197,20 +196,20 @@ public abstract class AbstractOffHeapMapIT {
     assertTrue(map.containsValue(valueB2));
     assertTrue(map.values().contains(valueB2));
     assertFalse(map.isEmpty());
-    
+
     assertThat(map.size(), is(2));
     assertThat(map.entrySet().size(), is(2));
     assertThat(map.values().size(), is(2));
-    
+
     assertFalse(map.isEmpty());
     assertFalse(map.entrySet().isEmpty());
     assertFalse(map.values().isEmpty());
-    
+
     Set<SpecialInteger> keySet = map.keySet();
     //keySet
     assertFalse(keySet.isEmpty());
     assertThat(keySet.size(), is(2));
-    assertTrue(keySet.equals(keySet));;
+    assertTrue(keySet.equals(keySet));
     assertTrue(keySet.containsAll(keySet));
     assertTrue(keySet.containsAll(Arrays.asList(keySet.toArray())));
     assertTrue(keySet.containsAll(Arrays.asList(keySet.toArray(new SpecialInteger[0]))));
@@ -256,12 +255,12 @@ public abstract class AbstractOffHeapMapIT {
       assertThat(a[2], nullValue());
       assertSame(a.getClass(), SpecialInteger[].class);
     }
-    
+
     Set<Map.Entry<SpecialInteger, SpecialInteger>> entrySet = map.entrySet();
     //entrySet
     assertFalse(entrySet.isEmpty());
     assertThat(entrySet.size(), is(2));
-    assertTrue(entrySet.equals(entrySet));;
+    assertTrue(entrySet.equals(entrySet));
     assertTrue(entrySet.containsAll(entrySet));
     assertTrue(entrySet.containsAll(Arrays.asList(entrySet.toArray())));
     assertTrue(entrySet.containsAll(Arrays.asList(entrySet.toArray(new Map.Entry[0]))));
@@ -378,7 +377,7 @@ public abstract class AbstractOffHeapMapIT {
   public final void testTerminalEncodingIterator() {
     Map<SpecialInteger, SpecialInteger> map = createMap(generator);
     assumeThat(map, instanceOf(OffHeapHashMap.class));
-    
+
     OffHeapHashMap<SpecialInteger, SpecialInteger> offheapMap = (OffHeapHashMap<SpecialInteger, SpecialInteger>) map;
     for (int i = 0; i < 20; i++) {
       offheapMap.put(generator.generate(i), generator.generate(i));
@@ -426,7 +425,7 @@ public abstract class AbstractOffHeapMapIT {
   public final void testDestroyFreesResources() {
     UpfrontAllocatingPageSource source = new UpfrontAllocatingPageSource(new OffHeapBufferSource(), 4 * 1024 * 1024, 4 * 1024 * 1024);
 
-    Collection<Map<Integer, byte[]>> maps = new ArrayList<Map<Integer, byte[]>>();
+    Collection<Map<Integer, byte[]>> maps = new ArrayList<>();
 
     int count = 0;
     while (true) {
@@ -437,8 +436,6 @@ public abstract class AbstractOffHeapMapIT {
           m.put(i, new byte[1024]);
         }
         count++;
-      } catch (OversizeMappingException e) {
-        break;
       } catch (IllegalArgumentException e) {
         break;
       }
@@ -480,7 +477,7 @@ public abstract class AbstractOffHeapMapIT {
   @Test
   public final void testDestroyedMapIsEmpty() {
     Map<SpecialInteger, SpecialInteger> m = createMap(generator);
-    
+
     for (int i = 0; i < 100; i++) {
       m.put(generator.generate(i), generator.generate(i));
     }
@@ -501,7 +498,7 @@ public abstract class AbstractOffHeapMapIT {
   @Test
   public final void testDestroyedMapIsImmutable() {
     Map<SpecialInteger, SpecialInteger> m = createMap(generator);
-    
+
     for (int i = 0; i < 100; i++) {
       m.put(generator.generate(i), generator.generate(i));
     }
@@ -517,7 +514,7 @@ public abstract class AbstractOffHeapMapIT {
     }
 
     m.clear();
-    m.putAll(Collections.<SpecialInteger, SpecialInteger>emptyMap());
+    m.putAll(Collections.emptyMap());
 
     try {
       m.put(generator.generate(1), generator.generate(1));
@@ -542,17 +539,17 @@ public abstract class AbstractOffHeapMapIT {
     for (int i = 0; i < 10; i++) {
       m.put(i, new byte[128]);
     }
-    
+
     Iterator<Integer> it = m.keySet().iterator();
     for (int i = 0; i < 5; i++) {
       Assert.assertTrue(it.hasNext());
       Assert.assertNotNull(it.next());
     }
-    
+
     Assert.assertTrue(it.hasNext());
 
     m.clear();
-    
+
     if (m instanceof OffHeapHashMap<?, ?>) {
       ((OffHeapHashMap<?, ?>) m).destroy();
     } else if (m instanceof AbstractConcurrentOffHeapMap<?, ?>) {
@@ -591,14 +588,14 @@ public abstract class AbstractOffHeapMapIT {
       }
     }
   }
-  
+
   @Test
   public void testFillBehavior() {
-    PageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), KILOBYTES.toBytes(32), KILOBYTES.toBytes(32)); 
+    PageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), KILOBYTES.toBytes(32), KILOBYTES.toBytes(32));
     Map<Integer, byte[]> m = createOffHeapBufferMap(source);
-    
+
     for (int i = 0; i < 100000; i++) {
-      Set<Integer> keySetCopy = new HashSet<Integer>(m.keySet());
+      Set<Integer> keySetCopy = new HashSet<>(m.keySet());
       doFill(m, i, new byte[i % 1024]);
       if (m.containsKey(i)) {
         Assert.assertNotNull(m.get(i));
@@ -624,25 +621,12 @@ public abstract class AbstractOffHeapMapIT {
     final SpecialInteger valueA1 = generator.generate(rndm.nextInt());
     final SpecialInteger valueA2 = generator.generate(valueA1.value() + 1);
 
-    assertThat(doComputeIfPresentWithMetadata(map, keyA, new BiFunction<SpecialInteger, MetadataTuple<SpecialInteger>, MetadataTuple<SpecialInteger>>() {
-      @Override
-      public MetadataTuple<SpecialInteger> apply(SpecialInteger t, MetadataTuple<SpecialInteger> u) {
-        throw new AssertionError("Unexpected function invocation");
-      }
+    assertThat(doComputeIfPresentWithMetadata(map, keyA, (t, u) -> {
+      throw new AssertionError("Unexpected function invocation");
     }), nullValue());
-    assertThat(doComputeIfAbsentWithMetadata(map, keyA, new Function<SpecialInteger, MetadataTuple<SpecialInteger>>() {
-      @Override
-      public MetadataTuple<SpecialInteger> apply(SpecialInteger t) {
-        return metadataTuple(valueA1, 0);
-      }
-    }), is(metadataTuple(valueA1, 0)));
+    assertThat(doComputeIfAbsentWithMetadata(map, keyA, t -> metadataTuple(valueA1, 0)), is(metadataTuple(valueA1, 0)));
 
-    assertThat(doComputeIfPresentWithMetadata(map, keyA, new BiFunction<SpecialInteger, MetadataTuple<SpecialInteger>, MetadataTuple<SpecialInteger>>() {
-      @Override
-      public MetadataTuple<SpecialInteger> apply(SpecialInteger t, MetadataTuple<SpecialInteger> u) {
-        return metadataTuple(generator.generate(u.value().value() + 1), 16);
-      }
-    }), is(metadataTuple(valueA2, 16)));
+    assertThat(doComputeIfPresentWithMetadata(map, keyA, (t, u) -> metadataTuple(generator.generate(u.value().value() + 1), 16)), is(metadataTuple(valueA2, 16)));
     assertThat(map.get(keyA), is(valueA2));
     assertThat(map.size(), is(1));
 
@@ -651,54 +635,31 @@ public abstract class AbstractOffHeapMapIT {
       keyB = generator.generate(rndm.nextInt());
     } while (keyB.equals(keyA));
     final SpecialInteger valueB1 = generator.generate(rndm.nextInt());
-    assertThat(doComputeWithMetadata(map, keyB, new BiFunction<SpecialInteger, MetadataTuple<SpecialInteger>, MetadataTuple<SpecialInteger>>() {
-      @Override
-      public MetadataTuple<SpecialInteger> apply(SpecialInteger t, MetadataTuple<SpecialInteger> u) {
-        assertThat(u, nullValue());
-        return metadataTuple(valueB1, 0);
-      }
+    assertThat(doComputeWithMetadata(map, keyB, (t, u) -> {
+      assertThat(u, nullValue());
+      return metadataTuple(valueB1, 0);
     }), is(metadataTuple(valueB1, 0)));
     assertThat(map.get(keyB), is(valueB1));
     assertThat(map.get(keyA), is(valueA2));
     assertThat(map.size(), is(2));
 
     final SpecialInteger valueB2 = generator.generate(rndm.nextInt());
-    assertThat(doComputeWithMetadata(map, keyB, new BiFunction<SpecialInteger, MetadataTuple<SpecialInteger>, MetadataTuple<SpecialInteger>>() {
-      @Override
-      public MetadataTuple<SpecialInteger> apply(SpecialInteger t, MetadataTuple<SpecialInteger> u) {
-        return metadataTuple(valueB2, 32);
-      }
-    }), is(metadataTuple(valueB2, 32)));
+    assertThat(doComputeWithMetadata(map, keyB, (t, u) -> metadataTuple(valueB2, 32)), is(metadataTuple(valueB2, 32)));
     assertThat(map.get(keyB), is(valueB2));
     assertThat(map.get(keyA), is(valueA2));
     assertThat(map.size(), is(2));
 
-    assertThat(doComputeWithMetadata(map, keyA, new BiFunction<SpecialInteger, MetadataTuple<SpecialInteger>, MetadataTuple<SpecialInteger>>() {
-      @Override
-      public MetadataTuple<SpecialInteger> apply(SpecialInteger t, MetadataTuple<SpecialInteger> u) {
-        return null;
-      }
-    }), nullValue());
+    assertThat(doComputeWithMetadata(map, keyA, (t, u) -> null), nullValue());
     assertThat(map.get(keyB), is(valueB2));
     assertThat(map.get(keyA), nullValue());
     assertThat(map.size(), is(1));
 
-    assertThat(doComputeIfPresentWithMetadata(map, keyB, new BiFunction<SpecialInteger, MetadataTuple<SpecialInteger>, MetadataTuple<SpecialInteger>>() {
-      @Override
-      public MetadataTuple<SpecialInteger> apply(SpecialInteger t, MetadataTuple<SpecialInteger> u) {
-        return null;
-      }
-    }), nullValue());
+    assertThat(doComputeIfPresentWithMetadata(map, keyB, (t, u) -> null), nullValue());
     assertThat(map.get(keyB), nullValue());
     assertThat(map.get(keyA), nullValue());
     assertThat(map.size(), is(0));
 
-    assertThat(doComputeIfPresentWithMetadata(map, keyA, new BiFunction<SpecialInteger, MetadataTuple<SpecialInteger>, MetadataTuple<SpecialInteger>>() {
-      @Override
-      public MetadataTuple<SpecialInteger> apply(SpecialInteger t, MetadataTuple<SpecialInteger> u) {
-        return null;
-      }
-    }), nullValue());
+    assertThat(doComputeIfPresentWithMetadata(map, keyA, (t, u) -> null), nullValue());
     assertThat(map.get(keyB), nullValue());
     assertThat(map.get(keyA), nullValue());
     assertThat(map.size(), is(0));
@@ -708,11 +669,11 @@ public abstract class AbstractOffHeapMapIT {
     assertThat(m.size(), is(0));
     assertThat(m.entrySet().size(), is(0));
     assertThat(m.values().size(), is(0));
-    
+
     assertTrue(m.isEmpty());
     assertTrue(m.entrySet().isEmpty());
     assertTrue(m.values().isEmpty());
-    
+
     assertThat(m.toString(), is("{}"));
     assertFalse(m.containsValue(g.generate(1)));
     assertFalse(m.containsKey(g.generate(1)));
@@ -727,7 +688,7 @@ public abstract class AbstractOffHeapMapIT {
     assertTrue(keySet.equals(Collections.emptySet()));
     assertTrue(Collections.emptySet().equals(keySet));
     assertTrue(keySet.equals(keySet));
-    
+
     //keySet::iterator
     assertFalse(keySet.iterator().hasNext());
     try {
@@ -736,7 +697,7 @@ public abstract class AbstractOffHeapMapIT {
     } catch (NoSuchElementException e) {
       //expected
     }
-    
+
     //keySet::toArray
     assertThat(keySet.toArray().length, is(0));
     assertSame(keySet.toArray().getClass(), Object[].class);
@@ -747,7 +708,7 @@ public abstract class AbstractOffHeapMapIT {
     assertSame(nullKeyArray.getClass(), SpecialInteger[].class);
     assertThat(nullKeyArray.length, is(1));
     assertThat(nullKeyArray[0], nullValue());
-    
+
     Set<Map.Entry<SpecialInteger, SpecialInteger>> entrySet = m.entrySet();
     //entrySet
     assertTrue(entrySet.isEmpty());
@@ -758,7 +719,7 @@ public abstract class AbstractOffHeapMapIT {
     assertTrue(entrySet.equals(Collections.emptySet()));
     assertTrue(Collections.emptySet().equals(entrySet));
     assertTrue(entrySet.equals(entrySet));
-    
+
     //entrySet::iterator
     assertFalse(entrySet.iterator().hasNext());
     try {
@@ -767,7 +728,7 @@ public abstract class AbstractOffHeapMapIT {
     } catch (NoSuchElementException e) {
       //expected
     }
-    
+
     //entrySet::toArray
     assertThat(entrySet.toArray().length, is(0));
     assertSame(entrySet.toArray().getClass(), Object[].class);
@@ -785,7 +746,7 @@ public abstract class AbstractOffHeapMapIT {
     assertThat(values.size(), is(0));
     assertThat(values.toString(), is("[]"));
     assertTrue(values.containsAll(values));
-    
+
     //values::iterator
     assertFalse(values.iterator().hasNext());
     try {
@@ -794,7 +755,7 @@ public abstract class AbstractOffHeapMapIT {
     } catch (NoSuchElementException e) {
       //expected
     }
-    
+
     //values::toArray
     assertThat(values.toArray().length, is(0));
     assertSame(values.toArray().getClass(), Object[].class);

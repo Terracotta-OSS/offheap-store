@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,8 +15,6 @@
  */
 package org.terracotta.offheapstore.util;
 
-import org.terracotta.offheapstore.util.PhysicalMemory;
-import java.lang.management.OperatingSystemMXBean;
 import java.security.Permission;
 
 import org.junit.Assert;
@@ -32,26 +30,20 @@ import static org.hamcrest.number.OrderingComparison.lessThanOrEqualTo;
  * @author cdennis
  */
 public class PhysicalMemoryTest {
-  
+
+  private static final RuntimePermission CHECK_MEMBER_ACCESS_PERMISSION = new RuntimePermission("accessDeclaredMembers");
+
   @Test
   public void testMemoryInvariants() {
     Assert.assertThat(PhysicalMemory.freePhysicalMemory(), anyOf(nullValue(Long.class), lessThanOrEqualTo(PhysicalMemory.totalPhysicalMemory())));
     Assert.assertThat(PhysicalMemory.freeSwapSpace(), anyOf(nullValue(Long.class), lessThanOrEqualTo(PhysicalMemory.totalSwapSpace())));
     Assert.assertThat(PhysicalMemory.ourCommittedVirtualMemory(), anyOf(nullValue(Long.class), greaterThanOrEqualTo(0L)));
   }
-  
+
   @Test
   public void testBehaviorWithSecurityManager() {
-    final Thread testThread = Thread.currentThread();
+    Thread testThread = Thread.currentThread();
     System.setSecurityManager(new SecurityManager() {
-
-      @Override
-      public void checkMemberAccess(Class<?> clazz, int which) {
-        if (Thread.currentThread() == testThread && OperatingSystemMXBean.class.isAssignableFrom(clazz)) {
-          throw new SecurityException();
-        }
-      }
-
       @Override
       public void checkPackageAccess(String pkg) {
         if (Thread.currentThread() == testThread && pkg.startsWith("com.sun.")) {
@@ -59,9 +51,21 @@ public class PhysicalMemoryTest {
         }
       }
 
+      @Override
       public void checkPermission(Permission perm) {
+        // To be allowed to set the security manager back to null at the end of the test
+        if (perm.getName().equals("setSecurityManager")) {
+          return;
+        }
+        // PhysicalMemory does reflection on OperatingSystemMXBean. It can fails it the user has a SecurityManager configured
+        // We make sure that in this case, we correctly map those failures to a null return. This is what this test is testing
+        if (Thread.currentThread() == testThread && CHECK_MEMBER_ACCESS_PERMISSION.equals(perm)) {
+          throw new SecurityException();
+        }
+        super.checkPermission(perm);
       }
     });
+
     try {
       Assert.assertThat(PhysicalMemory.totalPhysicalMemory(), nullValue());
       Assert.assertThat(PhysicalMemory.freePhysicalMemory(), nullValue());

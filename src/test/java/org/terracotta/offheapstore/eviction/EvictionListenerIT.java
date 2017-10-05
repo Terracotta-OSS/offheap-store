@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,10 +46,11 @@ public class EvictionListenerIT {
   public void testEvictionListenerReadWriteLocked() {
     MonitoringEvictionListener listener = new MonitoringEvictionListener();
     PageSource source = new UpfrontAllocatingPageSource(new OffHeapBufferSource(), 16 * 4096, 2048);
-    Map<Long, String> map = new ConcurrentOffHeapClockCache<Long, String>(source, LongStorageEngine.createFactory(OffHeapBufferHalfStorageEngine.createFactory(source, 128, StringPortability.INSTANCE)), listener);
+    Map<Long, String> map = new ConcurrentOffHeapClockCache<>(source, LongStorageEngine.createFactory(OffHeapBufferHalfStorageEngine
+      .createFactory(source, 128, StringPortability.INSTANCE)), listener);
 
     for (long i = 0; i < 2000L; i++) {
-      map.put(Long.valueOf(i), Long.toString(i));
+      map.put(i, Long.toString(i));
     }
 
     Set<Long> evictedKeys = listener.evictedKeys();
@@ -64,10 +65,11 @@ public class EvictionListenerIT {
   public void testEvictionListenerWriteLocked() {
     MonitoringEvictionListener listener = new MonitoringEvictionListener();
     PageSource source = new UpfrontAllocatingPageSource(new OffHeapBufferSource(), 16 * 4096, 2048);
-    Map<Long, String> map = new ConcurrentWriteLockedOffHeapClockCache<Long, String>(source, LongStorageEngine.createFactory(OffHeapBufferHalfStorageEngine.createFactory(source, 128, StringPortability.INSTANCE)), listener);
+    Map<Long, String> map = new ConcurrentWriteLockedOffHeapClockCache<>(source, LongStorageEngine.createFactory(OffHeapBufferHalfStorageEngine
+      .createFactory(source, 128, StringPortability.INSTANCE)), listener);
 
     for (long i = 0; i < 2000L; i++) {
-      map.put(Long.valueOf(i), Long.toString(i));
+      map.put(i, Long.toString(i));
     }
 
     Set<Long> evictedKeys = listener.evictedKeys();
@@ -82,11 +84,12 @@ public class EvictionListenerIT {
   public void testEvictionListenerThatThrowsReadWriteLocked() {
     ThrowingEvictionListener listener = new ThrowingEvictionListener();
     PageSource source = new UpfrontAllocatingPageSource(new OffHeapBufferSource(), 16 * 4096, 2048);
-    Map<Long, String> map = new ConcurrentOffHeapClockCache<Long, String>(source, LongStorageEngine.createFactory(OffHeapBufferHalfStorageEngine.createFactory(source, 128, StringPortability.INSTANCE)), listener);
+    Map<Long, String> map = new ConcurrentOffHeapClockCache<>(source, LongStorageEngine.createFactory(OffHeapBufferHalfStorageEngine
+      .createFactory(source, 128, StringPortability.INSTANCE)), listener);
 
     for (long i = 0; i < 2000L; i++) {
       try {
-        map.put(Long.valueOf(i), Long.toString(i));
+        map.put(i, Long.toString(i));
       } catch (NullPointerException e) {
         //ignore
       }
@@ -103,11 +106,12 @@ public class EvictionListenerIT {
   public void testEvictionListenerThatThrowsWriteLocked() {
     ThrowingEvictionListener listener = new ThrowingEvictionListener();
     PageSource source = new UpfrontAllocatingPageSource(new OffHeapBufferSource(), 16 * 4096, 2048);
-    Map<Long, String> map = new ConcurrentWriteLockedOffHeapClockCache<Long, String>(source, LongStorageEngine.createFactory(OffHeapBufferHalfStorageEngine.createFactory(source, 128, StringPortability.INSTANCE)), listener);
+    Map<Long, String> map = new ConcurrentWriteLockedOffHeapClockCache<>(source, LongStorageEngine.createFactory(OffHeapBufferHalfStorageEngine
+      .createFactory(source, 128, StringPortability.INSTANCE)), listener);
 
     for (long i = 0; i < 2000L; i++) {
       try {
-        map.put(Long.valueOf(i), Long.toString(i));
+        map.put(i, Long.toString(i));
       } catch (NullPointerException e) {
         //ignore
       }
@@ -124,22 +128,24 @@ public class EvictionListenerIT {
   public void testEvictionListenerSeesStealingEventsReadWriteLocked() {
     MonitoringEvictionListener listener = new MonitoringEvictionListener();
     PageSource source = new UpfrontAllocatingPageSource(new OffHeapBufferSource(), 16 * 4096, 16 * 4096);
-    Map<Long, String> victim = new ConcurrentOffHeapClockCache<Long, String>(source, LongStorageEngine.createFactory(OffHeapBufferHalfStorageEngine.createFactory(source, 128, StringPortability.INSTANCE, false, true)), listener);
+    Map<Long, String> victim = new ConcurrentOffHeapClockCache<>(source, LongStorageEngine.createFactory(OffHeapBufferHalfStorageEngine
+      .createFactory(source, 128, StringPortability.INSTANCE, false, true)), listener);
 
     long i = 0;
     while (listener.evictedKeys().isEmpty()) {
-      victim.put(Long.valueOf(i), Long.toString(i));
+      victim.put(i, Long.toString(i));
       i++;
     }
     listener.evictedKeys().clear();
     long victimSize = victim.size();
 
-    Map<Long, String> thief = new ConcurrentOffHeapHashMap<Long, String>(source, true, LongStorageEngine.createFactory(OffHeapBufferHalfStorageEngine.createFactory(source, 128, StringPortability.INSTANCE, true, false)));
+    Map<Long, String> thief = new ConcurrentOffHeapHashMap<>(source, true, LongStorageEngine.createFactory(OffHeapBufferHalfStorageEngine
+      .createFactory(source, 128, StringPortability.INSTANCE, true, false)));
 
     try {
       i = 0;
       while (true) {
-        thief.put(Long.valueOf(i), Long.toString(i));
+        thief.put(i, Long.toString(i));
         i++;
       }
     } catch (OversizeMappingException e) {
@@ -155,22 +161,24 @@ public class EvictionListenerIT {
   public void testEvictionListenerSeesStealingEventsWriteLocked() {
     MonitoringEvictionListener listener = new MonitoringEvictionListener();
     PageSource source = new UpfrontAllocatingPageSource(new OffHeapBufferSource(), 16 * 4096, 16 * 4096);
-    Map<Long, String> victim = new ConcurrentWriteLockedOffHeapClockCache<Long, String>(source, LongStorageEngine.createFactory(OffHeapBufferHalfStorageEngine.createFactory(source, 128, StringPortability.INSTANCE, false, true)), listener);
+    Map<Long, String> victim = new ConcurrentWriteLockedOffHeapClockCache<>(source, LongStorageEngine.createFactory(OffHeapBufferHalfStorageEngine
+      .createFactory(source, 128, StringPortability.INSTANCE, false, true)), listener);
 
     long i = 0;
     while (listener.evictedKeys().isEmpty()) {
-      victim.put(Long.valueOf(i), Long.toString(i));
+      victim.put(i, Long.toString(i));
       i++;
     }
     listener.evictedKeys().clear();
     long victimSize = victim.size();
 
-    Map<Long, String> thief = new ConcurrentOffHeapHashMap<Long, String>(source, true, LongStorageEngine.createFactory(OffHeapBufferHalfStorageEngine.createFactory(source, 128, StringPortability.INSTANCE, true, false)));
+    Map<Long, String> thief = new ConcurrentOffHeapHashMap<>(source, true, LongStorageEngine.createFactory(OffHeapBufferHalfStorageEngine
+      .createFactory(source, 128, StringPortability.INSTANCE, true, false)));
 
     try {
       i = 0;
       while (true) {
-        thief.put(Long.valueOf(i++), Long.toString(i));
+        thief.put(i++, Long.toString(i));
       }
     } catch (OversizeMappingException e) {
       //ignore
@@ -183,7 +191,7 @@ public class EvictionListenerIT {
 
   static class MonitoringEvictionListener implements EvictionListener<Long, String> {
 
-    private final Set<Long> evictedKeys = new HashSet<Long>();
+    private final Set<Long> evictedKeys = new HashSet<>();
 
     @Override
     public void evicting(Callable<Entry<Long, String>> evictee) {
@@ -203,7 +211,7 @@ public class EvictionListenerIT {
 
   static class ThrowingEvictionListener implements EvictionListener<Long, String> {
 
-    private final Set<Long> evictedKeys = new HashSet<Long>();
+    private final Set<Long> evictedKeys = new HashSet<>();
 
     @Override
     public void evicting(Callable<Entry<Long, String>> evictee) {

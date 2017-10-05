@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,20 +36,21 @@ import org.junit.Test;
  * @author cdennis
  */
 public class OffHeapDiskMapClearingIT extends AbstractDiskTest {
-  
+
   @Test
   public void testFrequentClearing() throws IOException {
     CountingPageSource source = new CountingPageSource(new MappedPageSource(dataFile));
-    Map<Integer, Integer> map = new OffHeapHashMap<Integer, Integer>(source, new SplitStorageEngine<Integer, Integer>(IntegerStorageEngine.instance(), IntegerStorageEngine.instance()));
+    Map<Integer, Integer> map = new OffHeapHashMap<>(source, new SplitStorageEngine<>(IntegerStorageEngine
+      .instance(), IntegerStorageEngine.instance()));
 
     for (int i = 0; i < 100000; i++) {
       map.clear();
     }
     Assert.assertThat(source.allocations.get(), Is.is(1));
   }
-  
+
   static class CountingPageSource implements PageSource {
-    
+
     private final AtomicInteger allocations = new AtomicInteger();
     private final PageSource delegate;
 
@@ -67,6 +68,6 @@ public class OffHeapDiskMapClearingIT extends AbstractDiskTest {
     public void free(Page page) {
       delegate.free(page);
     }
-    
+
   }
 }

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,42 +35,42 @@ import static org.terracotta.offheapstore.storage.portability.serializable.Seria
  * @author cdennis
  */
 public class EnumTest {
-  
+
   @Test
   public void basicInstanceSerialization() {
     Portability<Serializable> p = new SerializablePortability();
-    
-    Assert.assertThat(p.decode(p.encode(People.Alice)), IsSame.<Serializable>sameInstance(People.Alice));
-    Assert.assertThat(p.decode(p.encode(People.Bob)), IsSame.<Serializable>sameInstance(People.Bob));
-    Assert.assertThat(p.decode(p.encode(People.Eve)), IsSame.<Serializable>sameInstance(People.Eve));
+
+    Assert.assertThat(p.decode(p.encode(People.Alice)), IsSame.sameInstance(People.Alice));
+    Assert.assertThat(p.decode(p.encode(People.Bob)), IsSame.sameInstance(People.Bob));
+    Assert.assertThat(p.decode(p.encode(People.Eve)), IsSame.sameInstance(People.Eve));
   }
-  
+
   @Test
   public void classSerialization() {
     Portability<Serializable> p = new SerializablePortability();
-    
-    Assert.assertThat(p.decode(p.encode(Enum.class)), IsSame.<Serializable>sameInstance(Enum.class));
-    Assert.assertThat(p.decode(p.encode(Dogs.Handel.getClass())), IsSame.<Serializable>sameInstance(Dogs.Handel.getClass()));
-    Assert.assertThat(p.decode(p.encode(Dogs.Cassie.getClass())), IsSame.<Serializable>sameInstance(Dogs.Cassie.getClass()));
-    Assert.assertThat(p.decode(p.encode(Dogs.Penny.getClass())), IsSame.<Serializable>sameInstance(Dogs.Penny.getClass()));
+
+    Assert.assertThat(p.decode(p.encode(Enum.class)), IsSame.sameInstance(Enum.class));
+    Assert.assertThat(p.decode(p.encode(Dogs.Handel.getClass())), IsSame.sameInstance(Dogs.Handel.getClass()));
+    Assert.assertThat(p.decode(p.encode(Dogs.Cassie.getClass())), IsSame.sameInstance(Dogs.Cassie.getClass()));
+    Assert.assertThat(p.decode(p.encode(Dogs.Penny.getClass())), IsSame.sameInstance(Dogs.Penny.getClass()));
   }
-  
+
   @Test
   public void shiftingInstanceSerialization() throws Exception {
     Portability<Serializable> p = new SerializablePortability();
-    
+
     System.out.println(Arrays.toString(Foo_W.class.getDeclaredClasses()));
     System.out.println(Foo_W.c.getClass().getEnclosingClass());
-    
+
     ClassLoader wLoader = createClassNameRewritingLoader(Foo_W.class);
     ClassLoader rLoader = createClassNameRewritingLoader(Foo_R.class);
-    
+
     Class<?> wClass = wLoader.loadClass(newClassName(Foo_W.class));
     Class<?> rClass = rLoader.loadClass(newClassName(Foo_R.class));
-    
+
     Object[] wInstances = wClass.getEnumConstants();
     Object[] rInstances = rClass.getEnumConstants();
-    
+
     pushTccl(rLoader);
     try {
       for (int i = 0; i < wInstances.length; i++) {
@@ -80,9 +80,9 @@ public class EnumTest {
       popTccl();
     }
   }
-  
-  public static enum Foo_W { a, b, c { int i = 5; }, d { float f = 5.0f; } }
-  public static enum Foo_R { a, b { byte b = 3; }, c, d { double d = 6.0; } }
+
+  public enum Foo_W { a, b, c { int i = 5; }, d { float f = 5.0f; } }
+  public enum Foo_R { a, b { byte b = 3; }, c, d { double d = 6.0; } }
 }
 
 enum People { Alice, Bob, Eve }

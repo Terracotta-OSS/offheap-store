@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,21 +29,16 @@ import org.terracotta.offheapstore.util.Factory;
 public class IntegerStorageEngine implements HalfStorageEngine<Integer> {
 
   private static final IntegerStorageEngine              SINGLETON = new IntegerStorageEngine();
-  private static final Factory<IntegerStorageEngine> FACTORY   = new Factory<IntegerStorageEngine>() {
-    @Override
-    public IntegerStorageEngine newInstance() {
-      return SINGLETON;
-    }
-  };
+  private static final Factory<IntegerStorageEngine> FACTORY   = () -> SINGLETON;
 
   public static IntegerStorageEngine instance() {
     return SINGLETON;
   }
-  
+
   public static Factory<IntegerStorageEngine> createFactory() {
     return FACTORY;
   }
-  
+
   @Override
   public Integer read(int address) {
     return address;
@@ -61,11 +56,7 @@ public class IntegerStorageEngine implements HalfStorageEngine<Integer> {
 
   @Override
   public boolean equals(Object key, int address) {
-    if (key instanceof Integer) {
-      return ((Integer) key) == address;
-    } else {
-      return false;
-    }
+    return key instanceof Integer && ((Integer) key) == address;
   }
 
   @Override

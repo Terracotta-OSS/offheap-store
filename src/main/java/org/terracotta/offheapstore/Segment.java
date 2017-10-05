@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,10 +18,10 @@ package org.terracotta.offheapstore;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import org.terracotta.offheapstore.concurrent.AbstractConcurrentOffHeapMap;
-import org.terracotta.offheapstore.jdk8.BiFunction;
-import org.terracotta.offheapstore.jdk8.Function;
 
 /**
  * Implemented by maps that can be used as segments in a concurrent map.
@@ -33,7 +33,7 @@ public interface Segment<K, V> extends ConcurrentMap<K, V>, MapInternals, ReadWr
 
   /**
    * See {@link OffHeapHashMap#fill(Object, Object)} for a detailed description.
-   * 
+   *
    * @param key key with which the specified value is to be associated
    * @param value value to be associated with the specified key
    * @return the previous value associated with <tt>key</tt>, or
@@ -43,7 +43,7 @@ public interface Segment<K, V> extends ConcurrentMap<K, V>, MapInternals, ReadWr
   V fill(K key, V value);
 
   V fill(K key, V value, int metadata);
-  
+
   V put(K key, V value, int metadata);
 
   Integer getMetadata(K key, int mask);
@@ -61,7 +61,7 @@ public interface Segment<K, V> extends ConcurrentMap<K, V>, MapInternals, ReadWr
   ReentrantReadWriteLock getLock() throws UnsupportedOperationException;
 
   boolean removeNoReturn(Object key);
-  
+
   void destroy();
 
   boolean shrink();

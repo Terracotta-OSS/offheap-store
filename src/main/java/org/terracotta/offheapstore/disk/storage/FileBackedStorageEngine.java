@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +27,6 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -70,7 +69,7 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
   private static final int VALUE_LENGTH_OFFSET = 8;
   private static final int KEY_DATA_OFFSET = 12;
 
-  private final ConcurrentHashMap<Long, FileWriteTask> pendingWrites = new ConcurrentHashMap<Long, FileWriteTask>();
+  private final ConcurrentHashMap<Long, FileWriteTask> pendingWrites = new ConcurrentHashMap<>();
   private final ExecutorService writeExecutor;
 
   private final MappedPageSource source;
@@ -78,7 +77,7 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
   private final FileChannel writeChannel;
   private final AtomicReference<FileChannel> readChannelReference;
 
-  private final TreeMap<Long, FileChunk> chunks = new TreeMap<Long, FileChunk>();
+  private final TreeMap<Long, FileChunk> chunks = new TreeMap<>();
   private final long maxChunkSize;
 
   private volatile Owner owner;
@@ -88,22 +87,13 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
   }
 
   public static <K, V> Factory<FileBackedStorageEngine<K, V>> createFactory(final MappedPageSource source, final long maxChunkSize, final MemoryUnit maxChunkUnit, final Portability<? super K> keyPortability, final Portability<? super V> valuePortability, final boolean bootstrap) {
-    Factory<ExecutorService> executorFactory = new Factory<ExecutorService>() {
-      @Override
-      public ExecutorService newInstance() {
-        return new ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
-      }
-    };
+    Factory<ExecutorService> executorFactory = () -> new ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
     return createFactory(source, maxChunkSize, maxChunkUnit, keyPortability, valuePortability, executorFactory, bootstrap);
   }
 
   public static <K, V> Factory<FileBackedStorageEngine<K, V>> createFactory(final MappedPageSource source, final long maxChunkSize, final MemoryUnit maxChunkUnit, final Portability<? super K> keyPortability, final Portability<? super V> valuePortability, final Factory<ExecutorService> executorFactory, final boolean bootstrap) {
-    return new Factory<FileBackedStorageEngine<K, V>>() {
-      @Override
-      public FileBackedStorageEngine<K, V> newInstance() {
-        return new FileBackedStorageEngine<K, V>(source, maxChunkSize, maxChunkUnit, keyPortability, valuePortability, executorFactory.newInstance(), bootstrap);
-      }
-    };
+    return () -> new FileBackedStorageEngine<>(source, maxChunkSize, maxChunkUnit, keyPortability, valuePortability, executorFactory
+      .newInstance(), bootstrap);
   }
 
   public FileBackedStorageEngine(MappedPageSource source, final long maxChunkSize, final MemoryUnit maxChunkUnit, Portability<? super K> keyPortability, Portability<? super V> valuePortability) {
@@ -115,7 +105,7 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
   }
 
   public FileBackedStorageEngine(MappedPageSource source, final long maxChunkSize, final MemoryUnit maxChunkUnit, Portability<? super K> keyPortability, Portability<? super V> valuePortability, boolean bootstrap) {
-    this(source, maxChunkSize, maxChunkUnit, keyPortability, valuePortability, new ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>()), bootstrap);
+    this(source, maxChunkSize, maxChunkUnit, keyPortability, valuePortability, new ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>()), bootstrap);
   }
 
   public FileBackedStorageEngine(MappedPageSource source, long maxChunkSize, MemoryUnit maxChunkUnit, Portability<? super K> keyPortability, Portability<? super V> valuePortability, ExecutorService writer, boolean bootstrap) {
@@ -123,7 +113,7 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
 
     this.writeExecutor = writer;
     this.writeChannel = source.getWritableChannel();
-    this.readChannelReference = new AtomicReference<FileChannel>(source.getReadableChannel());
+    this.readChannelReference = new AtomicReference<>(source.getReadableChannel());
 
     this.source = source;
     this.maxChunkSize = highestOneBit(maxChunkUnit.toBytes(maxChunkSize));
@@ -152,12 +142,9 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
 
   @Override
   public void flush() throws IOException {
-    Future<Void> flush = writeExecutor.submit(new Callable<Void>() {
-      @Override
-      public Void call() throws IOException {
-        writeChannel.force(true);
-        return null;
-      }
+    Future<Void> flush = writeExecutor.submit(() -> {
+      writeChannel.force(true);
+      return null;
     });
 
     boolean interrupted = false;
@@ -245,25 +232,21 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
         final ByteBuffer binaryKeyForDecode = binaryKey.duplicate();
         final ByteBuffer binaryValueForDecode = binaryValue.duplicate();
         final Thread caller = Thread.currentThread();
-        fireRecovered(new Callable<K>() {
-
-          @Override
-          public K call() throws Exception {
-            if (caller == Thread.currentThread()) {
-              return (K) keyPortability.decode(binaryKeyForDecode.duplicate());
-            } else {
-              throw new IllegalStateException();
-            }
+        fireRecovered(() -> {
+          if (caller == Thread.currentThread()) {
+            @SuppressWarnings("unchecked")
+            K result = (K) keyPortability.decode(binaryKeyForDecode.duplicate());
+            return result;
+          } else {
+            throw new IllegalStateException();
           }
-        }, new Callable<V>() {
-
-          @Override
-          public V call() throws Exception {
-            if (caller == Thread.currentThread()) {
-              return (V) valuePortability.decode(binaryValueForDecode.duplicate());
-            } else {
-              throw new IllegalStateException();
-            }
+        }, () -> {
+          if (caller == Thread.currentThread()) {
+            @SuppressWarnings("unchecked")
+            V result = (V) valuePortability.decode(binaryValueForDecode.duplicate());
+            return result;
+          } else {
+            throw new IllegalStateException();
           }
         }, binaryKey, binaryValue, hash, 0, encoding);
       }
@@ -375,7 +358,7 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
     }
     return sum;
   }
-  
+
   private FileChunk findChunk(long address) {
     return chunks.floorEntry(address).getValue();
   }
@@ -523,9 +506,7 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
     FileChunk(long size, long baseAddress) {
       Long newOffset = source.allocateRegion(size);
       if (newOffset == null) {
-        StringBuilder sb = new StringBuilder("Storage engine file data area allocation failed:\n");
-        sb.append("Allocator: ").append(source);
-        throw new OutOfMemoryError(sb.toString());
+        throw new OutOfMemoryError("Storage engine file data area allocation failed:\nAllocator: " + source);
       } else {
         this.filePosition = newOffset;
       }
@@ -770,7 +751,7 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
     }
 
     Set<Long> encodings() {
-      Set<Long> encodings = new HashSet<Long>();
+      Set<Long> encodings = new HashSet<>();
       for (Long encoding : owner.encodingSet()) {
         long relative = encoding - baseAddress();
         if (relative >= 0 && relative < capacity()) {

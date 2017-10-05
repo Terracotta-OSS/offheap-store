@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -52,8 +52,7 @@ public class MappedPageSourceIT extends AbstractDiskTest {
       source.close();
     }
 
-    RandomAccessFile raf = new RandomAccessFile(source.getFile(), "r");
-    try {
+    try (RandomAccessFile raf = new RandomAccessFile(source.getFile(), "r")) {
       Assert.assertEquals(128, raf.length());
       byte[] data = new byte[(int) raf.length()];
       raf.readFully(data);
@@ -61,8 +60,6 @@ public class MappedPageSourceIT extends AbstractDiskTest {
       for (byte b : data) {
         Assert.assertEquals((byte) 0xff, b);
       }
-    } finally {
-      raf.close();
     }
   }
 
@@ -70,13 +67,13 @@ public class MappedPageSourceIT extends AbstractDiskTest {
   public void testCreateLotsOfMappedBuffers() throws IOException {
     final int size = 1024 * 1024;
     final int count = 16;
-    
+
     MappedPageSource source = new MappedPageSource(dataFile);
     try {
       byte[] data = new byte[1024];
       Arrays.fill(data, (byte) 0xff);
 
-      List<MappedPage> pages = new ArrayList<MappedPage>();
+      List<MappedPage> pages = new ArrayList<>();
       for (int i = 0; i < count; i++) {
         pages.add(source.allocate(size, false, false, null));
       }
@@ -92,11 +89,8 @@ public class MappedPageSourceIT extends AbstractDiskTest {
       source.close();
     }
 
-    RandomAccessFile raf = new RandomAccessFile(source.getFile(), "r");
-    try {
+    try (RandomAccessFile raf = new RandomAccessFile(source.getFile(), "r")) {
       Assert.assertEquals(size * count, raf.length());
-    } finally {
-      raf.close();
     }
   }
 
@@ -106,7 +100,7 @@ public class MappedPageSourceIT extends AbstractDiskTest {
 
     MappedPageSource source = new MappedPageSource(dataFile);
     try {
-      OffHeapHashMap<Integer, Integer> map = new OffHeapHashMap<Integer, Integer>(source, new SplitStorageEngine<Integer, Integer>(new IntegerStorageEngine(), new IntegerStorageEngine()));
+      OffHeapHashMap<Integer, Integer> map = new OffHeapHashMap<>(source, new SplitStorageEngine<>(new IntegerStorageEngine(), new IntegerStorageEngine()));
 
       for (int i = 0; i < size; i++) {
         map.put(i, i);

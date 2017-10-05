@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,6 @@ import java.util.Set;
 
 import org.junit.Assert;
 import org.terracotta.offheapstore.exceptions.OversizeMappingException;
-import org.terracotta.offheapstore.jdk8.BiFunction;
 
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.number.OrderingComparison.lessThan;
@@ -36,34 +35,34 @@ public final class CacheTestRoutines {
 
   public static void testCacheEviction(Map<Integer, Integer> cache, CapacityLimitedIntegerStorageEngineFactory engine) {
     Random rndm = new Random();
-    
+
     int toAdd = 100 + rndm.nextInt(90);
-    
+
     engine.setCapacity(toAdd);
-    
+
     for (int i = 0; i < toAdd; i++) {
       cache.put(i, i);
 
       Assert.assertEquals(i + 1, cache.size());
       for (int j = 0; j <= i; j++) {
-        Assert.assertTrue(cache.get(j).intValue() == j);
+        Assert.assertTrue(cache.get(j) == j);
       }
     }
-    
+
     int toEvict = 100 + rndm.nextInt(90);
-    
+
     for (int i = toAdd; i < toEvict + toAdd; i++) {
       cache.put(i, i);
 
       Assert.assertEquals(toAdd, cache.size());
-      Assert.assertTrue(cache.get(i).intValue() == i);
+      Assert.assertTrue(cache.get(i) == i);
     }
   }
 
   public static void testCacheEvictionMinimal(Map<Integer, Integer> cache) {
     for (int i = 0; i < 200; i++) {
       cache.put(i, i);
-      Assert.assertTrue(cache.get(i).intValue() == i);
+      Assert.assertTrue(cache.get(i) == i);
     }
   }
 
@@ -79,7 +78,7 @@ public final class CacheTestRoutines {
 
   public static void testFillBehavior(Map<Integer, byte[]> cache) {
     for (int i = 0; i < 100000; i++) {
-      Set<Integer> keySetCopy = new HashSet<Integer>(cache.keySet());
+      Set<Integer> keySetCopy = new HashSet<>(cache.keySet());
       AbstractOffHeapMapIT.doFill(cache, i, new byte[i % 1024]);
       if (cache.containsKey(i)) {
         Assert.assertNotNull(cache.get(i));
@@ -91,31 +90,26 @@ public final class CacheTestRoutines {
         Assert.assertEquals(keySetCopy, cache.keySet());
       }
     }
-    
+
     assertThat(cache.isEmpty(), is(false));
 
-    Set<Integer> keySetCopy = new HashSet<Integer>(cache.keySet());
-    
+    Set<Integer> keySetCopy = new HashSet<>(cache.keySet());
+
     for (Integer k : keySetCopy) {
       if (AbstractOffHeapMapIT.doFill(cache, k, new byte[(k % 1024) + 1]) == null) {
         if (cache.containsKey(k)) {
-          Assert.assertEquals((k % 1024) + 1, cache.get(k).length); 
+          Assert.assertEquals((k % 1024) + 1, cache.get(k).length);
         }
       } else {
         Assert.assertTrue(cache.containsKey(k));
-        Assert.assertEquals((k % 1024) + 1, cache.get(k).length); 
+        Assert.assertEquals((k % 1024) + 1, cache.get(k).length);
       }
     }
-  }  
+  }
 
   public static void testComputeEvictionBehavior(Map<Integer, byte[]> cache) {
     for (int i = 0; i < 100000; i++) {
-      AbstractOffHeapMapIT.doComputeWithMetadata(cache, i, new BiFunction<Integer, MetadataTuple<byte[]>, MetadataTuple<byte[]>>() {
-        @Override
-        public MetadataTuple<byte[]> apply(Integer t, MetadataTuple<byte[]> u) {
-          return MetadataTuple.metadataTuple(new byte[t % 1024], 0);
-        }
-      });
+      AbstractOffHeapMapIT.doComputeWithMetadata(cache, i, (t, u) -> MetadataTuple.metadataTuple(new byte[t % 1024], 0));
       assertThat(cache.get(i).length, is(i % 1024));
     }
 

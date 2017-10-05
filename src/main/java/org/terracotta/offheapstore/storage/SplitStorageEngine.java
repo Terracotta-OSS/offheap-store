@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,13 +29,7 @@ import org.terracotta.offheapstore.util.Factory;
 public class SplitStorageEngine<K, V> implements StorageEngine<K, V> {
 
   public static <K, V> Factory<SplitStorageEngine<K, V>> createFactory(final Factory<? extends HalfStorageEngine<K>> keyFactory, final Factory<? extends HalfStorageEngine<V>> valueFactory) {
-    return new Factory<SplitStorageEngine<K, V>>() {
-
-      @Override
-      public SplitStorageEngine<K, V> newInstance() {
-        return new SplitStorageEngine<K, V>(keyFactory.newInstance(), valueFactory.newInstance());
-      }
-    };
+    return () -> new SplitStorageEngine<>(keyFactory.newInstance(), valueFactory.newInstance());
   }
 
   protected final HalfStorageEngine<? super K> keyStorageEngine;
@@ -51,7 +45,7 @@ public class SplitStorageEngine<K, V> implements StorageEngine<K, V> {
     this.keyStorageEngine = keyStorageEngine;
     this.valueStorageEngine = valueStorageEngine;
   }
-  
+
   @Override
   public Long writeMapping(K key, V value, int hash, int metadata) {
     Integer keyEncoding = keyStorageEngine.write(key, hash);
@@ -72,7 +66,7 @@ public class SplitStorageEngine<K, V> implements StorageEngine<K, V> {
   public void attachedMapping(long encoding, int hash, int metadata) {
     //no-op
   }
-  
+
   @Override
   public void freeMapping(long encoding, int hash, boolean removal) {
     keyStorageEngine.free(keyEncoding(encoding));
@@ -106,7 +100,7 @@ public class SplitStorageEngine<K, V> implements StorageEngine<K, V> {
     keyStorageEngine.clear();
     valueStorageEngine.clear();
   }
-  
+
   @Override
   public long getAllocatedMemory() {
     return keyStorageEngine.getAllocatedMemory() + valueStorageEngine.getAllocatedMemory();
@@ -129,13 +123,11 @@ public class SplitStorageEngine<K, V> implements StorageEngine<K, V> {
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append("SplitStorageEngine:\n");
-    sb.append("Keys:\n");
-    sb.append(keyStorageEngine).append('\n');
-    sb.append("Values:\n");
-    sb.append(valueStorageEngine);
-    return sb.toString();
+    return "SplitStorageEngine:\n" +
+                "Keys:\n" +
+                keyStorageEngine + '\n' +
+                "Values:\n" +
+                valueStorageEngine;
   }
 
   @Override

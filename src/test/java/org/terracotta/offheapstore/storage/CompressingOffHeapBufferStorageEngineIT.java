@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,9 +47,11 @@ public class CompressingOffHeapBufferStorageEngineIT extends PointerSizeParamete
   public void testCompressionWithExplicitHoles() {
     PageSource source = new UnlimitedPageSource(new OffHeapBufferSource());
     Portability<Serializable> portability = new SerializablePortability();
-    
-    OffHeapHashMap<Integer, String> regular = new OffHeapHashMap<Integer, String>(source, new OffHeapBufferStorageEngine<Integer, String>(getPointerSize(), source, MemoryUnit.KILOBYTES.toBytes(1), portability, portability));
-    OffHeapHashMap<Integer, String> compressed = new OffHeapHashMap<Integer, String>(source, new OffHeapBufferStorageEngine<Integer, String>(getPointerSize(), source, MemoryUnit.KILOBYTES.toBytes(1), portability, portability, 1.0f));
+
+    OffHeapHashMap<Integer, String> regular = new OffHeapHashMap<>(source, new OffHeapBufferStorageEngine<>(getPointerSize(), source, MemoryUnit.KILOBYTES
+      .toBytes(1), portability, portability));
+    OffHeapHashMap<Integer, String> compressed = new OffHeapHashMap<>(source, new OffHeapBufferStorageEngine<>(getPointerSize(), source, MemoryUnit.KILOBYTES
+      .toBytes(1), portability, portability, 1.0f));
 
     for (int i = 0; i < 8 * 1024; i++) {
       regular.put(i, "foobar");
@@ -58,7 +60,7 @@ public class CompressingOffHeapBufferStorageEngineIT extends PointerSizeParamete
 
     assertThat(compressed, equalTo(regular));
     assertThat(compressed.getDataAllocatedMemory(), is(regular.getDataAllocatedMemory()));
-    
+
     for (int i = 1; i < 8 * 1024; i += 2) {
       regular.remove(i);
       compressed.remove(i);
@@ -73,9 +75,11 @@ public class CompressingOffHeapBufferStorageEngineIT extends PointerSizeParamete
     PageSource source1 = new UpfrontAllocatingPageSource(new OffHeapBufferSource(), MemoryUnit.KILOBYTES.toBytes(8), MemoryUnit.KILOBYTES.toBytes(8));
     PageSource source2 = new UpfrontAllocatingPageSource(new OffHeapBufferSource(), MemoryUnit.KILOBYTES.toBytes(8), MemoryUnit.KILOBYTES.toBytes(8));
     Portability<Serializable> portability = new SerializablePortability();
-    
-    OffHeapHashMap<Integer, String> regular = new OffHeapHashMap<Integer, String>(source1, new OffHeapBufferStorageEngine<Integer, String>(getPointerSize(), source1, MemoryUnit.KILOBYTES.toBytes(1), portability, portability));
-    OffHeapHashMap<Integer, String> compressed = new OffHeapHashMap<Integer, String>(source2, new OffHeapBufferStorageEngine<Integer, String>(getPointerSize(), source2, MemoryUnit.KILOBYTES.toBytes(1), portability, portability, 1.0f));
+
+    OffHeapHashMap<Integer, String> regular = new OffHeapHashMap<>(source1, new OffHeapBufferStorageEngine<>(getPointerSize(), source1, MemoryUnit.KILOBYTES
+      .toBytes(1), portability, portability));
+    OffHeapHashMap<Integer, String> compressed = new OffHeapHashMap<>(source2, new OffHeapBufferStorageEngine<>(getPointerSize(), source2, MemoryUnit.KILOBYTES
+      .toBytes(1), portability, portability, 1.0f));
 
     for (int i = 0; ; i++) {
       try {
@@ -102,7 +106,7 @@ public class CompressingOffHeapBufferStorageEngineIT extends PointerSizeParamete
 
     assertThat(compressed, equalTo(regular));
     assertThat(compressed.getDataAllocatedMemory(), is(regular.getDataAllocatedMemory()));
-    
+
     int limit = regular.size() - 1;
     for (int i = 1; i < limit; i += 2) {
       regular.remove(i);

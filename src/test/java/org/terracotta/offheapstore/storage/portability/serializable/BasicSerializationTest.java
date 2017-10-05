@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,7 +37,7 @@ import org.junit.Test;
  * @author cdennis
  */
 public class BasicSerializationTest {
-  
+
   @Test
   public void testSimpleObject() {
     Portability<Serializable> test = new SerializablePortability();
@@ -53,7 +53,7 @@ public class BasicSerializationTest {
   public void testComplexObject() {
     Portability<Serializable> test = new SerializablePortability();
 
-    HashMap<Integer, String> input = new HashMap<Integer, String>();
+    HashMap<Integer, String> input = new HashMap<>();
     input.put(1, "one");
     input.put(2, "two");
     input.put(3, "three");
@@ -64,12 +64,12 @@ public class BasicSerializationTest {
     Assert.assertEquals(input, result);
 
   }
-  
+
   private static final Class[] PRIMITIVE_CLASSES = new Class[] {
-     boolean.class, byte.class, char.class, short.class, 
+     boolean.class, byte.class, char.class, short.class,
      int.class, long.class, float.class, double.class, void.class
   };
-  
+
   @Test
   public void testPrimitiveClasses() {
     Portability<Serializable> p = new SerializablePortability();
@@ -108,8 +108,8 @@ public class BasicSerializationTest {
 
     static {
       try {
-        fooMethod = Foo.class.getDeclaredMethod("foo", new Class[0]);
-        barMethod = Bar.class.getDeclaredMethod("bar", new Class[0]);
+        fooMethod = Foo.class.getDeclaredMethod("foo");
+        barMethod = Bar.class.getDeclaredMethod("bar");
       } catch (NoSuchMethodException ex) {
         throw new Error();
       }
@@ -126,9 +126,9 @@ public class BasicSerializationTest {
     public Object invoke(Object proxy, Method method, Object[] args)
             throws Throwable {
       if (method.equals(fooMethod)) {
-        return Integer.valueOf(foo);
+        return foo;
       } else if (method.equals(barMethod)) {
-        return Float.valueOf(bar);
+        return bar;
       } else {
         throw new UnsupportedOperationException();
       }

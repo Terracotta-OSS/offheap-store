@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,7 +43,7 @@ public class ConcurrentWriteLockedOffHeapClockCache<K, V> extends AbstractConcur
    * @param storageEngineFactory factory for the segment storage engines
    */
   public ConcurrentWriteLockedOffHeapClockCache(PageSource tableSource, Factory<? extends StorageEngine<? super K, ? super V>> storageEngineFactory) {
-    super(new WriteLockedOffHeapClockCacheFactory<K, V>(tableSource, storageEngineFactory));
+    super(new WriteLockedOffHeapClockCacheFactory<>(tableSource, storageEngineFactory));
   }
 
   /**
@@ -55,7 +55,7 @@ public class ConcurrentWriteLockedOffHeapClockCache<K, V> extends AbstractConcur
    * @param evictionListener  listener notified on evictions
    */
   public ConcurrentWriteLockedOffHeapClockCache(PageSource tableSource, Factory<? extends StorageEngine<? super K, ? super V>> storageEngineFactory, EvictionListener<K, V> evictionListener) {
-    super(new WriteLockedOffHeapClockCacheFactory<K, V>(tableSource, storageEngineFactory, evictionListener));
+    super(new WriteLockedOffHeapClockCacheFactory<>(tableSource, storageEngineFactory, evictionListener));
   }
 
   /**
@@ -69,7 +69,7 @@ public class ConcurrentWriteLockedOffHeapClockCache<K, V> extends AbstractConcur
    */
   public ConcurrentWriteLockedOffHeapClockCache(PageSource tableSource, Factory<? extends StorageEngine<? super K, ? super V>> storageEngineFactory, long tableSize,
       int concurrency) {
-    super(new WriteLockedOffHeapClockCacheFactory<K, V>(tableSource, storageEngineFactory, (int) (tableSize / concurrency)), concurrency);
+    super(new WriteLockedOffHeapClockCacheFactory<>(tableSource, storageEngineFactory, (int) (tableSize / concurrency)), concurrency);
   }
 
   /**
@@ -84,6 +84,6 @@ public class ConcurrentWriteLockedOffHeapClockCache<K, V> extends AbstractConcur
    */
   public ConcurrentWriteLockedOffHeapClockCache(PageSource tableSource, Factory<? extends StorageEngine<? super K, ? super V>> storageEngineFactory, EvictionListener<K, V> evictionListener,
           long tableSize, int concurrency) {
-    super(new WriteLockedOffHeapClockCacheFactory<K, V>(tableSource, storageEngineFactory, evictionListener, (int) (tableSize / concurrency)), concurrency);
+    super(new WriteLockedOffHeapClockCacheFactory<>(tableSource, storageEngineFactory, evictionListener, (int) (tableSize / concurrency)), concurrency);
   }
 }

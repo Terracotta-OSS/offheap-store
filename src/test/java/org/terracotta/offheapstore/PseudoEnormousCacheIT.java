@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,8 +18,7 @@ package org.terracotta.offheapstore;
 import org.terracotta.offheapstore.ReadWriteLockedOffHeapHashMap;
 import org.terracotta.offheapstore.MapInternals;
 import org.terracotta.offheapstore.Segment;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
+
 import java.lang.reflect.Proxy;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -69,19 +68,15 @@ public class PseudoEnormousCacheIT {
 
   static class DementedSegmentFactory implements Factory<Segment<Integer, Integer>> {
 
-    private static final Segment<Integer, Integer> DEMENTED_SEGMENT = (Segment<Integer, Integer>) Proxy.newProxyInstance(Segment.class.getClassLoader(), new Class<?>[]{Segment.class}, new InvocationHandler() {
-      @Override
-      public Object invoke(Object o, Method method, Object[] os) throws Throwable {
-        return null;
-      }
-    });
+    @SuppressWarnings("unchecked")
+    private static final Segment<Integer, Integer> DEMENTED_SEGMENT = (Segment<Integer, Integer>) Proxy.newProxyInstance(Segment.class.getClassLoader(), new Class<?>[]{Segment.class}, (o, method, os) -> null);
     private volatile boolean done;
 
     @Override
     public Segment<Integer, Integer> newInstance() {
       if (!done) {
         done = true;
-        return new ReadWriteLockedOffHeapHashMap<Integer, Integer>(new UnlimitedPageSource(new HeapBufferSource()), new SplitStorageEngine<Integer, Integer>(new IntegerStorageEngine(), new IntegerStorageEngine()));
+        return new ReadWriteLockedOffHeapHashMap<>(new UnlimitedPageSource(new HeapBufferSource()), new SplitStorageEngine<>(new IntegerStorageEngine(), new IntegerStorageEngine()));
       } else {
         return DEMENTED_SEGMENT;
       }

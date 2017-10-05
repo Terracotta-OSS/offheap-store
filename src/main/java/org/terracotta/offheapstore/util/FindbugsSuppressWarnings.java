@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,5 +24,5 @@ import java.lang.annotation.Target;
 @Retention(value = RetentionPolicy.CLASS)
 public @interface FindbugsSuppressWarnings {
 
-  public String[] value() default {};
+  String[] value() default {};
 }

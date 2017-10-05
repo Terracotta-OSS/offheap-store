@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +32,7 @@ public class PowerOfTwoFileAllocator {
 
   private static final boolean DEBUG = Boolean.getBoolean(PowerOfTwoFileAllocator.class.getName() + ".DEBUG");
   private static final boolean VALIDATING = shouldValidate(PowerOfTwoFileAllocator.class);
-  
+
   private static final Region NULL_NODE = new Region();
 
   private Region root = NULL_NODE;
@@ -49,7 +49,7 @@ public class PowerOfTwoFileAllocator {
   public PowerOfTwoFileAllocator(long size) {
     this.root = new Region(0, size);
   }
-  
+
   public Long allocate(long size) {
     if (Long.bitCount(size) != 1) {
       throw new AssertionError("Size " + size + " is not a power of two");
@@ -78,7 +78,7 @@ public class PowerOfTwoFileAllocator {
       mark(new Region(address, address + length - 1));
     }
   }
-  
+
   public long occupied() {
     return occupied;
   }
@@ -510,13 +510,12 @@ public class PowerOfTwoFileAllocator {
     }
 
     private void swap(Region other) {
-      Region r = other;
       long temp = this.start;
-      this.start = r.start;
-      r.start = temp;
+      this.start = other.start;
+      other.start = temp;
       temp = this.end;
-      this.end = r.end;
-      r.end = temp;
+      this.end = other.end;
+      other.end = temp;
       updateAvailable();
     }
 

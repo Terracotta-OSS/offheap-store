@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -56,12 +56,13 @@ public class TableStealingFromStorageIT {
   public void testStealingFromOwnStorage() {
     PageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), MEGABYTES.toBytes(1), MEGABYTES.toBytes(1));
 
-    OffHeapHashMap<Integer, byte[]> selfStealer = new WriteLockedOffHeapClockCache<Integer, byte[]>(source, true, new SplitStorageEngine<Integer, byte[]>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<byte[]>(source, KILOBYTES.toBytes(16), ByteArrayPortability.INSTANCE, false, true)));
+    OffHeapHashMap<Integer, byte[]> selfStealer = new WriteLockedOffHeapClockCache<>(source, true, new SplitStorageEngine<>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<>(source, KILOBYTES
+      .toBytes(16), ByteArrayPortability.INSTANCE, false, true)));
 
     long seed = System.nanoTime();
     System.err.println("Random Seed = " + seed);
     Random rndm = new Random(seed);
-    
+
     int terminalKey = 0;
     for (int key = 0; true; key++) {
       int size = selfStealer.size();
@@ -73,16 +74,16 @@ public class TableStealingFromStorageIT {
         break;
       }
     }
-    
+
     System.err.println("Terminal Key = " + terminalKey);
-    
+
     for (int key = terminalKey + 1; key < 10 * terminalKey; key++) {
       byte[] payload = new byte[rndm.nextInt(KILOBYTES.toBytes(1))];
       Arrays.fill(payload, (byte) key);
       selfStealer.put(key, payload);
       selfStealer.remove(rndm.nextInt(key));
     }
-    
+
     long measuredSize = 0;
     for (Entry<Integer, byte[]> e : selfStealer.entrySet()) {
       int key = e.getKey();
@@ -96,13 +97,14 @@ public class TableStealingFromStorageIT {
     assertThat(selfStealer.size(), is((int) measuredSize));
     assertThat(selfStealer.getUsedSlotCount(), is(measuredSize));
   }
-  
+
   @Test
   @Ignore
   public void testSelfStealingIsStable() throws IOException {
     PageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), MEGABYTES.toBytes(2), MEGABYTES.toBytes(1));
 
-    OffHeapHashMap<Integer, byte[]> selfStealer = new WriteLockedOffHeapClockCache<Integer, byte[]>(source, true, new SplitStorageEngine<Integer, byte[]>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<byte[]>(source, KILOBYTES.toBytes(16), ByteArrayPortability.INSTANCE, false, true)));
+    OffHeapHashMap<Integer, byte[]> selfStealer = new WriteLockedOffHeapClockCache<>(source, true, new SplitStorageEngine<>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<>(source, KILOBYTES
+      .toBytes(16), ByteArrayPortability.INSTANCE, false, true)));
 
     // failing seed value
     //long seed = 1302292028471110000L;
@@ -112,17 +114,17 @@ public class TableStealingFromStorageIT {
     Random rndm = new Random(seed);
     int payloadSize = rndm.nextInt(KILOBYTES.toBytes(1));
     System.err.println("Payload Size = " + payloadSize);
-    
-    List<Long> sizes = new ArrayList<Long>();
-    List<Long> tableSizes = new ArrayList<Long>();
-    
+
+    List<Long> sizes = new ArrayList<>();
+    List<Long> tableSizes = new ArrayList<>();
+
     int terminalKey = 0;
     for (int key = 0; true; key++) {
       int size = selfStealer.size();
       byte[] payload = new byte[payloadSize];
       Arrays.fill(payload, (byte) key);
       selfStealer.put(key, payload);
-      sizes.add(Long.valueOf(selfStealer.size()));
+      sizes.add((long) selfStealer.size());
       tableSizes.add(selfStealer.getTableCapacity());
       if (size >= selfStealer.size()) {
         terminalKey = key;
@@ -130,9 +132,9 @@ public class TableStealingFromStorageIT {
         break;
       }
     }
-    
+
     System.err.println("Terminal Key = " + terminalKey);
-    
+
     int shrinkCount = 0;
     for (int key = terminalKey; key < 10 * terminalKey; key++) {
       byte[] payload = new byte[payloadSize];
@@ -146,39 +148,39 @@ public class TableStealingFromStorageIT {
       if (preTableSize > postTableSize) {
         shrinkCount++;
       }
-      sizes.add(Long.valueOf(selfStealer.size()));
+      sizes.add((long) selfStealer.size());
       tableSizes.add(postTableSize);
     }
 
     if (shrinkCount != 0) {
-      Map<String, List<? extends Number>> data = new HashMap<String, List<? extends Number>>();
+      Map<String, List<? extends Number>> data = new HashMap<>();
       data.put("actual size", sizes);
       data.put("table size", tableSizes);
-      
+
       JFreeChart chart = ChartFactory.createXYLineChart("Cache Size", "operations", "size", new LongListXYDataset(data), PlotOrientation.VERTICAL, true, false, false);
       File plotOutput = new File("target/TableStealingFromStorageTest.testSelfStealingIsStable.png");
       ChartUtilities.saveChartAsPNG(plotOutput, chart, 640, 480);
       fail("Expected no shrink events after reaching equilibrium : saw " + shrinkCount + " [plot in " + plotOutput + "]");
     }
   }
-  
+
   static class LongListXYDataset extends AbstractXYDataset {
 
     private static final long serialVersionUID = 1119808858992366568L;
-    
+
     private final List<String> keys;
     private final List<List<? extends Number>> data;
-    
+
     public LongListXYDataset(Map<String, List<? extends Number>> series) {
-      keys = new ArrayList<String>(series.size());
-      data = new ArrayList<List<? extends Number>>(series.size());
-      
+      keys = new ArrayList<>(series.size());
+      data = new ArrayList<>(series.size());
+
       for (Entry<String, List<? extends Number>> e : series.entrySet()) {
         keys.add(e.getKey());
         data.add(e.getValue());
       }
     }
-    
+
     @Override
     public int getItemCount(int seriesIndex) {
       return data.get(seriesIndex).size();
@@ -186,7 +188,7 @@ public class TableStealingFromStorageIT {
 
     @Override
     public Number getX(int seriesIndex, int dataIndex) {
-      return Integer.valueOf(dataIndex);
+      return dataIndex;
     }
 
     @Override

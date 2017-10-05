@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -82,7 +82,7 @@ public class PutFieldTest {
       popTccl();
     }
   }
-  
+
   public static class Foo_A implements Serializable {
 
     private static final long serialVersionUID = 0L;
@@ -104,7 +104,7 @@ public class PutFieldTest {
       fields.put("c", '5');
       fields.put("s", (short) 5);
       fields.put("i", 5);
-      fields.put("j", 5l);
+      fields.put("j", 5L);
       fields.put("f", 5.0f);
       fields.put("d", 5.0);
       fields.put("str", "5");
@@ -138,7 +138,7 @@ public class PutFieldTest {
       ObjectOutputStream.PutField fields = out.putFields();
       fields.put("s1", "qwerty");
       fields.put("s2", "asdfg");
-      fields.write(out);
+      out.writeFields();
     }
   }
 

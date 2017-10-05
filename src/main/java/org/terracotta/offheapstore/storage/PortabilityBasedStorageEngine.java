@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -63,14 +63,14 @@ public abstract class PortabilityBasedStorageEngine<K, V> extends AbstractListen
       ByteBuffer keyBuffer = keyPortability.encode(key);
       ByteBuffer valueBuffer = valuePortability.encode(value);
       result = writeMappingBuffers(keyBuffer.duplicate(), valueBuffer.duplicate(), hash);
-      lastMapping = new CachedEncode<K, V>(key, value, keyBuffer, valueBuffer, result);
+      lastMapping = new CachedEncode<>(key, value, keyBuffer, valueBuffer, result);
     }
     if (result != null) {
       fireWritten(key, value, lastMapping.getEncodedKey(), lastMapping.getEncodedValue(), hash, metadata, result);
     }
     return result;
   }
-  
+
   @Override
   public void attachedMapping(long encoding, int hash, int metadata) {
     //no-op
@@ -88,7 +88,7 @@ public abstract class PortabilityBasedStorageEngine<K, V> extends AbstractListen
     }
   }
 
-  
+
   @Override
   public final void clear() {
     clearInternal();
@@ -154,7 +154,7 @@ public abstract class PortabilityBasedStorageEngine<K, V> extends AbstractListen
     detached.put(attached).flip();
     return detached;
   }
-  
+
   @Override
   public boolean equalsBinaryKey(ByteBuffer binaryKey, long encoding) {
     return binaryKey.equals(readBinaryKey(encoding)) || equalsKey(keyPortability.decode(binaryKey.duplicate()), encoding);
@@ -164,26 +164,26 @@ public abstract class PortabilityBasedStorageEngine<K, V> extends AbstractListen
   public Long writeBinaryMapping(ByteBuffer[] binaryKey, ByteBuffer[] binaryValue, int pojoHash, int metadata) {
     return writeMappingBuffersGathering(binaryKey, binaryValue, pojoHash);
   }
-  
+
   @Override
   public Long writeBinaryMapping(ByteBuffer binaryKey, ByteBuffer binaryValue, int pojoHash, int metadata) {
     return writeMappingBuffers(binaryKey, binaryValue, pojoHash);
   }
-  
+
   protected Long writeMappingBuffersGathering(ByteBuffer[] keyBuffers, ByteBuffer[] valueBuffers, int hash) {
     return writeMappingBuffers(aggregate(keyBuffers), aggregate(valueBuffers), hash);
   }
-  
+
   protected abstract void free(long address);
 
   protected abstract void clearInternal();
-  
+
   protected abstract ByteBuffer readKeyBuffer(long address);
 
   protected abstract WriteContext getKeyWriteContext(long address);
-  
+
   protected abstract ByteBuffer readValueBuffer(long address);
-  
+
   protected abstract WriteContext getValueWriteContext(long address);
 
   protected abstract Long writeMappingBuffers(ByteBuffer keyBuffer, ByteBuffer valueBuffer, int hash);
@@ -201,14 +201,14 @@ public abstract class PortabilityBasedStorageEngine<K, V> extends AbstractListen
     private final ByteBuffer valueBuffer;
 
     private final Long encoding;
-    
+
     public CachedEncode(K key, V value, ByteBuffer keyBuffer, ByteBuffer valueBuffer, Long encoding) {
       this.key = key;
       this.value = value;
 
       this.keyBuffer = keyBuffer;
       this.valueBuffer = valueBuffer;
-      
+
       this.encoding = encoding;
     }
 
@@ -227,7 +227,7 @@ public abstract class PortabilityBasedStorageEngine<K, V> extends AbstractListen
     final ByteBuffer getEncodedValue() {
       return valueBuffer.duplicate();
     }
-    
+
     final Long getEncoding() {
       return encoding;
     }

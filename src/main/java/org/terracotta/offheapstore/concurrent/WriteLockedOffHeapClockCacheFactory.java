@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,7 +40,7 @@ public class WriteLockedOffHeapClockCacheFactory<K, V> implements Factory<WriteL
 
   private final EvictionListener<K, V> evictionListener;
 
-  
+
   /**
    * Creates segments using the given table buffer source and storage engine
    * factory.
@@ -51,7 +51,7 @@ public class WriteLockedOffHeapClockCacheFactory<K, V> implements Factory<WriteL
   public WriteLockedOffHeapClockCacheFactory(PageSource tableSource, Factory<? extends StorageEngine<? super K, ? super V>> storageEngineFactory) {
     this(tableSource, storageEngineFactory, DEFAULT_TABLE_SIZE);
   }
-  
+
   /**
    * Creates segments using the given table buffer source and storage engine
    * factory.
@@ -104,9 +104,9 @@ public class WriteLockedOffHeapClockCacheFactory<K, V> implements Factory<WriteL
     StorageEngine<? super K, ? super V> storageEngine = storageEngineFactory.newInstance();
     try {
       if (evictionListener == null) {
-        return new WriteLockedOffHeapClockCache<K, V>(tableSource, storageEngine, tableSize);
+        return new WriteLockedOffHeapClockCache<>(tableSource, storageEngine, tableSize);
       } else {
-        return new EvictionListeningWriteLockedOffHeapClockCache<K, V>(evictionListener, tableSource, storageEngine, tableSize);
+        return new EvictionListeningWriteLockedOffHeapClockCache<>(evictionListener, tableSource, storageEngine, tableSize);
       }
     } catch (RuntimeException e) {
       storageEngine.destroy();

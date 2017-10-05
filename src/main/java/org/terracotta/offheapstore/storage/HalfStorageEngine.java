@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -88,14 +88,14 @@ public interface HalfStorageEngine<T> {
    *
    * @return vital memory allocated for this engine in bytes
    */
-  public long getVitalMemory();
+  long getVitalMemory();
 
   /**
    * Returns a measure of the total size of the keys and values stored in this storage engine.
    *
    * @return size of the stored keys and values in bytes
    */
-  public long getDataSize();
+  long getDataSize();
 
   /**
    * Invalidate any local key/value caches.
@@ -104,11 +104,11 @@ public interface HalfStorageEngine<T> {
    * is permitted within a write operation (i.e. to cache around allocation
    * failures during eviction processes).
    */
-  public void invalidateCache();
+  void invalidateCache();
 
-  public void bind(Owner owner, long mask);
+  void bind(Owner owner, long mask);
 
-  public void destroy();
+  void destroy();
 
-  public boolean shrink();
+  boolean shrink();
 }

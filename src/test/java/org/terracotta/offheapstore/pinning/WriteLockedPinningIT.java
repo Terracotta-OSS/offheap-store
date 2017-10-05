@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,19 +36,19 @@ public class WriteLockedPinningIT extends AbstractPinningIT {
   @Override
   protected PinnableCache<Integer, Integer> createPinnedIntegerCache(PageSource source) {
     Assume.assumeThat(getPointerSize(), Is.is(PointerSize.INT));
-    StorageEngine<Integer, Integer> storageEngine = new SplitStorageEngine(new IntegerStorageEngine(), new IntegerStorageEngine());
-    return new WriteLockedOffHeapClockCache<Integer, Integer>(source, storageEngine);
+    StorageEngine<Integer, Integer> storageEngine = new SplitStorageEngine<>(new IntegerStorageEngine(), new IntegerStorageEngine());
+    return new WriteLockedOffHeapClockCache<>(source, storageEngine);
   }
 
   @Override
   protected PinnableCache<Integer, byte[]> createPinnedByteArrayCache(PageSource source) {
-    StorageEngine<Integer, byte[]> storageEngine = new OffHeapBufferStorageEngine<Integer, byte[]>(getPointerSize(), source, KILOBYTES.toBytes(1), new SerializablePortability(), ByteArrayPortability.INSTANCE);
-    return new WriteLockedOffHeapClockCache<Integer, byte[]>(source, storageEngine);
+    StorageEngine<Integer, byte[]> storageEngine = new OffHeapBufferStorageEngine<>(getPointerSize(), source, KILOBYTES.toBytes(1), new SerializablePortability(), ByteArrayPortability.INSTANCE);
+    return new WriteLockedOffHeapClockCache<>(source, storageEngine);
   }
 
   @Override
   protected PinnableCache<Integer, byte[]> createSharingPinnedByteArrayCache(PageSource source) {
-    StorageEngine<Integer, byte[]> storageEngine = new OffHeapBufferStorageEngine<Integer, byte[]>(getPointerSize(), source, KILOBYTES.toBytes(1), new SerializablePortability(), ByteArrayPortability.INSTANCE, true, true);
-    return new WriteLockedOffHeapClockCache<Integer, byte[]>(source, true, storageEngine);
+    StorageEngine<Integer, byte[]> storageEngine = new OffHeapBufferStorageEngine<>(getPointerSize(), source, KILOBYTES.toBytes(1), new SerializablePortability(), ByteArrayPortability.INSTANCE, true, true);
+    return new WriteLockedOffHeapClockCache<>(source, true, storageEngine);
   }
 }

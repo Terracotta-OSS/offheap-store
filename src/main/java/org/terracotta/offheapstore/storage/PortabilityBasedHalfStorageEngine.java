@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +26,7 @@ import org.terracotta.offheapstore.storage.portability.Portability;
 public abstract class PortabilityBasedHalfStorageEngine<T> implements HalfStorageEngine<T> {
 
   private final Portability<? super T> portability;
-  
+
   private CachedEncode<T> lastObject;
 
   public PortabilityBasedHalfStorageEngine(Portability<? super T> portability) {
@@ -41,7 +41,7 @@ public abstract class PortabilityBasedHalfStorageEngine<T> implements HalfStorag
       ByteBuffer buffer = portability.encode(object);
       Integer result = writeBuffer(buffer, hash);
       if (result == null) {
-        lastObject = new CachedEncode<T>(object, buffer.duplicate());
+        lastObject = new CachedEncode<>(object, buffer.duplicate());
       }
       return result;
     }

@@ -41,13 +41,11 @@ import java.util.NavigableSet;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.terracotta.offheapstore.storage.allocator.PowerOfTwoAllocator.Packing.CEILING;
 import static org.terracotta.offheapstore.storage.allocator.PowerOfTwoAllocator.Packing.FLOOR;
@@ -69,24 +67,21 @@ public class UpfrontAllocatingPageSource implements PageSource {
     private static final double PROGRESS_LOGGING_STEP_SIZE = 0.1;
     private static final long PROGRESS_LOGGING_THRESHOLD = MemoryUnit.GIGABYTES.toBytes(4L);
 
-    private static final Comparator<Page> REGION_COMPARATOR = new Comparator<Page>() {
-      @Override
-      public int compare(Page a, Page b) {
-        if (a.address() == b.address()) {
-          return a.size() - b.size();
-        } else {
-          return a.address() - b.address();
-        }
+    private static final Comparator<Page> REGION_COMPARATOR = (a, b) -> {
+      if (a.address() == b.address()) {
+        return a.size() - b.size();
+      } else {
+        return a.address() - b.address();
       }
     };
 
-    private final SortedMap<Long, Runnable> risingThresholds = new TreeMap<Long, Runnable>();
-    private final SortedMap<Long, Runnable> fallingThresholds = new TreeMap<Long, Runnable>();
+    private final SortedMap<Long, Runnable> risingThresholds = new TreeMap<>();
+    private final SortedMap<Long, Runnable> fallingThresholds = new TreeMap<>();
 
-    private final List<PowerOfTwoAllocator> sliceAllocators = new ArrayList<PowerOfTwoAllocator>();
-    private final List<PowerOfTwoAllocator> victimAllocators = new ArrayList<PowerOfTwoAllocator>();
+    private final List<PowerOfTwoAllocator> sliceAllocators = new ArrayList<>();
+    private final List<PowerOfTwoAllocator> victimAllocators = new ArrayList<>();
 
-    private final List<ByteBuffer> buffers = new ArrayList<ByteBuffer>();
+    private final List<ByteBuffer> buffers = new ArrayList<>();
 
     /*
      * TODO : currently the TreeSet along with the comparator above works for the
@@ -95,7 +90,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
      * to using an AATreeSet subclass - that would also require me to finish
      * writing the subSet implementation for that class.
      */
-    private final List<NavigableSet<Page>> victims = new ArrayList<NavigableSet<Page>>();
+    private final List<NavigableSet<Page>> victims = new ArrayList<>();
 
     private volatile int availableSet = ~0;
 
@@ -157,7 +152,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
         for (ByteBuffer buffer : allocateBackingBuffers(source, toAllocate, maxChunk, minChunk, fixed)) {
           sliceAllocators.add(new PowerOfTwoAllocator(buffer.capacity()));
           victimAllocators.add(new PowerOfTwoAllocator(buffer.capacity()));
-          victims.add(new TreeSet<Page>(REGION_COMPARATOR));
+          victims.add(new TreeSet<>(REGION_COMPARATOR));
           buffers.add(buffer);
         }
     }
@@ -204,8 +199,8 @@ public class UpfrontAllocatingPageSource implements PageSource {
       PowerOfTwoAllocator victimAllocator = null;
       PowerOfTwoAllocator sliceAllocator = null;
       List<Page> targets = Collections.emptyList();
-      Collection<AllocatedRegion> tempHolds = new ArrayList<AllocatedRegion>();
-      Map<OffHeapStorageArea, Collection<Page>> releases = new IdentityHashMap<OffHeapStorageArea, Collection<Page>>();
+      Collection<AllocatedRegion> tempHolds = new ArrayList<>();
+      Map<OffHeapStorageArea, Collection<Page>> releases = new IdentityHashMap<>();
 
       synchronized (this) {
         for (int i = 0; i < victimAllocators.size(); i++) {
@@ -241,7 +236,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
           OffHeapStorageArea a = p.binding();
           Collection<Page> c = releases.get(a);
           if (c == null) {
-            c = new LinkedList<Page>();
+            c = new LinkedList<>();
             c.add(p);
             releases.put(a, c);
           } else {
@@ -254,14 +249,14 @@ public class UpfrontAllocatingPageSource implements PageSource {
        * Drop the page source synchronization here to prevent deadlock against
        * map/cache threads.
        */
-      Collection<Page> results = new LinkedList<Page>();
+      Collection<Page> results = new LinkedList<>();
       for (Entry<OffHeapStorageArea, Collection<Page>> e : releases.entrySet()) {
         OffHeapStorageArea a = e.getKey();
         Collection<Page> p = e.getValue();
         results.addAll(a.release(p));
       }
 
-      List<Page> failedReleases = new ArrayList<Page>();
+      List<Page> failedReleases = new ArrayList<>();
       synchronized (this) {
         for (AllocatedRegion r : tempHolds) {
           sliceAllocator.free(r.address, r.size);
@@ -301,8 +296,8 @@ public class UpfrontAllocatingPageSource implements PageSource {
     }
 
     private List<Page> findVictimPages(int chunk, int address, int size) {
-      return new ArrayList<Page>(victims.get(chunk).subSet(new Page(null, -1, address, null),
-                                                     new Page(null, -1, address + size, null)));
+      return new ArrayList<>(victims.get(chunk).subSet(new Page(null, -1, address, null),
+        new Page(null, -1, address + size, null)));
     }
 
     private Page allocateFromFree(int size, boolean victim, OffHeapStorageArea owner) {
@@ -321,7 +316,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
                 int address = sliceAllocators.get(i).allocate(size, victim ? CEILING : FLOOR);
                 if (address >= 0) {
                     if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug("Allocating a {}B buffer from chunk {} &{}", new Object[]{DebuggingUtils.toBase2SuffixedString(size), i, address});
+                        LOGGER.debug("Allocating a {}B buffer from chunk {} &{}", DebuggingUtils.toBase2SuffixedString(size), i, address);
                     }
                     ByteBuffer b = ((ByteBuffer) buffers.get(i).limit(address + size).position(address)).slice();
                     Page p = new Page(b, i, address, owner);
@@ -352,7 +347,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
     public synchronized void free(Page page) {
         if (page.isFreeable()) {
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Freeing a {}B buffer from chunk {} &{}", new Object[]{DebuggingUtils.toBase2SuffixedString(page.size()), page.index(), page.address()});
+                LOGGER.debug("Freeing a {}B buffer from chunk {} &{}", DebuggingUtils.toBase2SuffixedString(page.size()), page.index(), page.address());
             }
             markAllAvailable();
             sliceAllocators.get(page.index()).free(page.address(), page.size());
@@ -476,7 +471,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
 
   /**
    * Allocate multiple buffers to fulfill the requested memory {@code toAllocate}. We first divide {@code toAllocate} in
-   * chunks of size {@maxChunk} and try to allocate them in parallel on all available processors. If one chunk fails to be
+   * chunks of size {@code maxChunk} and try to allocate them in parallel on all available processors. If one chunk fails to be
    * allocated, we try to allocate two chunks of {@code maxChunk / 2}. If this allocation fails, we continue dividing until
    * we reach of size of {@code minChunk}. If at that moment, the allocation still fails, an {@code IllegalArgumentException}
    * is thrown.
@@ -501,26 +496,21 @@ public class UpfrontAllocatingPageSource implements PageSource {
 
       final PrintStream allocatorLog = createAllocatorLog(toAllocate, maxChunk, minChunk);
 
-      final Collection<ByteBuffer> buffers = new ArrayList<ByteBuffer>((int)(toAllocate / maxChunk + 10)); // guess the number of buffers and add some padding just in case
+      final Collection<ByteBuffer> buffers = new ArrayList<>((int) (toAllocate / maxChunk + 10)); // guess the number of buffers and add some padding just in case
 
       try {
         if (allocatorLog != null) {
           allocatorLog.printf("timestamp,threadid,duration,size,physfree,totalswap,freeswap,committed%n");
         }
 
-        List<Future<Collection<ByteBuffer>>> futures = new ArrayList<Future<Collection<ByteBuffer>>>((int)(toAllocate / maxChunk + 1));
+        List<Future<Collection<ByteBuffer>>> futures = new ArrayList<>((int) (toAllocate / maxChunk + 1));
 
         ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         try {
 
           for (long dispatched = 0; dispatched < toAllocate; ) {
             final int currentChunkSize = (int)Math.min(maxChunk, toAllocate - dispatched);
-            futures.add(executorService.submit(new Callable<Collection<ByteBuffer>>() {
-              @Override
-              public Collection<ByteBuffer> call() throws Exception {
-                return bufferAllocation(source, currentChunkSize, minChunk, fixed, allocatorLog, start);
-              }
-            }));
+            futures.add(executorService.submit(() -> bufferAllocation(source, currentChunkSize, minChunk, fixed, allocatorLog, start)));
             dispatched += currentChunkSize;
           }
         } finally {
@@ -561,7 +551,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
     long allocated = 0;
     long currentChunkSize = toAllocate;
 
-    Collection<ByteBuffer> buffers = new ArrayList<ByteBuffer>();
+    Collection<ByteBuffer> buffers = new ArrayList<>();
 
     while (allocated < toAllocate) {
       long blockStart = System.nanoTime();
@@ -644,7 +634,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
     }
 
     public enum ThresholdDirection {
-      RISING, FALLING;
+      RISING, FALLING
     }
 
     static class AllocatedRegion {

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,12 +23,12 @@ import java.util.Stack;
 
 public class AATreeSet<T extends Comparable<? super T>> extends AbstractSet<T> implements SortedSet<T> {
 
-  private Node<T> root = TerminalNode.<T>terminal();
+  private Node<T> root = TerminalNode.terminal();
 
   private int     size = 0;
   private boolean mutated;
 
-  private Node<T> item = TerminalNode.<T>terminal(), heir = TerminalNode.<T>terminal();
+  private Node<T> item = TerminalNode.terminal(), heir = TerminalNode.terminal();
   private T       removed;
 
   @Override
@@ -54,8 +54,8 @@ public class AATreeSet<T extends Comparable<? super T>> extends AbstractSet<T> i
       }
       return mutated;
     } finally {
-      heir = TerminalNode.<T>terminal();
-      item = TerminalNode.<T>terminal();
+      heir = TerminalNode.terminal();
+      item = TerminalNode.terminal();
       mutated = false;
       removed = null;
     }
@@ -70,8 +70,8 @@ public class AATreeSet<T extends Comparable<? super T>> extends AbstractSet<T> i
       }
       return removed;
     } finally {
-      heir = TerminalNode.<T>terminal();
-      item = TerminalNode.<T>terminal();
+      heir = TerminalNode.terminal();
+      item = TerminalNode.terminal();
       mutated = false;
       removed = null;
     }
@@ -79,7 +79,7 @@ public class AATreeSet<T extends Comparable<? super T>> extends AbstractSet<T> i
 
   @Override
   public void clear() {
-    root = TerminalNode.<T>terminal();
+    root = TerminalNode.terminal();
     size = 0;
   }
 
@@ -184,7 +184,7 @@ public class AATreeSet<T extends Comparable<? super T>> extends AbstractSet<T> i
     if (data instanceof Node<?>) {
       return (Node<T>) data;
     } else {
-      return new TreeNode<T>(data);
+      return new TreeNode<>(data);
     }
   }
 
@@ -247,27 +247,27 @@ public class AATreeSet<T extends Comparable<? super T>> extends AbstractSet<T> i
     return top;
   }
 
-  public static interface Node<E extends Comparable<? super E>> {
+  public interface Node<E extends Comparable<? super E>> {
 
-    public void setLeft(Node<E> node);
+    void setLeft(Node<E> node);
 
-    public void setRight(Node<E> node);
+    void setRight(Node<E> node);
 
-    public Node<E> getLeft();
+    Node<E> getLeft();
 
-    public Node<E> getRight();
+    Node<E> getRight();
 
-    public int getLevel();
+    int getLevel();
 
-    public void setLevel(int value);
+    void setLevel(int value);
 
-    public int decrementLevel();
+    int decrementLevel();
 
-    public int incrementLevel();
+    int incrementLevel();
 
-    public void swapPayload(Node<E> with);
+    void swapPayload(Node<E> with);
 
-    public E getPayload();
+    E getPayload();
   }
 
   public static abstract class AbstractTreeNode<E extends Comparable<? super E>> implements Node<E> {
@@ -281,8 +281,8 @@ public class AATreeSet<T extends Comparable<? super T>> extends AbstractSet<T> i
     }
 
     private AbstractTreeNode(int level) {
-      this.left = TerminalNode.<E>terminal();
-      this.right = TerminalNode.<E>terminal();
+      this.left = TerminalNode.terminal();
+      this.right = TerminalNode.terminal();
       this.level = level;
     }
 
@@ -431,11 +431,7 @@ public class AATreeSet<T extends Comparable<? super T>> extends AbstractSet<T> i
     @Override
     @SuppressWarnings("unchecked")
     public boolean remove(Object o) {
-      if (inRange((T) o)) {
-        return remove(o);
-      } else {
-        return false;
-      }
+      return inRange((T) o) && remove(o);
     }
 
     @Override
@@ -523,11 +519,11 @@ public class AATreeSet<T extends Comparable<? super T>> extends AbstractSet<T> i
 
   class TreeIterator implements Iterator<T> {
 
-    private final java.util.Stack<Node<T>> path = new Stack<Node<T>>();
+    private final java.util.Stack<Node<T>> path = new Stack<>();
     private Node<T>                        next;
 
     TreeIterator() {
-      path.push(TerminalNode.<T>terminal());
+      path.push(TerminalNode.terminal());
       Node<T> leftMost = root;
       while (leftMost.getLeft() != TerminalNode.<T>terminal()) {
         path.push(leftMost);
@@ -537,7 +533,7 @@ public class AATreeSet<T extends Comparable<? super T>> extends AbstractSet<T> i
     }
 
     TreeIterator(T start) {
-      path.push(TerminalNode.<T>terminal());
+      path.push(TerminalNode.terminal());
       Node<T> current = root;
       while (true) {
         int direction = current.getPayload().compareTo(start);

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,12 +28,7 @@ import org.terracotta.offheapstore.util.Factory;
 public class StringStorageEngine extends OffHeapBufferStorageEngine<String, String> {
 
   public static Factory<StringStorageEngine> createFactory(final PointerSize width, final PageSource source, final int pageSize) {
-    return new Factory<StringStorageEngine>() {
-      @Override
-      public StringStorageEngine newInstance() {
-        return new StringStorageEngine(width, source, pageSize);
-      }
-    };
+    return () -> new StringStorageEngine(width, source, pageSize);
   }
 
   private static final Portability<String> PORTABILITY = StringPortability.INSTANCE;
