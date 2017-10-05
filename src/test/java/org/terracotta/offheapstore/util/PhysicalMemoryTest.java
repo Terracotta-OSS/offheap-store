@@ -15,10 +15,7 @@
  */
 package org.terracotta.offheapstore.util;
 
-import sun.security.util.SecurityConstants;
-import java.lang.management.OperatingSystemMXBean;
 import java.security.Permission;
-import java.util.Arrays;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -33,6 +30,8 @@ import static org.hamcrest.number.OrderingComparison.lessThanOrEqualTo;
  * @author cdennis
  */
 public class PhysicalMemoryTest {
+
+  private static final RuntimePermission CHECK_MEMBER_ACCESS_PERMISSION = new RuntimePermission("accessDeclaredMembers");
 
   @Test
   public void testMemoryInvariants() {
@@ -55,24 +54,18 @@ public class PhysicalMemoryTest {
       @Override
       public void checkPermission(Permission perm) {
         // To be allowed to set the security manager back to null at the end of the test
-        if(perm.getName().equals("setSecurityManager")) {
+        if (perm.getName().equals("setSecurityManager")) {
           return;
         }
-
-        // We care only about the test threads, other can do whatever they want
-        if (Thread.currentThread() == testThread && perm.getName().equals("accessDeclaredMembers")) {
-          // OperatingSystemMXBean should not ask for permissions
-          Class<?> stack[] = getClassContext();
-          Arrays.stream(stack)
-            .filter(OperatingSystemMXBean.class::isAssignableFrom)
-            .findAny()
-            .ifPresent(c -> {
-              System.out.println("Found " + c); throw new SecurityException(); });
+        // PhysicalMemory does reflection on OperatingSystemMXBean. It can fails it the user has a SecurityManager configured
+        // We make sure that in this case, we correctly map those failures to a null return. This is what this test is testing
+        if (Thread.currentThread() == testThread && CHECK_MEMBER_ACCESS_PERMISSION.equals(perm)) {
+          throw new SecurityException();
         }
-
         super.checkPermission(perm);
       }
     });
+
     try {
       Assert.assertThat(PhysicalMemory.totalPhysicalMemory(), nullValue());
       Assert.assertThat(PhysicalMemory.freePhysicalMemory(), nullValue());
