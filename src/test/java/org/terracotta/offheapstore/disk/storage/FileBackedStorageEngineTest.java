@@ -18,8 +18,6 @@ package org.terracotta.offheapstore.disk.storage;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.terracotta.offheapstore.concurrent.ConcurrentOffHeapHashMap;
 import org.terracotta.offheapstore.disk.AbstractDiskTest;
 import org.terracotta.offheapstore.disk.paging.MappedPageSource;

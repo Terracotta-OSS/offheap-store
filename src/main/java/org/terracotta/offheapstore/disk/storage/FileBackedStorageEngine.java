@@ -400,31 +400,29 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
   }
 
   private int readFromChannel(ByteBuffer buffer, long position) throws IOException {
+    boolean interrupted = Thread.interrupted();
     FileChannel current = getReadableChannel();
     try {
       return readFromChannel(current, buffer, position);
     } catch (ClosedChannelException e) {
-      boolean interrupted = Thread.interrupted();
-      try {
-        while (true) {
-          current = getReadableChannel();
-          try {
-            return readFromChannel(current, buffer, position);
-          } catch (ClosedChannelException f) {
-            interrupted |= Thread.interrupted();
-
-            FileChannel newChannel = source.getReadableChannel();
-            if (!readChannelReference.compareAndSet(current, newChannel)) {
-              newChannel.close();
-            } else {
-              LOGGER.info("Creating new read-channel for " + source.getFile().getName() + " as previous one was closed (likely due to interrupt)");
-            }
+      interrupted |= Thread.interrupted();
+      while (true) {
+        current = getReadableChannel();
+        try {
+          return readFromChannel(current, buffer, position);
+        } catch (ClosedChannelException f) {
+          interrupted |= Thread.interrupted();
+          FileChannel newChannel = source.getReadableChannel();
+          if (!readChannelReference.compareAndSet(current, newChannel)) {
+            newChannel.close();
+          } else {
+            LOGGER.info("Creating new read-channel for " + source.getFile().getName() + " as previous one was closed (likely due to interrupt)");
           }
         }
-      } finally {
-        if (interrupted) {
-          Thread.currentThread().interrupt();
-        }
+      }
+    } finally {
+      if (interrupted) {
+        Thread.currentThread().interrupt();
       }
     }
   }
