@@ -15,7 +15,21 @@
  */
 package org.terracotta.offheapstore.disk.storage;
 
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.terracotta.offheapstore.concurrent.ConcurrentOffHeapHashMap;
+import org.terracotta.offheapstore.disk.AbstractDiskTest;
+import org.terracotta.offheapstore.disk.paging.MappedPageSource;
+import org.terracotta.offheapstore.disk.storage.portability.PersistentByteArrayPortability;
+import org.terracotta.offheapstore.disk.storage.portability.PersistentSerializablePortability;
+import org.terracotta.offheapstore.util.DebuggingUtils;
+import org.terracotta.offheapstore.util.MemoryUnit;
+
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
+import java.nio.channels.FileChannel;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,18 +39,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.IntStream;
 
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
-
-import org.terracotta.offheapstore.concurrent.ConcurrentOffHeapHashMap;
-import org.terracotta.offheapstore.disk.AbstractDiskTest;
-import org.terracotta.offheapstore.disk.paging.MappedPageSource;
-import org.terracotta.offheapstore.disk.storage.portability.PersistentByteArrayPortability;
-import org.terracotta.offheapstore.disk.storage.portability.PersistentSerializablePortability;
-import org.terracotta.offheapstore.util.DebuggingUtils;
-import org.terracotta.offheapstore.util.MemoryUnit;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.notNull;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 /**
  *
@@ -119,6 +128,97 @@ public class FileBackedStorageEngineTest extends AbstractDiskTest {
       Assert.assertEquals(32, v.length);
     } finally {
       engine.close();
+      source.close();
+    }
+  }
+
+  @Test
+  public void testConcurrentReads() throws IOException {
+    MappedPageSource source = new MappedPageSource(dataFile);
+    FileBackedStorageEngine<byte[], byte[]> engine = new FileBackedStorageEngine<>(source, Long.MAX_VALUE, MemoryUnit.BYTES, PersistentByteArrayPortability.INSTANCE, PersistentByteArrayPortability.INSTANCE);
+    try {
+      int size = 32;
+      long p = engine.writeMapping(new byte[0], new byte[size], 0, 0);
+      Assert.assertTrue(p >= 0);
+      engine.flush();
+
+      IntStream.range(0, 8)
+        .parallel()
+        .mapToObj(n -> engine.readValue(p))
+        .peek(Assert::assertNotNull)
+        .forEach(v -> Assert.assertEquals(size, v.length));
+    } finally {
+      engine.close();
+      source.close();
+    }
+  }
+
+  @Test(expected = IOException.class)
+  public void testConcurrentClose() throws Throwable {
+    FileChannel spyChannel = spy(FileChannel.class);
+    MappedPageSource source = new MappedPageSource(dataFile) {
+      @Override
+      public FileChannel getReadableChannel() {
+        return spyChannel;
+      }
+    };
+    FileBackedStorageEngine<byte[], byte[]> engine = new FileBackedStorageEngine<>(source, Long.MAX_VALUE, MemoryUnit.BYTES, PersistentByteArrayPortability.INSTANCE, PersistentByteArrayPortability.INSTANCE);
+    when(spyChannel.read(notNull(), anyLong()))
+      .thenAnswer(o -> {
+        //deterministically simulate another thread closing the engine while
+        //this thread is reading.
+        engine.close();
+        throw new ClosedChannelException();
+      });
+    try {
+      byte[] buffer = new byte[10];
+      long p = engine.writeMapping(new byte[0], buffer, 0, 0);
+      Assert.assertTrue(p >= 0);
+      engine.flush();
+      engine.readValue(0);
+    } catch (Throwable e) {
+      Throwable cause = e;
+      while (cause.getCause() != null) {
+        cause = cause.getCause();
+      }
+      throw cause;
+    } finally {
+      source.close();
+    }
+  }
+
+  @Test
+  public void testConcurrentInterrupt() throws Throwable {
+    AtomicReference<FileChannel> realChannelRef = new AtomicReference<>();
+    FileChannel spyChannel = spy(FileChannel.class);
+    MappedPageSource source = new MappedPageSource(dataFile) {
+      @Override
+      public FileChannel getReadableChannel() {
+        FileChannel channel = super.getReadableChannel();
+        realChannelRef.set(channel);
+        return spyChannel;
+      }
+    };
+    Random random = new Random();
+    FileBackedStorageEngine<byte[], byte[]> engine = new FileBackedStorageEngine<>(source, Long.MAX_VALUE, MemoryUnit.BYTES, PersistentByteArrayPortability.INSTANCE, PersistentByteArrayPortability.INSTANCE);
+    when(spyChannel.read(notNull(), anyLong()))
+      .thenAnswer(invocation -> {
+        //simulate periodic interruptions while reading.
+        if (random.nextDouble() < 0.5) {
+          Thread.currentThread().interrupt();
+        }
+        ByteBuffer buffer = invocation.getArgument(0);
+        Long position = invocation.getArgument(1);
+        return realChannelRef.get().read(buffer, position);
+      });
+    try {
+      byte[] buffer = new byte[10];
+      long p = engine.writeMapping(new byte[0], buffer, 0, 0);
+      Assert.assertTrue(p >= 0);
+      engine.flush();
+      byte[] bytes = engine.readValue(0);
+      Assert.assertArrayEquals(buffer, bytes);
+    } finally {
       source.close();
     }
   }
