@@ -14,20 +14,14 @@
 # limitations under the License.
 #
 
-pool:
-  vmImage: 'Ubuntu 16.04'
+# See shared code location for steps and parameters:
+# https://dev.azure.com/TerracottaCI/_git/terracotta
 
-steps:
-- bash: |
-   curl -s https://raw.githubusercontent.com/Terracotta-OSS/cloud-tools/master/azure/init.sh?junk=$(date +%s) | bash      
-  displayName: 'Bash Script'
-- task: Maven@3
-  inputs:
-    mavenPomFile: 'pom.xml'
-    mavenOptions: '-Xmx3072m'
-    javaHomeOption: 'JDKVersion'
-    jdkVersionOption: '1.8'
-    jdkArchitectureOption: 'x64'
-    publishJUnitResults: true
-    testResultsFiles: '**/TEST-*.xml'
-    goals: 'verify'
+resources:
+  repositories:
+    - repository: templates
+      type: git   
+      name: terracotta/terracotta
+
+jobs:
+- template: build-templates/maven-common.yml@templates  
