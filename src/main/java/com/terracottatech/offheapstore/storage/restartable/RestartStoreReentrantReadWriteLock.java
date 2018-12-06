@@ -114,6 +114,11 @@ public class RestartStoreReentrantReadWriteLock<I, K, V> extends ReentrantReadWr
     public void resume() throws NotPausedException {
       restartability.resume();
     }
+
+    @Override
+    public Future<Future<Void>> freeze() {
+      return restartability.freeze();
+    }
   }
 
   static class WrappedTransaction<I, K, V> implements Transaction<I, K, V> {

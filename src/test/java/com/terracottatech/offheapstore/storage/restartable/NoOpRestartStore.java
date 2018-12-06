@@ -87,6 +87,11 @@ public class NoOpRestartStore<I, K, V> implements RestartStore<I, K, V> {
 
   }
 
+  @Override
+  public Future<Future<Void>> freeze() {
+    return null;
+  }
+
   public static class NoOpTransaction<I, K, V> implements Transaction<I, K, V> {
 
     @Override

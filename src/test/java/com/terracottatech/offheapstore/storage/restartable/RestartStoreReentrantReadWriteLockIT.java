@@ -111,6 +111,11 @@ public class RestartStoreReentrantReadWriteLockIT {
     public void resume() throws NotPausedException {
 
     }
+
+    @Override
+    public Future<Future<Void>> freeze() {
+      return null;
+    }
   }
   
   static class DummyTransaction implements Transaction<Object, Object, Object> {
