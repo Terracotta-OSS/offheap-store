@@ -28,7 +28,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map.Entry;
-import java.util.function.BiFunction;
+import java.util.function.BiConsumer;
 
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
@@ -144,77 +144,37 @@ public class IteratorMutationIT {
 
   @Test
   public void testConcurrentResizeAndRemoveViaComputeWithMetadata() {
-    testConcurrentResizeAndUpdate(new BiConsumer<ReadWriteLockedOffHeapHashMap<Value, Value>, Value>() {
-      @Override
-      public void accept(ReadWriteLockedOffHeapHashMap<Value, Value> map, Value key) {
-        map.computeWithMetadata(key, new BiFunction<Value, MetadataTuple<Value>, MetadataTuple<Value>>() {
-          @Override
-          public MetadataTuple<Value> apply(Value k, MetadataTuple<Value> v) {
-            return null;
-          }
-        });
-      }
-    });
+    testConcurrentResizeAndUpdate((map, key) -> map.computeWithMetadata(key, (k, v) -> null));
   }
 
   @Test
   public void testConcurrentResizeAndRemoveViaComputeIfPresentWithMetadata() {
-    testConcurrentResizeAndUpdate(new BiConsumer<ReadWriteLockedOffHeapHashMap<Value, Value>, Value>() {
-      @Override
-      public void accept(ReadWriteLockedOffHeapHashMap<Value, Value> map, Value key) {
-        map.computeIfPresentWithMetadata(key, new BiFunction<Value, MetadataTuple<Value>, MetadataTuple<Value>>() {
-          @Override
-          public MetadataTuple<Value> apply(Value k, MetadataTuple<Value> v) {
-            return null;
-          }
-        });
-      }
-    });
+    testConcurrentResizeAndUpdate((map, key) -> map.computeIfPresentWithMetadata(key, (k, v) -> null));
   }
 
   @Test
   public void testConcurrentResizeAndRemoveViaEntrySet() {
-    testConcurrentResizeAndUpdate(new BiConsumer<ReadWriteLockedOffHeapHashMap<Value, Value>, Value>() {
-      @Override
-      public void accept(ReadWriteLockedOffHeapHashMap<Value, Value> map, Value key) {
-        map.entrySet().remove(new SimpleImmutableEntry<Value, Value>(key, key));
-      }
-    });
+    testConcurrentResizeAndUpdate((map, key) -> map.entrySet().remove(new SimpleImmutableEntry<Value, Value>(key, key)));
   }
 
   @Test
   public void testConcurrentResizeAndRemove() {
-    testConcurrentResizeAndUpdate(new BiConsumer<ReadWriteLockedOffHeapHashMap<Value, Value>, Value>() {
-      @Override
-      public void accept(ReadWriteLockedOffHeapHashMap<Value, Value> map, Value key) {
-        map.remove(key);
-      }
-    });
+    testConcurrentResizeAndUpdate((map, key) -> map.remove(key));
   }
 
   @Test
   public void testConcurrentResizeAndRemoveNoReturn() {
-    testConcurrentResizeAndUpdate(new BiConsumer<ReadWriteLockedOffHeapHashMap<Value, Value>, Value>() {
-      @Override
-      public void accept(ReadWriteLockedOffHeapHashMap<Value, Value> map, Value key) {
-        map.removeNoReturn(key);
-      }
-    });
+    testConcurrentResizeAndUpdate((map, key) -> map.removeNoReturn(key));
   }
 
   @Test
   public void testConcurrentResizeAndRemoveWithValue() {
-    testConcurrentResizeAndUpdate(new BiConsumer<ReadWriteLockedOffHeapHashMap<Value, Value>, Value>() {
-      @Override
-      public void accept(ReadWriteLockedOffHeapHashMap<Value, Value> map, Value key) {
-        map.remove(key, key);
-      }
-    });
+    testConcurrentResizeAndUpdate((map, key) -> map.remove(key, key));
   }
 
   private void testConcurrentResizeAndUpdate(BiConsumer<ReadWriteLockedOffHeapHashMap<Value, Value>, Value> update) {
     PageSource source = new UnlimitedPageSource(new HeapBufferSource());
-    ReadWriteLockedOffHeapHashMap<Value, Value> map = new ReadWriteLockedOffHeapHashMap<Value, Value>(source, new OffHeapBufferStorageEngine<Serializable, Serializable>(PointerSize.INT, source, 1024, new SerializablePortability(), new SerializablePortability()), 2);
+    ReadWriteLockedOffHeapHashMap<Value, Value> map = new ReadWriteLockedOffHeapHashMap<>(source, new OffHeapBufferStorageEngine<>(PointerSize.INT, source, 1024, new SerializablePortability(), new SerializablePortability()), 2);
 
     map.put(new Value(0), new Value(0));
     map.put(new Value(1), new Value(1));
@@ -237,18 +197,13 @@ public class IteratorMutationIT {
 
     update.accept(map, new Value(1));
 
-    Collection<Value> iteratorKeys = new ArrayList<Value>();
+    Collection<Value> iteratorKeys = new ArrayList<>();
     while (entryIterator.hasNext()) {
       Entry<Value, Value> next = entryIterator.next();
       assertThat(next.getValue(), is(next.getKey()));
       iteratorKeys.add(next.getKey());
     }
-    assertThat(iteratorKeys, hasSize(new HashSet<Value>(iteratorKeys).size()));
-  }
-
-  interface BiConsumer<T, U> {
-
-    void accept(T t, U u);
+    assertThat(iteratorKeys, hasSize(new HashSet<>(iteratorKeys).size()));
   }
 
   static class Value implements Serializable {
