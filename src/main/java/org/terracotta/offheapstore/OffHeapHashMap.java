@@ -1894,7 +1894,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
             MetadataTuple<V> result = remappingFunction.apply(key, existingValue);
             if (result == null) {
               storageEngine.freeMapping(readLong(laterEntry, ENCODING), laterEntry.get(KEY_HASHCODE), true);
-              laterEntry.put(STATUS_REMOVED);
+              laterEntry.put(STATUS, STATUS_REMOVED);
               slotRemoved(laterEntry);
               shrink();
             } else if (result == existingValue) {
@@ -1956,7 +1956,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
         MetadataTuple<V> result = remappingFunction.apply(key, existingTuple);
         if (result == null) {
           storageEngine.freeMapping(existingEncoding, hash, true);
-          entry.put(STATUS_REMOVED);
+          entry.put(STATUS, STATUS_REMOVED);
           slotRemoved(entry);
           shrink();
         } else if (result == existingTuple) {
@@ -2096,7 +2096,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
         MetadataTuple<V> result = remappingFunction.apply(key, existingValue);
         if (result == null) {
           storageEngine.freeMapping(existingEncoding, hash, true);
-          entry.put(STATUS_REMOVED);
+          entry.put(STATUS, STATUS_REMOVED);
           slotRemoved(entry);
           shrink();
         } else if (result == existingValue) {
