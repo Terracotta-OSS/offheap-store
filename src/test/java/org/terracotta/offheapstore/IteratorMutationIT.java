@@ -15,18 +15,29 @@
  */
 package org.terracotta.offheapstore;
 
+import org.hamcrest.Matchers;
 import org.terracotta.offheapstore.ReadWriteLockedOffHeapHashMap;
 import org.terracotta.offheapstore.OffHeapHashMap;
+
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import java.io.Serializable;
+import java.nio.IntBuffer;
+import java.util.AbstractMap;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
@@ -140,6 +151,70 @@ public class IteratorMutationIT {
       }});
   }
 
+  @Test
+  public void testConcurrentResizeAndRemoveViaComputeWithMetadata() {
+    testConcurrentResizeAndUpdate((map, key) -> map.computeWithMetadata(key, (k, v) -> null));
+  }
+
+  @Test
+  public void testConcurrentResizeAndRemoveViaComputeIfPresentWithMetadata() {
+    testConcurrentResizeAndUpdate((map, key) -> map.computeIfPresentWithMetadata(key, (k, v) -> null));
+  }
+
+  @Test
+  public void testConcurrentResizeAndRemoveViaEntrySet() {
+    testConcurrentResizeAndUpdate((map, key) -> map.entrySet().remove(new SimpleImmutableEntry<>(key, key)));
+  }
+
+  @Test
+  public void testConcurrentResizeAndRemove() {
+    testConcurrentResizeAndUpdate((map, key) -> map.remove(key));
+  }
+
+  @Test
+  public void testConcurrentResizeAndRemoveNoReturn() {
+    testConcurrentResizeAndUpdate((map, key) -> map.removeNoReturn(key));
+  }
+
+  @Test
+  public void testConcurrentResizeAndRemoveWithValue() {
+    testConcurrentResizeAndUpdate((map, key) -> map.remove(key, key));
+  }
+
+  private void testConcurrentResizeAndUpdate(BiConsumer<OffHeapHashMap<Value, Value>, Value> update) {
+    PageSource source = new UnlimitedPageSource(new HeapBufferSource());
+    ReadWriteLockedOffHeapHashMap<Value, Value> map = new ReadWriteLockedOffHeapHashMap<>(source, new OffHeapBufferStorageEngine<>(PointerSize.INT, source, 1024, new SerializablePortability(), new SerializablePortability()), 2);
+
+    map.put(new Value(0), new Value(0));
+    map.put(new Value(1), new Value(1));
+
+    assertThat(map.getAtTableOffset(0 * OffHeapHashMap.ENTRY_SIZE), is(new Value(0)));
+    assertThat(map.getAtTableOffset(1 * OffHeapHashMap.ENTRY_SIZE), is(new Value(1)));
+    assertThat(map.getTableCapacity(), is(2L));
+
+    Iterator<Entry<Value, Value>> entryIterator = map.entrySet().iterator();
+
+    //trigger map resize
+    map.put(new Value(2), new Value(2));
+    map.put(new Value(3), new Value(3));
+    assertThat(map.getTableCapacity(), is(4L));
+
+    assertThat(map.getAtTableOffset(0 * OffHeapHashMap.ENTRY_SIZE), is(new Value(2)));
+    assertThat(map.getAtTableOffset(1 * OffHeapHashMap.ENTRY_SIZE), is(new Value(3)));
+    assertThat(map.getAtTableOffset(2 * OffHeapHashMap.ENTRY_SIZE), is(new Value(0)));
+    assertThat(map.getAtTableOffset(3 * OffHeapHashMap.ENTRY_SIZE), is(new Value(1)));
+
+    update.accept(map, new Value(1));
+
+    Collection<Value> iteratorKeys = new ArrayList<>();
+    while (entryIterator.hasNext()) {
+      Entry<Value, Value> next = entryIterator.next();
+      assertThat(next.getValue(), is(next.getKey()));
+      iteratorKeys.add(next.getKey());
+    }
+    assertThat(iteratorKeys, hasSize(new HashSet<>(iteratorKeys).size()));
+  }
+
   static class Value implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -157,7 +232,7 @@ public class IteratorMutationIT {
 
     @Override
     public int hashCode() {
-      return 0;
+      return ~0;
     }
 
     @Override
