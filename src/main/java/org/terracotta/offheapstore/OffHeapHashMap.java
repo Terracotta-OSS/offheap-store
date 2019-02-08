@@ -932,21 +932,33 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
   }
 
   @Override
-  public Set<Entry<K, V>> entrySet() {
+  public final Set<Entry<K, V>> entrySet() {
     Set<Entry<K, V>> es = entrySet;
-    return es == null ? (entrySet = new EntrySet()) : es;
+    return es == null ? (entrySet = createEntrySet()) : es;
   }
 
   @Override
-  public Set<Long> encodingSet() {
+  public final Set<Long> encodingSet() {
     Set<Long> es = encodingSet;
-    return es == null ? (encodingSet = new EncodingSet()) : es;
+    return es == null ? (encodingSet = createEncodingSet()) : es;
   }
 
   @Override
-  public Set<K> keySet() {
+  public final Set<K> keySet() {
     Set<K> ks = keySet;
-    return ks == null ? (keySet = new KeySet()) : ks;
+    return ks == null ? (keySet = createKeySet()) : ks;
+  }
+
+  protected Set<Entry<K, V>> createEntrySet() {
+    return new EntrySet();
+  }
+
+  protected Set<Long> createEncodingSet() {
+    return new EncodingSet();
+  }
+
+  protected Set<K> createKeySet() {
+    return new KeySet();
   }
 
   protected static boolean isPresent(IntBuffer entry) {
@@ -1272,7 +1284,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
     return reprobeLimit;
   }
 
-  class EntrySet extends AbstractSet<Entry<K, V>> {
+  protected class EntrySet extends AbstractSet<Entry<K, V>> {
 
     @Override
     public Iterator<Map.Entry<K, V>> iterator() {
@@ -1305,7 +1317,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
     }
   }
 
-  class EncodingSet extends AbstractSet<Long> {
+  protected class EncodingSet extends AbstractSet<Long> {
     @Override
     public Iterator<Long> iterator() {
       return new EncodingIterator();
@@ -1323,7 +1335,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
     }
   }
 
-  class KeySet extends AbstractSet<K> {
+  protected class KeySet extends AbstractSet<K> {
 
     @Override
     public Iterator<K> iterator() {
@@ -1351,7 +1363,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
     }
   }
 
-  abstract class HashIterator<T> implements Iterator<T> {
+  protected abstract class HashIterator<T> implements Iterator<T> {
 
     final int expectedModCount; // For fast-fail
     /*
@@ -1495,7 +1507,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
     }
   }
 
-  class KeyIterator extends HashIterator<K> {
+  protected class KeyIterator extends HashIterator<K> {
     KeyIterator() {
       super();
     }
@@ -1508,7 +1520,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
 
   }
 
-  class EntryIterator extends HashIterator<Entry<K, V>> {
+  protected class EntryIterator extends HashIterator<Entry<K, V>> {
     EntryIterator() {
       super();
     }
@@ -1519,7 +1531,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
     }
   }
 
-  class EncodingIterator extends HashIterator<Long> {
+  protected class EncodingIterator extends HashIterator<Long> {
     EncodingIterator() {
       super();
     }
