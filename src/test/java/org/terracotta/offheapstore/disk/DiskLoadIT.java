@@ -54,7 +54,7 @@ public class DiskLoadIT {
     final MappedPageSource source = new MappedPageSource(dataFile);
     final ConcurrentOffHeapHashMap<Integer, byte[]> map = new ConcurrentOffHeapHashMap<>(source, (Factory<StorageEngine<Integer, byte[]>>) () -> {
       ThreadPoolExecutor e = new ThreadPoolExecutor(1, 1, 0, TimeUnit.SECONDS, new LinkedBlockingQueue<>(1000), (r, executor) -> {
-        boolean interrupted = false;
+        boolean interrupted = Thread.interrupted();
         try {
           while (true) {
             try {
