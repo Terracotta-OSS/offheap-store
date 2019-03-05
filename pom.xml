@@ -8,7 +8,7 @@
 
   <groupId>com.terracottatech</groupId>
   <artifactId>offheap-restartable-store</artifactId>
-  <version>2.7.6</version>
+  <version>2.7.7-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>Terracotta Off-Heap Restartable Store</name>
@@ -16,10 +16,6 @@
   <properties>
     <slf4j.version>1.7.25</slf4j.version>
     <java.build.version>1.8</java.build.version>
-  
-    <metadata.build.jenkins.url>http://jenkins.terracotta.eur.ad.sag:8080/job/releasers/job/offheap-restartable-store_trunk_releaser/30/</metadata.build.jenkins.url>
-    <metadata.build.maven.active.profiles>terracotta-repositories,release,tc-publish,fullmode</metadata.build.maven.active.profiles>
-    <metadata.svn.revision/>
   </properties>
 
   <dependencies>
