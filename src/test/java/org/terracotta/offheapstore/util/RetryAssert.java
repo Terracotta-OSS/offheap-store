@@ -28,9 +28,9 @@ public class RetryAssert {
     }
 
     public static <T> void assertBy(long time, TimeUnit unit, Callable<T> value, Matcher<? super T> matcher) {
-        boolean interrupted = false;
-        long end = System.nanoTime() + unit.toNanos(time);
+        boolean interrupted = Thread.interrupted();
         try {
+          long end = System.nanoTime() + unit.toNanos(time);
             for (long sleep = 10; ; sleep <<= 1L) {
                 try {
                     Assert.assertThat(value.call(), matcher);

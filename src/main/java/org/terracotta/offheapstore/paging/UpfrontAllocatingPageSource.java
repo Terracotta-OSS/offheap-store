@@ -590,7 +590,7 @@ public class UpfrontAllocatingPageSource implements PageSource {
   }
 
   private static <T> T uninterruptibleGet(Future<T> future) {
-    boolean wasInterrupted = false;
+    boolean interrupted = Thread.interrupted();
     try {
       while (true) {
         try {
@@ -602,11 +602,11 @@ public class UpfrontAllocatingPageSource implements PageSource {
           throw new RuntimeException(e);
         } catch (InterruptedException e) {
           // Remember and keep going
-          wasInterrupted = true;
+          interrupted = true;
         }
       }
     } finally {
-      if(wasInterrupted) {
+      if(interrupted) {
         Thread.currentThread().interrupt();
       }
     }
