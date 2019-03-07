@@ -237,7 +237,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
       if (isTerminating(entry)) {
         return false;
       } else if (isPresent(entry) && keyEquals(key, hash, readLong(entry, ENCODING), entry.get(KEY_HASHCODE))) {
-        hit(entry);
+        hit(view.position(), entry);
         return true;
       } else {
         view.position(view.position() + ENTRY_SIZE);
@@ -269,7 +269,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
       if (isTerminating(entry)) {
         return null;
       } else if (isPresent(entry) && keyEquals(key, hash, readLong(entry, ENCODING), entry.get(KEY_HASHCODE))) {
-        hit(entry);
+        hit(view.position(), entry);
         return (V) storageEngine.readValue(readLong(entry, ENCODING));
       } else {
         view.position(view.position() + ENTRY_SIZE);
@@ -324,14 +324,15 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
       }
 
       IntBuffer entry = (IntBuffer) hashtable.slice().limit(ENTRY_SIZE);
+      int entryPosition = hashtable.position();
 
       if (isAvailable(entry)) {
         if (isRemoved(entry)) {
           removedSlots--;
         }
         entry.put(newEntry);
-        slotAdded(entry);
-        hit(entry);
+        slotAdded(entryPosition, entry);
+        hit(entryPosition, entry);
         return readLong(newEntry, ENCODING);
       } else {
         hashtable.position(hashtable.position() + ENTRY_SIZE);
@@ -432,7 +433,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
       if (isTerminating(entry)) {
         return null;
       } else if (isPresent(entry) && keyEquals(key, hash, encoding, entry.get(KEY_HASHCODE))) {
-        hit(entry);
+        hit(hashtable.position(), entry);
         entry.put(STATUS, (entry.get(STATUS) & ~safeMask) | (values & safeMask));
         @SuppressWarnings("unchecked")
         V result = (V) storageEngine.readValue(readLong(entry, ENCODING));
@@ -470,10 +471,12 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
       }
 
       IntBuffer entry = (IntBuffer) hashtable.slice().limit(ENTRY_SIZE);
+      int entryPosition = hashtable.position();
 
       if (isAvailable(entry)) {
         storageEngine.attachedMapping(readLong(newEntry, ENCODING), hash, metadata);
         storageEngine.invalidateCache();
+        int laterEntryPosition = entryPosition;
         for (IntBuffer laterEntry = entry; i < limit; i++) {
           if (isTerminating(laterEntry)) {
             break;
@@ -482,8 +485,8 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
             storageEngine.freeMapping(readLong(laterEntry, ENCODING), laterEntry.get(KEY_HASHCODE), false);
             long oldEncoding = readLong(laterEntry, ENCODING);
             laterEntry.put(newEntry);
-            slotUpdated((IntBuffer) laterEntry.flip(), oldEncoding);
-            hit(laterEntry);
+            slotUpdated(laterEntryPosition, (IntBuffer) laterEntry.flip(), oldEncoding);
+            hit(laterEntryPosition, laterEntry);
             return old;
           } else {
             hashtable.position(hashtable.position() + ENTRY_SIZE);
@@ -494,13 +497,14 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
           }
 
           laterEntry = (IntBuffer) hashtable.slice().limit(ENTRY_SIZE);
+          laterEntryPosition = hashtable.position();
         }
         if (isRemoved(entry)) {
           removedSlots--;
         }
         entry.put(newEntry);
-        slotAdded(entry);
-        hit(entry);
+        slotAdded(entryPosition, entry);
+        hit(entryPosition, entry);
         return null;
       } else if (keyEquals(key, hash, readLong(entry, ENCODING), entry.get(KEY_HASHCODE))) {
         storageEngine.attachedMapping(readLong(newEntry, ENCODING), hash, metadata);
@@ -509,8 +513,8 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
         storageEngine.freeMapping(readLong(entry, ENCODING), entry.get(KEY_HASHCODE), false);
         long oldEncoding = readLong(entry, ENCODING);
         entry.put(newEntry);
-        slotUpdated((IntBuffer) entry.flip(), oldEncoding);
-        hit(entry);
+        slotUpdated(entryPosition, (IntBuffer) entry.flip(), oldEncoding);
+        hit(entryPosition, entry);
         return old;
       } else {
         hashtable.position(hashtable.position() + ENTRY_SIZE);
@@ -614,10 +618,12 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
       }
 
       IntBuffer entry = (IntBuffer) hashtable.slice().limit(ENTRY_SIZE);
+      int entryPosition = hashtable.position();
 
       if (isAvailable(entry)) {
         storageEngine.attachedMapping(readLong(newEntry, ENCODING), hash, metadata);
         storageEngine.invalidateCache();
+        int laterEntryPosition = entryPosition;
         for (IntBuffer laterEntry = entry; i < limit; i++) {
           if (isTerminating(laterEntry)) {
             break;
@@ -626,8 +632,8 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
             storageEngine.freeMapping(readLong(laterEntry, ENCODING), laterEntry.get(KEY_HASHCODE), false);
             long oldEncoding = readLong(laterEntry, ENCODING);
             laterEntry.put(newEntry);
-            slotUpdated((IntBuffer) laterEntry.flip(), oldEncoding);
-            hit(laterEntry);
+            slotUpdated(laterEntryPosition, (IntBuffer) laterEntry.flip(), oldEncoding);
+            hit(laterEntryPosition, laterEntry);
             return old;
           } else {
             hashtable.position(hashtable.position() + ENTRY_SIZE);
@@ -638,13 +644,14 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
           }
 
           laterEntry = (IntBuffer) hashtable.slice().limit(ENTRY_SIZE);
+          laterEntryPosition = hashtable.position();
         }
         if (isRemoved(entry)) {
           removedSlots--;
         }
         entry.put(newEntry);
-        slotAdded(entry);
-        hit(entry);
+        slotAdded(entryPosition, entry);
+        hit(entryPosition, entry);
         return null;
       } else if (keyEquals(key, hash, readLong(entry, ENCODING), entry.get(KEY_HASHCODE))) {
         storageEngine.attachedMapping(readLong(newEntry, ENCODING), hash, metadata);
@@ -653,8 +660,8 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
         storageEngine.freeMapping(readLong(entry, ENCODING), entry.get(KEY_HASHCODE), false);
         long oldEncoding = readLong(entry, ENCODING);
         entry.put(newEntry);
-        slotUpdated((IntBuffer) entry.flip(), oldEncoding);
-        hit(entry);
+        slotUpdated(entryPosition, (IntBuffer) entry.flip(), oldEncoding);
+        hit(entryPosition, entry);
         return old;
       } else {
         hashtable.position(hashtable.position() + ENTRY_SIZE);
@@ -753,6 +760,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
       }
 
       IntBuffer entry = (IntBuffer) hashtable.slice().limit(ENTRY_SIZE);
+      int entryPosition = hashtable.position();
 
       if (isTerminating(entry)) {
         return null;
@@ -774,7 +782,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
          * that will rehash the table.
          */
         entry.put(STATUS, STATUS_REMOVED);
-        slotRemoved(entry);
+        slotRemoved(entryPosition, entry);
         shrink();
         return removedValue;
       } else {
@@ -805,6 +813,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
       }
 
       IntBuffer entry = (IntBuffer) hashtable.slice().limit(ENTRY_SIZE);
+      int entryPosition = hashtable.position();
 
       if (isTerminating(entry)) {
         return removed;
@@ -830,7 +839,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
          * that will rehash the table.
          */
         entry.put(STATUS, STATUS_REMOVED);
-        slotRemoved(entry);
+        slotRemoved(entryPosition, entry);
       }
       hashtable.position(hashtable.position() + ENTRY_SIZE);
     }
@@ -854,6 +863,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
       }
 
       IntBuffer entry = (IntBuffer) hashtable.slice().limit(ENTRY_SIZE);
+      int entryPosition = hashtable.position();
 
       if (isTerminating(entry)) {
         return false;
@@ -873,7 +883,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
          * that will rehash the table.
          */
         entry.put(STATUS, STATUS_REMOVED);
-        slotRemoved(entry);
+        slotRemoved(entryPosition, entry);
         shrink();
         return true;
       } else {
@@ -1613,6 +1623,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
       }
 
       IntBuffer entry = (IntBuffer) hashtable.slice().limit(ENTRY_SIZE);
+      int entryPosition = hashtable.position();
 
       if (isTerminating(entry)) {
         return false;
@@ -1621,7 +1632,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
         storageEngine.freeMapping(readLong(entry, ENCODING), entry.get(KEY_HASHCODE), true);
 
         entry.put(STATUS, STATUS_REMOVED);
-        slotRemoved(entry);
+        slotRemoved(entryPosition, entry);
         shrink();
         return true;
       } else {
@@ -1644,7 +1655,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
       storageEngine.freeMapping(readLong(entry, ENCODING), entry.get(KEY_HASHCODE), true);
 
       entry.put(STATUS, STATUS_REMOVED);
-      slotRemoved(entry);
+      slotRemoved(offset, entry);
       if (shrink) {
         shrink();
       }
@@ -1738,41 +1749,41 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
   }
 
   @FindbugsSuppressWarnings("VO_VOLATILE_INCREMENT")
-  private void slotRemoved(IntBuffer entry) {
+  private void slotRemoved(int position, IntBuffer entry) {
     modCount++;
     removedSlots++;
     size--;
     updatePendingTables(entry.get(KEY_HASHCODE), readLong(entry, ENCODING), entry);
-    removed(entry);
+    removed(position, entry);
   }
 
   @FindbugsSuppressWarnings("VO_VOLATILE_INCREMENT")
-  private void slotAdded(IntBuffer entry) {
+  private void slotAdded(int position, IntBuffer entry) {
     modCount++;
     size++;
-    added(entry);
+    added(position, entry);
   }
 
   @FindbugsSuppressWarnings("VO_VOLATILE_INCREMENT")
-  private void slotUpdated(IntBuffer entry, long oldEncoding) {
+  private void slotUpdated(int position, IntBuffer entry, long oldEncoding) {
     modCount++;
     updatePendingTables(entry.get(KEY_HASHCODE), oldEncoding, entry);
-    updated(entry);
+    updated(position, entry);
   }
 
-  protected void added(IntBuffer entry) {
+  protected void added(int position, IntBuffer entry) {
     //no-op
   }
 
-  protected void hit(IntBuffer entry) {
+  protected void hit(int position, IntBuffer entry) {
     //no-op
   }
 
-  protected void removed(IntBuffer entry) {
+  protected void removed(int position, IntBuffer entry) {
     //no-op
   }
 
-  protected void updated(IntBuffer entry) {
+  protected void updated(int position, IntBuffer entry) {
     //no-op
   }
 
@@ -1892,8 +1903,10 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
       }
 
       IntBuffer entry = (IntBuffer) hashtable.slice().limit(ENTRY_SIZE);
+      int entryPosition = hashtable.position();
 
       if (isAvailable(entry)) {
+        int laterEntryPosition = entryPosition;
         for (IntBuffer laterEntry = entry; i < limit; i++) {
           if (isTerminating(laterEntry)) {
             break;
@@ -1907,7 +1920,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
             if (result == null) {
               storageEngine.freeMapping(readLong(laterEntry, ENCODING), laterEntry.get(KEY_HASHCODE), true);
               laterEntry.put(STATUS, STATUS_REMOVED);
-              slotRemoved(laterEntry);
+              slotRemoved(laterEntryPosition, laterEntry);
               shrink();
             } else if (result == existingValue) {
               //nop
@@ -1925,8 +1938,8 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
               storageEngine.freeMapping(readLong(laterEntry, ENCODING), laterEntry.get(KEY_HASHCODE), false);
               long oldEncoding = readLong(laterEntry, ENCODING);
               laterEntry.put(newEntry);
-              slotUpdated((IntBuffer) laterEntry.flip(), oldEncoding);
-              hit(laterEntry);
+              slotUpdated(laterEntryPosition, (IntBuffer) laterEntry.flip(), oldEncoding);
+              hit(laterEntryPosition, laterEntry);
             }
             return result;
           } else {
@@ -1938,6 +1951,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
           }
 
           laterEntry = (IntBuffer) hashtable.slice().limit(ENTRY_SIZE);
+          laterEntryPosition = hashtable.position();
         }
         MetadataTuple<V> result = remappingFunction.apply(key, null);
         if (result != null) {
@@ -1954,8 +1968,8 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
           storageEngine.attachedMapping(readLong(newEntry, ENCODING), hash, result.metadata());
           storageEngine.invalidateCache();
           entry.put(newEntry);
-          slotAdded(entry);
-          hit(entry);
+          slotAdded(entryPosition, entry);
+          hit(entryPosition, entry);
         }
         return result;
       } else if (keyEquals(key, hash, readLong(entry, ENCODING), entry.get(KEY_HASHCODE))) {
@@ -1969,7 +1983,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
         if (result == null) {
           storageEngine.freeMapping(existingEncoding, hash, true);
           entry.put(STATUS, STATUS_REMOVED);
-          slotRemoved(entry);
+          slotRemoved(entryPosition, entry);
           shrink();
         } else if (result == existingTuple) {
           //nop
@@ -1985,8 +1999,8 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
           storageEngine.invalidateCache();
           storageEngine.freeMapping(readLong(entry, ENCODING), entry.get(KEY_HASHCODE), false);
           entry.put(newEntry);
-          slotUpdated((IntBuffer) entry.flip(), existingEncoding);
-          hit(entry);
+          slotUpdated(entryPosition, (IntBuffer) entry.flip(), existingEncoding);
+          hit(entryPosition, entry);
         }
         return result;
       } else {
@@ -2019,6 +2033,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
       }
 
       IntBuffer entry = (IntBuffer) hashtable.slice().limit(ENTRY_SIZE);
+      int entryPosition = hashtable.position();
 
       if (isAvailable(entry)) {
         for (IntBuffer laterEntry = entry; i < limit; i++) {
@@ -2055,8 +2070,8 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
           storageEngine.attachedMapping(readLong(newEntry, ENCODING), hash, result.metadata());
           storageEngine.invalidateCache();
           entry.put(newEntry);
-          slotAdded(entry);
-          hit(entry);
+          slotAdded(entryPosition, entry);
+          hit(entryPosition, entry);
         }
         return result;
       } else if (keyEquals(key, hash, readLong(entry, ENCODING), entry.get(KEY_HASHCODE))) {
@@ -2095,6 +2110,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
       }
 
       IntBuffer entry = (IntBuffer) hashtable.slice().limit(ENTRY_SIZE);
+      int entryPosition = hashtable.position();
 
       if (isTerminating(entry)) {
         return null;
@@ -2109,7 +2125,7 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
         if (result == null) {
           storageEngine.freeMapping(existingEncoding, hash, true);
           entry.put(STATUS, STATUS_REMOVED);
-          slotRemoved(entry);
+          slotRemoved(entryPosition, entry);
           shrink();
         } else if (result == existingValue) {
           //nop
@@ -2125,8 +2141,8 @@ public class OffHeapHashMap<K, V> extends AbstractMap<K, V> implements MapIntern
           storageEngine.invalidateCache();
           storageEngine.freeMapping(readLong(entry, ENCODING), entry.get(KEY_HASHCODE), false);
           entry.put(newEntry);
-          slotUpdated((IntBuffer) entry.flip(), readLong(entry, ENCODING));
-          hit(entry);
+          slotUpdated(entryPosition, (IntBuffer) entry.flip(), readLong(entry, ENCODING));
+          hit(entryPosition, entry);
         }
         return result;
       } else {

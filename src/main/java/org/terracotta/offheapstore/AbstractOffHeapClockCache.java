@@ -109,7 +109,7 @@ public abstract class AbstractOffHeapClockCache<K, V> extends AbstractLockedOffH
   }
 
   @Override
-  protected void hit(IntBuffer entry) {
+  protected void hit(int position, IntBuffer entry) {
     entry.put(STATUS, PRESENT_CLOCK | entry.get(STATUS));
   }
 

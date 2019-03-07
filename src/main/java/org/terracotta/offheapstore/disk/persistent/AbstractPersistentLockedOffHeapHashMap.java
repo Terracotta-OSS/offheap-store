@@ -108,7 +108,7 @@ public abstract class AbstractPersistentLockedOffHeapHashMap<K, V> extends Abstr
 
         if (isPresent(entry)) {
           size++;
-          added(entry);
+          added(hashtable.position(), entry);
         } else if (isRemoved(entry)) {
           removedSlots++;
         }

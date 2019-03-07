@@ -110,7 +110,7 @@ public abstract class AbstractPersistentOffHeapCache<K, V> extends AbstractOffHe
 
         if (isPresent(entry)) {
           size++;
-          added(entry);
+          added(hashtable.position(), entry);
         } else if (isRemoved(entry)) {
           removedSlots++;
         }
