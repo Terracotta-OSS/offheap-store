@@ -149,7 +149,7 @@ public class CrossedStealingDeadlockIT extends OffHeapAndDiskStorageEngineDepend
             }
           }
           for (Thread t : interest) {
-            t.stop(new AssertionError("Deadlock was detected"));
+            t.stop();
           }
           throw new AssertionError("Deadlock was detected");
         }

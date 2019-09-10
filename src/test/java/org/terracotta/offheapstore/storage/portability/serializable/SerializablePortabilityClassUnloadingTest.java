@@ -16,13 +16,19 @@
 package org.terracotta.offheapstore.storage.portability.serializable;
 
 import org.terracotta.offheapstore.storage.portability.SerializablePortability;
+
+import java.io.File;
 import java.io.Serializable;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -45,7 +51,7 @@ public class SerializablePortabilityClassUnloadingTest {
 
   @Before
   public void createSpecialObject() throws Exception {
-    ClassLoader duplicate = new URLClassLoader(((URLClassLoader) SpecialClass.class.getClassLoader()).getURLs(), null);
+    ClassLoader duplicate = newLoader();
 
     @SuppressWarnings("unchecked")
     Class<? extends Serializable> special = (Class<? extends Serializable>) duplicate.loadClass(SpecialClass.class.getName());
@@ -109,6 +115,20 @@ public class SerializablePortabilityClassUnloadingTest {
     private static final long serialVersionUID = 1L;
 
     //empty impl
+  }
+
+  private static ClassLoader newLoader() {
+    String pathSeparator = System.getProperty("path.separator");
+    String[] classPathEntries = System.getProperty("java.class.path").split(pathSeparator);
+    URL[] urls = Arrays.stream(classPathEntries).map(s -> {
+      try {
+        return new File(s).toURI().toURL();
+      } catch (MalformedURLException e) {
+        e.printStackTrace();
+        return null;
+      }
+    }).toArray(URL[]::new);
+    return new URLClassLoader(urls, null);
   }
 
 //  private static void dumpHeap(String fileName, boolean live) {

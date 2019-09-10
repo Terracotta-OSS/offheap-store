@@ -15,9 +15,13 @@
  */
 package org.terracotta.offheapstore.storage.portability.serializable;
 
+import java.io.File;
 import java.io.Serializable;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -31,7 +35,17 @@ import org.terracotta.offheapstore.storage.portability.SerializablePortability;
 public class SerializablePortabilityClassLoaderTest {
 
   private static ClassLoader newLoader() {
-    return new URLClassLoader(((URLClassLoader) SerializablePortabilityClassLoaderTest.class.getClassLoader()).getURLs(), null);
+    String pathSeparator = System.getProperty("path.separator");
+    String[] classPathEntries = System.getProperty("java.class.path").split(pathSeparator);
+    URL[] urls = Arrays.stream(classPathEntries).map(s -> {
+      try {
+        return new File(s).toURI().toURL();
+      } catch (MalformedURLException e) {
+        e.printStackTrace();
+        return null;
+      }
+    }).toArray(URL[]::new);
+    return new URLClassLoader(urls, null);
   }
 
   @Test
