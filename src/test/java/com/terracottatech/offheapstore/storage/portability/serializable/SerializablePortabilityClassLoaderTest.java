@@ -1,6 +1,7 @@
 package com.terracottatech.offheapstore.storage.portability.serializable;
 
 import java.io.Serializable;
+import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.ByteBuffer;
 
@@ -16,7 +17,7 @@ import org.terracotta.offheapstore.storage.portability.SerializablePortability;
 public class SerializablePortabilityClassLoaderTest {
 
   private static ClassLoader newLoader() {
-    return new URLClassLoader(((URLClassLoader) SerializablePortabilityClassLoaderTest.class.getClassLoader()).getURLs(), null);
+    return new URLClassLoader(new URL[] {Foo.class.getProtectionDomain().getCodeSource().getLocation()}, null);
   }
 
   @Test
