@@ -8,6 +8,8 @@ import com.terracottatech.frs.RestartStore;
 import com.terracottatech.frs.Transaction;
 import com.terracottatech.frs.TransactionException;
 import com.terracottatech.frs.object.ObjectManagerEntry;
+import org.mockito.ArgumentMatchers;
+import org.mockito.hamcrest.MockitoHamcrest;
 import org.terracotta.offheapstore.storage.BinaryStorageEngine;
 import org.terracotta.offheapstore.storage.StorageEngine;
 import org.terracotta.offheapstore.storage.listener.RuntimeStorageEngineListener;
@@ -28,6 +30,8 @@ import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.*;
+import static org.mockito.hamcrest.MockitoHamcrest.argThat;
+import static org.mockito.hamcrest.MockitoHamcrest.longThat;
 
 /**
  *
@@ -89,7 +93,7 @@ public class RestartableStorageEngineTest {
     when(((BinaryStorageEngine) delegate).readBinaryValue(42L)).thenReturn(ByteBuffer.allocate(25));
     
     RestartStore restartability = mock(RestartStore.class);
-    when(restartability.beginTransaction(true)).thenThrow(TransactionException.class);
+    when(restartability.beginTransaction(true)).thenAnswer(invocation -> {throw new TransactionException();});
     
     RestartableStorageEngine engine = new RestartableStorageEngine("identifier", restartability, delegate, true);
     try {
