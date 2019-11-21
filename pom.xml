@@ -2,7 +2,7 @@
   <parent>
     <groupId>org.terracotta.forge</groupId>
     <artifactId>forge-parent-ee</artifactId>
-    <version>4.10</version>
+    <version>4.12</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -25,7 +25,7 @@
     <dependency>
       <groupId>com.terracottatech</groupId>
       <artifactId>fast-restartable-store</artifactId>
-      <version>1.6.0</version>
+      <version>1.6.1</version>
     </dependency>
 
     <dependency>
@@ -100,27 +100,6 @@
         </executions>
       </plugin>
     </plugins>
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <groupId>org.terracotta</groupId>
-          <artifactId>maven-forge-plugin</artifactId>
-          <version>${maven-forge-plugin.version}</version>
-          <dependencies>
-            <dependency>
-              <groupId>com.softwareag.ibit.tools.util</groupId>
-              <artifactId>finder</artifactId>
-              <!-- Before bumping version - verify it still accepts exclusion files -->
-              <version>3.0</version>
-              <scope>compile</scope>
-            </dependency>
-          </dependencies>
-          <configuration>
-            <exclusionList>${basedir}/src/finder-exclusions.txt</exclusionList>
-          </configuration>
-        </plugin>
-      </plugins>
-    </pluginManagement>
   </build>
 
   <profiles>
