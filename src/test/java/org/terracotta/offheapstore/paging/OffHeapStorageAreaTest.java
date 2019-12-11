@@ -19,12 +19,16 @@ import org.terracotta.offheapstore.paging.Page;
 import org.terracotta.offheapstore.paging.OffHeapStorageArea;
 import org.terracotta.offheapstore.paging.UnlimitedPageSource;
 import org.terracotta.offheapstore.paging.PageSource;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -36,7 +40,13 @@ import org.terracotta.offheapstore.storage.IntegerStorageEngine;
 import org.terracotta.offheapstore.storage.OffHeapBufferHalfStorageEngine;
 import org.terracotta.offheapstore.storage.SplitStorageEngine;
 import org.terracotta.offheapstore.storage.portability.ByteArrayPortability;
+import org.terracotta.offheapstore.util.MemoryUnit;
+import org.terracotta.offheapstore.util.NoOpLock;
 import org.terracotta.offheapstore.util.PointerSizeParameterizedTest;
+
+import static java.util.Collections.emptyList;
+import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
+import static org.junit.Assert.assertThat;
 
 /**
  *
@@ -97,7 +107,91 @@ public class OffHeapStorageAreaTest extends PointerSizeParameterizedTest {
       storage.free(pointer);
     }
   }
-  
+
+  @Test
+  public void testConcurrentMutationDuringRelease() {
+    GettablePageSource source = new GettablePageSource();
+
+    final AtomicReference<OffHeapStorageArea> storageReference = new AtomicReference<OffHeapStorageArea>();
+    final Map<Integer, Map<Long, Integer>> structures = new HashMap<Integer, Map<Long, Integer>>();
+    OffHeapStorageArea storage = new OffHeapStorageArea(getPointerSize(), new OffHeapStorageArea.Owner() {
+      @Override
+      public Collection<Long> evictAtAddress(long address, boolean shrink) {
+        if (shrink) {
+          return emptyList();
+        } else {
+          Map<Long, Integer> structure = getStructureContaining(address);
+
+          Collection<Long> removed = new ArrayList<Long>(structure.keySet());
+          structure.clear();
+          for (Long p : removed) {
+            storageReference.get().free(p);
+          }
+          return removed;
+        }
+      }
+
+      @Override
+      public Lock writeLock() {
+        return NoOpLock.INSTANCE;
+      }
+
+      @Override
+      public boolean isThief() {
+        return false;
+      }
+
+      @Override
+      public boolean moved(long from, long to) {
+        Map<Long, Integer> structure = getStructureContaining(from);
+
+        structure.put(to, structure.remove(from));
+        return true;
+      }
+
+      private Map<Long, Integer> getStructureContaining(long address) {
+        for (Map<Long, Integer> structure : structures.values()) {
+          if (structure.containsKey(address)) {
+            return structure;
+          }
+        }
+        throw new AssertionError("No structure contains address " + address);
+      }
+
+      @Override
+      public int sizeOf(long address) {
+        for (Map<Long, Integer> structure : structures.values()) {
+          Integer size = structure.get(address);
+          if (size != null) {
+            return size;
+          }
+        }
+        throw new AssertionError("Address not valid " + address);
+      }
+    }, source,1024, false, false);
+    storageReference.set(storage);
+
+    Random rndm = new Random();
+    while (storage.getOccupiedMemory() < MemoryUnit.MEGABYTES.toBytes(1L)) {
+
+      int structure = rndm.nextInt(100);
+
+      Map<Long, Integer> pointers = structures.get(structure);
+      if (pointers == null) {
+        structures.put(structure, (pointers = new HashMap<Long, Integer>()));
+      }
+
+      int size = rndm.nextInt(1024);
+      long p = storage.allocate(size);
+      assertThat(p, greaterThanOrEqualTo(0L));
+      pointers.put(p, size);
+    }
+
+    while(storage.getOccupiedMemory() > 0) {
+      source.release();
+    }
+  }
+
 //  @Test
 //  public void testVariablePageSizeAddressLogic() {
 //    PageSource source = new UnlimitedPageSource(new HeapBufferSource());

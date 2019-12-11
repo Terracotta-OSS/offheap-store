@@ -24,6 +24,7 @@ import org.terracotta.offheapstore.storage.PointerSize;
 import org.terracotta.offheapstore.util.MemoryUnit;
 import org.terracotta.offheapstore.util.NoOpLock;
 
+import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 
@@ -32,6 +33,7 @@ import org.hamcrest.number.OrderingComparison;
 import org.junit.Test;
 
 import static org.hamcrest.core.Is.*;
+import static java.util.Collections.singleton;
 import static org.junit.Assert.assertThat;
 
 /**
@@ -283,9 +285,9 @@ public class UpfrontAllocatingPageSourceThresholdTest {
     }
     
     @Override
-    public boolean evictAtAddress(long address, boolean shrink) {
+    public Collection<Long> evictAtAddress(long address, boolean shrink) {
       storage.free(address);
-      return true;
+      return singleton(address);
     }
 
     @Override
