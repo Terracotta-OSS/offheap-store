@@ -576,7 +576,7 @@ public class OffHeapStorageArea {
           Collection<Page> releasedPages = new ArrayList<>();
           released.push(releasedPages);
           try {
-            if (owner.evictAtAddress(remove, true) || moveAddressDown(remove)) {
+            if (!owner.evictAtAddress(remove, true).isEmpty() || moveAddressDown(remove)) {
               for (Page p : releasedPages) {
                 if (targets.remove(p)) {
                   recovered.add(p);
@@ -625,50 +625,64 @@ public class OffHeapStorageArea {
     int sizeOfArea = owner.sizeOf(target);
 
     long ceiling = addressForPage(Math.max(0, pageIndexFor(target) - 2)) + 1;
-    long startAt = random.nextLong() % ceiling; //check for negative results??
+    long startAt = Long.MAX_VALUE & (random.nextLong() % ceiling);
 
-    Iterator<Long> pointers = allocator.iterator();
-
-    while (pointers.hasNext() && pointers.next() < startAt);
-
-    while (pointers.hasNext()) {
-      long address = pointers.next();
-      if (address < target && owner.evictAtAddress(address, false)) {
-        long relocated = allocator.allocate(sizeOfArea);
-        if (relocated >= 0) {
-          if (relocated < target) {
-            writeBuffers(relocated, readBuffers(target, sizeOfArea));
-            if (!owner.moved(target, relocated)) {
-              throw new AssertionError("Failure to move mapping during release");
-            }
-            allocator.free(target);
-            return true;
-          } else {
-            allocator.free(relocated);
-          }
-        }
-      }
+    if (moveAddressDown(target, sizeOfArea, startAt)) {
+      return true;
+    } else {
+      LOGGER.debug("Random Eviction Failure Migration Failed - Using Biased Approach");
+      return moveAddressDown(target, sizeOfArea, 0);
     }
-
-    LOGGER.debug("Random Eviction Failure Migration Failed - Using Biased Approach");
-
-    for (long address : allocator) {
-      if (address < target && owner.evictAtAddress(address, false)) {
-        long relocated = allocator.allocate(sizeOfArea);
-        if (relocated >= 0) {
-          if (relocated < target) {
-            writeBuffer(relocated, readBuffer(target, sizeOfArea));
-            owner.moved(target, relocated);
-            allocator.free(target);
-            return true;
-          } else {
-            allocator.free(relocated);
-          }
-        }
-      }
-    }
-    return false;
   }
+
+  private boolean moveAddressDown(long target, int size, long start) {
+    withFreshIterator: while (true) {
+      Iterator<Long> pointers = allocator.iterator();
+
+      if (!pointers.hasNext()) {
+        return false;
+      }
+
+      long address;
+      while ((address = pointers.next()) < start && pointers.hasNext()) ;
+
+      if (address > target) {
+        return false;
+      }
+
+      do {
+        Collection<Long> removed = owner.evictAtAddress(address, false);
+        if (removed.contains(target)) {
+          return true;
+        } else if (!removed.isEmpty()) {
+          long relocated = allocator.allocate(size);
+          if (relocated >= 0) {
+            if (relocated < target) {
+              writeBuffer(relocated, readBuffer(target, size));
+              if (!owner.moved(target, relocated)) {
+                throw new AssertionError("Failure to move mapping during release");
+              }
+              allocator.free(target);
+              return true;
+            } else {
+              allocator.free(relocated);
+            }
+          }
+
+          for (Long p : removed) {
+            if (p > address) {
+              start = address + 1;
+              //iterator is potentially broken
+              continue withFreshIterator;
+            }
+          }
+        }
+      } while (pointers.hasNext() && (address = pointers.next()) < target);
+
+      return false;
+    }
+  }
+
 
   public boolean shrink() {
     final Lock ownerLock = owner.writeLock();
@@ -699,7 +713,7 @@ public class OffHeapStorageArea {
   }
 
   public interface Owner {
-    boolean evictAtAddress(long address, boolean shrink);
+    Collection<Long> evictAtAddress(long address, boolean shrink);
 
     Lock writeLock();
 
