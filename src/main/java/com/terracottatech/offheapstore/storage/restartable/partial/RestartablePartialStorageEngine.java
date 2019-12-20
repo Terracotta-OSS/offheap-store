@@ -13,11 +13,15 @@ import org.terracotta.offheapstore.storage.portability.Portability;
 import org.terracotta.offheapstore.util.Factory;
 
 import java.nio.ByteBuffer;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.terracottatech.offheapstore.storage.restartable.partial.RestartableMinimalStorageEngine.detach;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singleton;
 import static org.terracotta.offheapstore.util.Validation.shouldValidate;
 import static org.terracotta.offheapstore.util.Validation.validate;
 
@@ -382,7 +386,7 @@ public class RestartablePartialStorageEngine<I, K, V> extends RestartableMinimal
     }
   }
 
-  private void free(long encoding) {
+  private Long free(long encoding) {
     lock.writeLock().lock();
     try {
       long cacheAddress = metadataArea.readLong(encoding + getCacheOffset(encoding));
@@ -390,8 +394,11 @@ public class RestartablePartialStorageEngine<I, K, V> extends RestartableMinimal
         metadataArea.writeLong(encoding + getCacheOffset(encoding), NULL_ENCODING);
         unlinkEntry(cacheAddress);
         storage.free(cacheAddress);
+        validateCache();
+        return cacheAddress;
+      } else {
+        return null;
       }
-      validateCache();
     } finally {
       lock.writeLock().unlock();
     }
@@ -591,9 +598,13 @@ public class RestartablePartialStorageEngine<I, K, V> extends RestartableMinimal
 
     //called under write lock
     @Override
-    public boolean evictAtAddress(long address, boolean shrink) {
-      free(storage.readLong(address + CACHE_META_OFFSET));
-      return true;
+    public Collection<Long> evictAtAddress(long address, boolean shrink) {
+      Long freed = free(storage.readLong(address + CACHE_META_OFFSET));
+      if (freed == null) {
+        return emptyList();
+      } else {
+        return singleton(freed);
+      }
     }
 
     //no need for locking
