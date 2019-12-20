@@ -24,11 +24,14 @@ import org.terracotta.offheapstore.util.Factory;
 import java.io.Closeable;
 import java.nio.ByteBuffer;
 import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Lock;
 
+import static java.util.Collections.singleton;
 import static org.terracotta.offheapstore.util.Validation.shouldValidate;
 import static org.terracotta.offheapstore.util.Validation.validate;
 import static com.terracottatech.offheapstore.storage.restartable.RestartableStorageEngine.decodeKey;
@@ -774,10 +777,14 @@ public class RestartableMinimalStorageEngine<I, K, V> extends AbstractListenable
   class MetadataOwner implements OffHeapStorageArea.Owner {
 
     @Override
-    public boolean evictAtAddress(long address, boolean shrink) {
+    public Collection<Long> evictAtAddress(long address, boolean shrink) {
       int hash = readKeyHash(address);
       int slot = owner.getSlotForHashAndEncoding(hash, address, ~0);
-      return owner.evict(slot, shrink);
+      if (owner.evict(slot, shrink)) {
+        return singleton(address);
+      } else {
+        return Collections.emptyList();
+      }
     }
 
     @Override
