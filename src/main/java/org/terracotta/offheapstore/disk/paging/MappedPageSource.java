@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.HashMap;
@@ -36,6 +37,7 @@ import org.terracotta.offheapstore.paging.OffHeapStorageArea;
 import org.terracotta.offheapstore.paging.Page;
 import org.terracotta.offheapstore.paging.PageSource;
 import org.terracotta.offheapstore.util.DebuggingUtils;
+import org.terracotta.offheapstore.util.ReopeningInterruptibleChannel;
 import org.terracotta.offheapstore.util.Retryer;
 
 /**
@@ -56,7 +58,7 @@ public class MappedPageSource implements PageSource {
 
   private final File file;
   private final RandomAccessFile raf;
-  private final FileChannel channel;
+  private final ReopeningInterruptibleChannel<FileChannel> channel;
   private final PowerOfTwoFileAllocator allocator;
 
   private final IdentityHashMap<MappedPage, Long> pages = new IdentityHashMap<MappedPage, Long>();
@@ -69,7 +71,7 @@ public class MappedPageSource implements PageSource {
   public MappedPageSource(File file, long size) throws IOException {
     this(file, true, size);
   }
-  
+
   public MappedPageSource(File file, boolean truncate) throws IOException {
     this(file, truncate, Long.MAX_VALUE);
   }
@@ -80,19 +82,19 @@ public class MappedPageSource implements PageSource {
     }
     this.file = file;
     this.raf = new RandomAccessFile(file, "rw");
-    this.channel = raf.getChannel();
+    this.channel = ReopeningInterruptibleChannel.create(raf::getChannel);
     if (truncate) {
       try {
-        channel.truncate(0);
+        channel.execute(channel -> channel.truncate(0));
       } catch (IOException e) {
         LOGGER.info("Exception prevented truncation of disk store file", e);
       }
-    } else if (channel.size() > size) {
+    } else if (channel.execute(FileChannel::size) > size) {
       throw new IllegalStateException("Existing file is larger than source limit");
     }
     this.allocator = new PowerOfTwoFileAllocator(size);
   }
-  
+
   public synchronized Long allocateRegion(long size) {
     Long address = allocator.allocate(size);
     if (address == null) {
@@ -105,10 +107,10 @@ public class MappedPageSource implements PageSource {
      */
     long max = address + size;
     try {
-      if (max > channel.size()) {
+      if (max > channel.execute(FileChannel::size)) {
         ByteBuffer one = ByteBuffer.allocate(1);
         while (one.hasRemaining()) {
-          channel.write(one, max - 1);
+          channel.execute(channel -> channel.write(one, max - 1));
         }
       }
     } catch (IOException e) {
@@ -130,7 +132,7 @@ public class MappedPageSource implements PageSource {
     }
   }
 
-  public synchronized long claimRegion(long address, long size) throws IOException {
+  public synchronized long claimRegion(long address, long size) {
     allocator.mark(address, size);
     allocated.put(address, new AllocatedRegion(address, size));
     return address;
@@ -162,9 +164,9 @@ public class MappedPageSource implements PageSource {
     if (address == null) {
       return null;
     }
-    
+
     try {
-      MappedByteBuffer buffer = channel.map(MapMode.READ_WRITE, address, size);
+      MappedByteBuffer buffer = channel.execute(fc -> fc.map(MapMode.READ_WRITE, address, size));
       MappedPage page = new MappedPage(buffer);
       pages.put(page, address);
       return page;
@@ -208,7 +210,7 @@ public class MappedPageSource implements PageSource {
 
   public synchronized MappedPage claimPage(long address, long size) throws IOException {
     claimRegion(address, size);
-    MappedByteBuffer buffer = channel.map(MapMode.READ_WRITE, address, size);
+    MappedByteBuffer buffer = channel.execute(channel -> channel.map(MapMode.READ_WRITE, address, size));
     MappedPage page = new MappedPage(buffer);
     pages.put(page, address);
     return page;
@@ -219,8 +221,13 @@ public class MappedPageSource implements PageSource {
   }
 
   public synchronized void flush() throws IOException {
-    if (channel.isOpen()) {
-      channel.force(true);
+    try {
+      channel.execute(channel -> {
+        channel.force(true);
+        return null;
+      });
+    } catch (ClosedChannelException e) {
+      //ignore
     }
   }
 

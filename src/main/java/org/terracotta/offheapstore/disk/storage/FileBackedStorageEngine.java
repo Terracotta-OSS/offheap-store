@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,7 +35,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 
 import org.slf4j.Logger;
@@ -48,6 +47,7 @@ import org.terracotta.offheapstore.storage.PortabilityBasedStorageEngine;
 import org.terracotta.offheapstore.storage.portability.Portability;
 import org.terracotta.offheapstore.storage.portability.WriteContext;
 import org.terracotta.offheapstore.util.Factory;
+import org.terracotta.offheapstore.util.ReopeningInterruptibleChannel;
 import org.terracotta.offheapstore.util.MemoryUnit;
 
 import static java.lang.Long.highestOneBit;
@@ -75,8 +75,8 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
 
   private final MappedPageSource source;
 
-  private final FileChannel writeChannel;
-  private final AtomicReference<FileChannel> readChannelReference;
+  private final ReopeningInterruptibleChannel<FileChannel> writeChannel;
+  private final ReopeningInterruptibleChannel<FileChannel> readChannel;
 
   private final TreeMap<Long, FileChunk> chunks = new TreeMap<Long, FileChunk>();
   private final long maxChunkSize;
@@ -122,8 +122,8 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
     super(keyPortability, valuePortability);
 
     this.writeExecutor = writer;
-    this.writeChannel = source.getWritableChannel();
-    this.readChannelReference = new AtomicReference<FileChannel>(source.getReadableChannel());
+    this.writeChannel = ReopeningInterruptibleChannel.create(source::getWritableChannel);
+    this.readChannel = ReopeningInterruptibleChannel.create(source::getReadableChannel);
 
     this.source = source;
     this.maxChunkSize = highestOneBit(maxChunkUnit.toBytes(maxChunkSize));
@@ -155,8 +155,10 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
     Future<Void> flush = writeExecutor.submit(new Callable<Void>() {
       @Override
       public Void call() throws IOException {
-        writeChannel.force(true);
-        return null;
+        return writeChannel.execute(channel -> {
+          channel.force(true);
+          return null;
+        });
       }
     });
 
@@ -202,7 +204,7 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
       try {
         writeChannel.close();
       } finally {
-        readChannelReference.getAndSet(null).close();
+        readChannel.close();
       }
     }
   }
@@ -375,79 +377,31 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
     }
     return sum;
   }
-  
+
   private FileChunk findChunk(long address) {
     return chunks.floorEntry(address).getValue();
-  }
-
-  private int readIntFromChannel(long position) throws IOException {
-    ByteBuffer lengthBuffer = ByteBuffer.allocate(Integer.SIZE / Byte.SIZE);
-    for (int i = 0; lengthBuffer.hasRemaining(); ) {
-      int read = readFromChannel(lengthBuffer, position + i);
-      if (read < 0) {
-        throw new EOFException();
-      } else {
-        i += read;
-      }
-    }
-    return ((ByteBuffer) lengthBuffer.flip()).getInt();
-  }
-
-  private void writeIntToChannel(long position, int data) throws IOException {
-    ByteBuffer buffer = ByteBuffer.allocate(Integer.SIZE / Byte.SIZE);
-    buffer.putInt(data).flip();
-    writeBufferToChannel(position, buffer);
   }
 
   private void writeLongToChannel(long position, long data) throws IOException {
     ByteBuffer buffer = ByteBuffer.allocate(Long.SIZE / Byte.SIZE);
     buffer.putLong(data).flip();
-    writeBufferToChannel(position, buffer);
+    writeToChannel(position, buffer);
   }
 
-  private void writeBufferToChannel(long position, ByteBuffer buffer) throws IOException {
-    for (int i = 0; buffer.hasRemaining(); ) {
-      int written = writeChannel.write(buffer, position + i);
+  private void writeToChannel(long position, ByteBuffer buffer) throws IOException {
+    while (buffer.hasRemaining()) {
+      final long pos = position;
+      int written = writeChannel.execute(channel -> channel.write(buffer, pos));
       if (written < 0) {
         throw new EOFException();
       } else {
-        i += written;
+        position += written;
       }
     }
   }
 
   private int readFromChannel(ByteBuffer buffer, long position) throws IOException {
-    FileChannel current = readChannelReference.get();
-    if (current == null) {
-      throw new IOException("Storage engine is closed");
-    } else {
-      try {
-        return readFromChannel(current, buffer, position);
-      } catch (ClosedChannelException e) {
-        boolean interrupted = Thread.interrupted();
-        try {
-          while (true) {
-            current = readChannelReference.get();
-            try {
-              return readFromChannel(current, buffer, position);
-            } catch (ClosedChannelException f) {
-              interrupted |= Thread.interrupted();
-
-              FileChannel newChannel = source.getReadableChannel();
-              if (!readChannelReference.compareAndSet(current, newChannel)) {
-                newChannel.close();
-              } else {
-                LOGGER.info("Creating new read-channel for " + source.getFile().getName() + " as previous one was closed (likely due to interrupt)");
-              }
-            }
-          }
-        } finally {
-          if (interrupted) {
-            Thread.currentThread().interrupt();
-          }
-        }
-      }
-    }
+    return readChannel.execute(channel -> readFromChannel(channel, buffer, position));
   }
 
   private int readFromChannel(FileChannel channel, ByteBuffer buffer, long position) throws IOException {
@@ -547,62 +501,36 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
     }
 
     ByteBuffer readKeyBuffer(long address) {
-      try {
-        long position = filePosition + address;
-        FileWriteTask pending = pendingWrites.get(position);
-        if (pending == null) {
-          int keyLength = readIntFromChannel(position + KEY_LENGTH_OFFSET);
-          return readBuffer(position + KEY_DATA_OFFSET, keyLength);
-        } else {
-          return pending.getKeyBuffer();
-        }
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      } catch (OutOfMemoryError e) {
-        LOGGER.error("Failed to allocate direct buffer for FileChannel read.  "
-                + "Consider increasing the -XX:MaxDirectMemorySize property to "
-                + "allow enough space for the FileChannel transfer buffers");
-        throw e;
+      long position = filePosition + address;
+      FileWriteTask pending = pendingWrites.get(position);
+      if (pending == null) {
+        int keyLength = readBuffer(position + KEY_LENGTH_OFFSET, 4).getInt(0);
+        return readBuffer(position + KEY_DATA_OFFSET, keyLength);
+      } else {
+        return pending.getKeyBuffer();
       }
     }
 
     protected int readPojoHash(long address) {
-      try {
-        long position = filePosition + address;
-        FileWriteTask pending = pendingWrites.get(position);
-        if (pending == null) {
-          return readIntFromChannel(position + KEY_HASH_OFFSET);
-        } else {
-          return pending.pojoHash;
-        }
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      } catch (OutOfMemoryError e) {
-        LOGGER.error("Failed to allocate direct buffer for FileChannel read.  "
-                + "Consider increasing the -XX:MaxDirectMemorySize property to "
-                + "allow enough space for the FileChannel transfer buffers");
-        throw e;
+      long position = filePosition + address;
+      FileWriteTask pending = pendingWrites.get(position);
+      if (pending == null) {
+        return readBuffer(position + KEY_HASH_OFFSET, 4).getInt(0);
+      } else {
+        return pending.pojoHash;
       }
     }
 
     ByteBuffer readValueBuffer(long address) {
-      try {
-        long position = filePosition + address;
-        FileWriteTask pending = pendingWrites.get(position);
-        if (pending == null) {
-          int keyLength = readIntFromChannel(position + KEY_LENGTH_OFFSET);
-          int valueLength = readIntFromChannel(position + VALUE_LENGTH_OFFSET);
-          return readBuffer(position + keyLength + KEY_DATA_OFFSET, valueLength);
-        } else {
-          return pending.getValueBuffer();
-        }
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      } catch (OutOfMemoryError e) {
-        LOGGER.error("Failed to allocate direct buffer for FileChannel read.  "
-                + "Consider increasing the -XX:MaxDirectMemorySize property to "
-                + "allow enough space for the FileChannel transfer buffers");
-        throw e;
+      long position = filePosition + address;
+      FileWriteTask pending = pendingWrites.get(position);
+      if (pending == null) {
+        ByteBuffer lengths = readBuffer(position + KEY_LENGTH_OFFSET, 8);
+        int keyLength = lengths.getInt(0);
+        int valueLength = lengths.getInt(VALUE_LENGTH_OFFSET - KEY_LENGTH_OFFSET);
+        return readBuffer(position + keyLength + KEY_DATA_OFFSET, valueLength);
+      } else {
+        return pending.getValueBuffer();
       }
     }
 
@@ -645,41 +573,34 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
     }
 
     WriteContext getKeyWriteContext(long address) {
-      try {
-        long position = filePosition + address;
-        FileWriteTask pending = pendingWrites.get(position);
-        if (pending == null) {
-          int keyLength = readIntFromChannel(position + KEY_LENGTH_OFFSET);
-          return getDiskWriteContext(position + KEY_DATA_OFFSET, keyLength);
+      long position = filePosition + address;
+      FileWriteTask pending = pendingWrites.get(position);
+      if (pending == null) {
+        int keyLength = readBuffer(position + KEY_LENGTH_OFFSET, 4).getInt(0);
+        return getDiskWriteContext(position + KEY_DATA_OFFSET, keyLength);
+      } else {
+        if (pendingWrites.get(position) != pending) {
+          return getKeyWriteContext(address);
         } else {
-          if (pendingWrites.get(position) != pending) {
-            return getKeyWriteContext(address);
-          } else {
-            return getQueuedWriteContext(pending, pending.getKeyBuffer());
-          }
+          return getQueuedWriteContext(pending, pending.getKeyBuffer());
         }
-      } catch (IOException e) {
-        throw new RuntimeException(e);
       }
     }
 
     WriteContext getValueWriteContext(long address) {
-      try {
-        long position = filePosition + address;
-        FileWriteTask pending = pendingWrites.get(position);
-        if (pending == null) {
-          int keyLength = readIntFromChannel(position + KEY_LENGTH_OFFSET);
-          int valueLength = readIntFromChannel(position + VALUE_LENGTH_OFFSET);
-          return getDiskWriteContext(position + keyLength + KEY_DATA_OFFSET, valueLength);
+      long position = filePosition + address;
+      FileWriteTask pending = pendingWrites.get(position);
+      if (pending == null) {
+        ByteBuffer lengths = readBuffer(position + KEY_LENGTH_OFFSET, 8);
+        int keyLength = lengths.getInt(0);
+        int valueLength = lengths.getInt(VALUE_LENGTH_OFFSET - KEY_LENGTH_OFFSET);
+        return getDiskWriteContext(position + keyLength + KEY_DATA_OFFSET, valueLength);
+      } else {
+        if (pendingWrites.get(position) != pending) {
+          return getValueWriteContext(address);
         } else {
-          if (pendingWrites.get(position) != pending) {
-            return getValueWriteContext(address);
-          } else {
-            return getQueuedWriteContext(pending, pending.getValueBuffer());
-          }
+          return getQueuedWriteContext(pending, pending.getValueBuffer());
         }
-      } catch (IOException e) {
-        throw new RuntimeException(e);
       }
     }
 
@@ -722,22 +643,19 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
     }
 
     void free(long address) {
-      try {
-        long position = filePosition + address;
-        int keyLength;
-        int valueLength;
-        FileWriteTask pending = pendingWrites.remove(position);
-        if (pending == null) {
-          keyLength = readIntFromChannel(position + KEY_LENGTH_OFFSET);
-          valueLength = readIntFromChannel(position + VALUE_LENGTH_OFFSET);
-        } else {
-          keyLength = pending.getKeyBuffer().remaining();
-          valueLength = pending.getValueBuffer().remaining();
-        }
-        allocator.free(address, keyLength + valueLength + KEY_DATA_OFFSET);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
+      long position = filePosition + address;
+      int keyLength;
+      int valueLength;
+      FileWriteTask pending = pendingWrites.remove(position);
+      if (pending == null) {
+        ByteBuffer lengths = readBuffer(position + KEY_LENGTH_OFFSET, 8);
+        keyLength = lengths.getInt(0);
+        valueLength = lengths.getInt(VALUE_LENGTH_OFFSET - KEY_LENGTH_OFFSET);
+      } else {
+        keyLength = pending.getKeyBuffer().remaining();
+        valueLength = pending.getValueBuffer().remaining();
       }
+      allocator.free(address, keyLength + valueLength + KEY_DATA_OFFSET);
     }
 
     synchronized void clear() {
@@ -841,13 +759,16 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
       int keyLength = key.remaining();
       int valueLength = value.remaining();
 
-      writeIntToChannel(position + KEY_HASH_OFFSET, pojoHash);
-      writeIntToChannel(position + KEY_LENGTH_OFFSET, keyLength);
-      writeIntToChannel(position + VALUE_LENGTH_OFFSET, valueLength);
-      writeBufferToChannel(position + KEY_DATA_OFFSET, key);
-      writeBufferToChannel(position + KEY_DATA_OFFSET + keyLength, value);
+      ByteBuffer header = ByteBuffer.allocate(12);
+      header.putInt(KEY_HASH_OFFSET, pojoHash);
+      header.putInt(KEY_LENGTH_OFFSET, keyLength);
+      header.putInt(VALUE_LENGTH_OFFSET, valueLength);
+      writeToChannel(position + KEY_HASH_OFFSET, header);
+      writeToChannel(position + KEY_DATA_OFFSET, key);
+      writeToChannel(position + KEY_DATA_OFFSET + keyLength, value);
 
-      long size = writeChannel.size();
+
+      long size = writeChannel.execute(FileChannel::size);
       long expected = position + keyLength + valueLength + KEY_DATA_OFFSET;
       if (size < expected) {
         throw new IOException("File size does not encompass last write [size:" + size + " end-of-write:" + expected);
