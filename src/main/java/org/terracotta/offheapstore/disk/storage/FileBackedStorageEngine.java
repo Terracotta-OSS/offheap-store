@@ -34,7 +34,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 
 import org.slf4j.Logger;
@@ -47,6 +46,7 @@ import org.terracotta.offheapstore.storage.PortabilityBasedStorageEngine;
 import org.terracotta.offheapstore.storage.portability.Portability;
 import org.terracotta.offheapstore.storage.portability.WriteContext;
 import org.terracotta.offheapstore.util.Factory;
+import org.terracotta.offheapstore.util.ReopeningInterruptibleChannel;
 import org.terracotta.offheapstore.util.MemoryUnit;
 
 import static java.lang.Long.highestOneBit;
@@ -74,8 +74,8 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
 
   private final MappedPageSource source;
 
-  private final FileChannel writeChannel;
-  private final AtomicReference<FileChannel> readChannelReference;
+  private final ReopeningInterruptibleChannel<FileChannel> writeChannel;
+  private final ReopeningInterruptibleChannel<FileChannel> readChannel;
 
   private final TreeMap<Long, FileChunk> chunks = new TreeMap<>();
   private final long maxChunkSize;
@@ -112,8 +112,8 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
     super(keyPortability, valuePortability);
 
     this.writeExecutor = writer;
-    this.writeChannel = source.getWritableChannel();
-    this.readChannelReference = new AtomicReference<>(source.getReadableChannel());
+    this.writeChannel = ReopeningInterruptibleChannel.create(source::getWritableChannel);
+    this.readChannel = ReopeningInterruptibleChannel.create(source::getReadableChannel);
 
     this.source = source;
     this.maxChunkSize = highestOneBit(maxChunkUnit.toBytes(maxChunkSize));
@@ -142,10 +142,10 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
 
   @Override
   public void flush() throws IOException {
-    Future<Void> flush = writeExecutor.submit(() -> {
-      writeChannel.force(true);
+    Future<Void> flush = writeExecutor.submit(() -> writeChannel.execute(channel -> {
+      channel.force(true);
       return null;
-    });
+    }));
 
     boolean interrupted = Thread.interrupted();
     try {
@@ -189,7 +189,7 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
       try {
         writeChannel.close();
       } finally {
-        readChannelReference.getAndSet(null).close();
+        readChannel.close();
       }
     }
   }
@@ -379,56 +379,29 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
   private void writeIntToChannel(long position, int data) throws IOException {
     ByteBuffer buffer = ByteBuffer.allocate(Integer.SIZE / Byte.SIZE);
     buffer.putInt(data).flip();
-    writeBufferToChannel(position, buffer);
+    writeToChannel(position, buffer);
   }
 
   private void writeLongToChannel(long position, long data) throws IOException {
     ByteBuffer buffer = ByteBuffer.allocate(Long.SIZE / Byte.SIZE);
     buffer.putLong(data).flip();
-    writeBufferToChannel(position, buffer);
+    writeToChannel(position, buffer);
   }
 
-  private void writeBufferToChannel(long position, ByteBuffer buffer) throws IOException {
-    for (int i = 0; buffer.hasRemaining(); ) {
-      int written = writeChannel.write(buffer, position + i);
+  private void writeToChannel(long position, ByteBuffer buffer) throws IOException {
+    while (buffer.hasRemaining()) {
+      final long pos = position;
+      int written = writeChannel.execute(channel -> channel.write(buffer, pos));
       if (written < 0) {
         throw new EOFException();
       } else {
-        i += written;
+        position += written;
       }
     }
   }
 
   private int readFromChannel(ByteBuffer buffer, long position) throws IOException {
-    boolean interrupted = Thread.interrupted();
-    try {
-      while (true) {
-        FileChannel current = getReadableChannel();
-        try {
-          return readFromChannel(current, buffer, position);
-        } catch (ClosedChannelException e) {
-          interrupted |= Thread.interrupted();
-          FileChannel newChannel = source.getReadableChannel();
-          if (!readChannelReference.compareAndSet(current, newChannel)) {
-            newChannel.close();
-          } else {
-            LOGGER.info("Creating new read-channel for " + source.getFile().getName() + " as previous one was closed (likely due to interrupt)");
-          }
-        }
-      }
-    } finally {
-      if (interrupted) {
-        Thread.currentThread().interrupt();
-      }
-    }
-  }
-
-  private FileChannel getReadableChannel() throws IOException {
-    FileChannel current = readChannelReference.get();
-    if (current == null) {
-      throw new IOException("Storage engine is closed");
-    }
-    return current;
+    return readChannel.execute(channel -> readFromChannel(channel, buffer, position));
   }
 
   private int readFromChannel(FileChannel channel, ByteBuffer buffer, long position) throws IOException {
@@ -823,10 +796,10 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
       writeIntToChannel(position + KEY_HASH_OFFSET, pojoHash);
       writeIntToChannel(position + KEY_LENGTH_OFFSET, keyLength);
       writeIntToChannel(position + VALUE_LENGTH_OFFSET, valueLength);
-      writeBufferToChannel(position + KEY_DATA_OFFSET, key);
-      writeBufferToChannel(position + KEY_DATA_OFFSET + keyLength, value);
+      writeToChannel(position + KEY_DATA_OFFSET, key);
+      writeToChannel(position + KEY_DATA_OFFSET + keyLength, value);
 
-      long size = writeChannel.size();
+      long size = writeChannel.execute(FileChannel::size);
       long expected = position + keyLength + valueLength + KEY_DATA_OFFSET;
       if (size < expected) {
         throw new IOException("File size does not encompass last write [size:" + size + " end-of-write:" + expected);
