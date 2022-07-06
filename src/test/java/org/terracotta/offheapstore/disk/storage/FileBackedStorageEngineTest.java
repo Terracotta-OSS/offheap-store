@@ -220,6 +220,7 @@ public class FileBackedStorageEngineTest extends AbstractDiskTest {
       Assert.assertArrayEquals(buffer, bytes);
     } finally {
       source.close();
+      Thread.interrupted();   // Clear interruption stats
     }
   }
 
