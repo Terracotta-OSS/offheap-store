@@ -16,9 +16,7 @@
 package org.terracotta.offheapstore;
 
 import java.nio.ByteBuffer;
-import java.util.AbstractCollection;
 import java.util.AbstractSet;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -42,10 +40,6 @@ import org.terracotta.offheapstore.storage.StorageEngine;
  * @author Chris Dennis
  */
 public abstract class AbstractLockedOffHeapHashMap<K, V> extends OffHeapHashMap<K, V> implements Segment<K, V> {
-
-  private Set<Entry<K, V>> entrySet;
-  private Set<K> keySet;
-  private Collection<V> values;
 
   public AbstractLockedOffHeapHashMap(PageSource source, StorageEngine<? super K, ? super V> storageEngine) {
     super(source, storageEngine);
@@ -338,12 +332,11 @@ public abstract class AbstractLockedOffHeapHashMap<K, V> extends OffHeapHashMap<
   }
 
   @Override
-  public Set<Entry<K, V>> entrySet() {
-    Set<Entry<K, V>> es = entrySet;
-    return es == null ? (entrySet = new LockedEntrySet()) : es;
+  protected Set<Entry<K, V>> createEntrySet() {
+    return new LockedEntrySet();
   }
 
-  class LockedEntrySet extends AbstractSet<Entry<K, V>> {
+  protected class LockedEntrySet extends AbstractSet<Entry<K, V>> {
 
     @Override
     public Iterator<Entry<K, V>> iterator() {
@@ -389,7 +382,7 @@ public abstract class AbstractLockedOffHeapHashMap<K, V> extends OffHeapHashMap<
     }
   }
 
-  class LockedEntryIterator extends EntryIterator {
+  protected class LockedEntryIterator extends EntryIterator {
 
     @Override
     public Entry<K, V> next() {
@@ -420,14 +413,11 @@ public abstract class AbstractLockedOffHeapHashMap<K, V> extends OffHeapHashMap<
   }
 
   @Override
-  public Set<K> keySet() {
-    if (keySet == null) {
-      keySet = new LockedKeySet();
-    }
-    return keySet;
+  protected Set<K> createKeySet() {
+    return new LockedKeySet();
   }
 
-  class LockedKeySet extends AbstractSet<K> {
+  protected class LockedKeySet extends AbstractSet<K> {
 
     @Override
     public Iterator<K> iterator() {
@@ -461,7 +451,7 @@ public abstract class AbstractLockedOffHeapHashMap<K, V> extends OffHeapHashMap<
     }
   }
 
-  class LockedKeyIterator extends KeyIterator {
+  protected class LockedKeyIterator extends KeyIterator {
 
     @Override
     public K next() {
@@ -489,58 +479,6 @@ public abstract class AbstractLockedOffHeapHashMap<K, V> extends OffHeapHashMap<
     protected void checkForConcurrentModification() {
       //no-op
     }
-  }
-
-  @Override
-  public Collection<V> values() {
-    if (values == null) {
-      values = new AbstractCollection<V>() {
-
-        @Override
-        public Iterator<V> iterator() {
-          return new Iterator<V>() {
-
-            private final Iterator<Entry<K, V>> i = entrySet().iterator();
-
-            @Override
-            public boolean hasNext() {
-              return i.hasNext();
-            }
-
-            @Override
-            public V next() {
-              return i.next().getValue();
-            }
-
-            @Override
-            public void remove() {
-              i.remove();
-            }
-          };
-        }
-
-        @Override
-        public int size() {
-          return AbstractLockedOffHeapHashMap.this.size();
-        }
-
-        @Override
-        public boolean isEmpty() {
-          return AbstractLockedOffHeapHashMap.this.isEmpty();
-        }
-
-        @Override
-        public void clear() {
-          AbstractLockedOffHeapHashMap.this.clear();
-        }
-
-        @Override
-        public boolean contains(Object v) {
-          return AbstractLockedOffHeapHashMap.this.containsValue(v);
-        }
-      };
-    }
-    return values;
   }
 
   @Override

@@ -256,7 +256,7 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
 
     mutator.start();
 
-    boolean interrupted = false;
+    boolean interrupted = Thread.interrupted();
     try {
       for (int i = 0; i < 10; i++) {
         int checked = 0;
@@ -391,7 +391,7 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
 
     mutator.start();
 
-    boolean interrupted = false;
+    boolean interrupted = Thread.interrupted();
     try {
       for (int i = 0; i < 10; i++) {
         int checked = 0;

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -108,7 +108,7 @@ public abstract class AbstractPersistentLockedOffHeapHashMap<K, V> extends Abstr
 
         if (isPresent(entry)) {
           size++;
-          added(entry);
+          added(hashtable.position(), entry);
         } else if (isRemoved(entry)) {
           removedSlots++;
         }

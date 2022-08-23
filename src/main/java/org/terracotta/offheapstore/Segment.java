@@ -36,8 +36,8 @@ public interface Segment<K, V> extends ConcurrentMap<K, V>, MapInternals, ReadWr
    *
    * @param key key with which the specified value is to be associated
    * @param value value to be associated with the specified key
-   * @return the previous value associated with <tt>key</tt>, or
-   *         <tt>null</tt> if there was no mapping for <tt>key</tt>
+   * @return the previous value associated with <var>key</var>, or
+   *         <var>null</var> if there was no mapping for <var>key</var>
    *         (irrespective of whether the value was successfully installed).
    */
   V fill(K key, V value);
