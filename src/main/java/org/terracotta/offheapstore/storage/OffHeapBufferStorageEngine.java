@@ -16,6 +16,7 @@
 package org.terracotta.offheapstore.storage;
 
 import java.nio.ByteBuffer;
+import java.util.Collection;
 import java.util.concurrent.locks.Lock;
 
 import org.terracotta.offheapstore.paging.OffHeapStorageArea;
@@ -24,6 +25,9 @@ import org.terracotta.offheapstore.storage.portability.Portability;
 import org.terracotta.offheapstore.storage.portability.WriteContext;
 import org.terracotta.offheapstore.util.DebuggingUtils;
 import org.terracotta.offheapstore.util.Factory;
+
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singleton;
 import static org.terracotta.offheapstore.util.ByteBufferUtils.totalLength;
 
 /**
@@ -246,10 +250,14 @@ public class OffHeapBufferStorageEngine<K, V> extends PortabilityBasedStorageEng
   }
 
   @Override
-  public boolean evictAtAddress(long address, boolean shrink) {
+  public Collection<Long> evictAtAddress(long address, boolean shrink) {
     int hash = storageArea.readInt(address + KEY_HASH_OFFSET);
     int slot = owner.getSlotForHashAndEncoding(hash, address, ~0);
-    return owner.evict(slot, shrink);
+    if (owner.evict(slot, shrink)) {
+      return singleton(address);
+    } else {
+      return emptyList();
+    }
   }
 
   @Override
