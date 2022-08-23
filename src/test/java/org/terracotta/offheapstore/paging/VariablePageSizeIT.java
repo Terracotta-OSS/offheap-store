@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,16 +15,14 @@
  */
 package org.terracotta.offheapstore.paging;
 
-import org.terracotta.offheapstore.paging.UnlimitedPageSource;
-import org.terracotta.offheapstore.paging.PageSource;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentMap;
 
 import org.junit.Assert;
+import org.junit.AssumptionViolatedException;
 import org.junit.Test;
-import org.junit.internal.AssumptionViolatedException;
 
 import org.terracotta.offheapstore.AbstractConcurrentOffHeapMapIT;
 import org.terracotta.offheapstore.buffersource.OffHeapBufferSource;
@@ -40,8 +38,6 @@ import org.terracotta.offheapstore.util.ParallelParameterized;
 import org.terracotta.offheapstore.util.PointerSizeParameterizedTest;
 
 import java.util.Collection;
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assume.assumeThat;
 import org.junit.runner.RunWith;
 
 /**
@@ -54,12 +50,12 @@ public class VariablePageSizeIT extends AbstractConcurrentOffHeapMapIT {
   private final PointerSize pointerWidth;
   private final int initialPageSize;
   private final int maximalPageSize;
-  
+
   @ParallelParameterized.Parameters
   public static Collection<Object[]> data() {
     return PointerSizeParameterizedTest.data();
   }
-  
+
   public VariablePageSizeIT(PointerSize pointerWidth) {
     super(GOOD_GENERATOR);
     this.pointerWidth = pointerWidth;
@@ -71,14 +67,14 @@ public class VariablePageSizeIT extends AbstractConcurrentOffHeapMapIT {
     this.initialPageSize = 1 << initialShift;
     this.maximalPageSize = 1 << maximalShift;
   }
-  
+
   @Test
   public void testSerializablePortability() {
     Map<Serializable, Serializable> map = createSerializableMap(new UnlimitedPageSource(new OffHeapBufferSource()));
-            
+
     for (int i = 0; i < 100; i++) {
       map.put(Integer.toString(i), Integer.toString(i));
-      
+
       for (int j = 0; j <= i; j++) {
         Assert.assertEquals(Integer.toString(j), map.get(Integer.toString(j)));
       }
@@ -86,18 +82,18 @@ public class VariablePageSizeIT extends AbstractConcurrentOffHeapMapIT {
 
     Assert.assertEquals(100, map.size());
     Assert.assertFalse(map.isEmpty());
-    
+
     for (int i = 0; i < 100; i++) {
       Assert.assertEquals(Integer.toString(i), map.remove(Integer.toString(i)));
-      
+
       for (int j = i + 1; j < 100; j++) {
         Assert.assertEquals(Integer.toString(j), map.get(Integer.toString(j)));
       }
     }
-    
+
     Assert.assertTrue(map.isEmpty());
   }
-  
+
   @Override
   protected ConcurrentMap<SpecialInteger, SpecialInteger> createMap(Generator generator) {
     throw new AssumptionViolatedException("Not bothered with non-paging tests");
@@ -105,11 +101,11 @@ public class VariablePageSizeIT extends AbstractConcurrentOffHeapMapIT {
 
   @Override
   protected Map<Integer, byte[]> createOffHeapBufferMap(PageSource source) {
-    return new ConcurrentOffHeapClockCache<Integer, byte[]>(source, createStorageEngineFactory(source));
+    return new ConcurrentOffHeapClockCache<>(source, createStorageEngineFactory(source));
   }
-  
+
   protected Map<Serializable, Serializable> createSerializableMap(PageSource source) {
-    return new ConcurrentOffHeapClockCache<Serializable, Serializable>(source, createStorageEngineFactory(source));
+    return new ConcurrentOffHeapClockCache<>(source, createStorageEngineFactory(source));
   }
 
   private Factory<OffHeapBufferStorageEngine<Serializable, Serializable>> createStorageEngineFactory(PageSource source) {

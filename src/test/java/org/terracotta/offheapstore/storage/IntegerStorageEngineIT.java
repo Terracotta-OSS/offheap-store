@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -53,7 +53,7 @@ public class IntegerStorageEngineIT {
 
   @Test
   public void testMapUsage() {
-    Map<Integer, Integer> map = new OffHeapHashMap<Integer, Integer>(new UnlimitedPageSource(new HeapBufferSource()), new SplitStorageEngine<Integer, Integer>(new IntegerStorageEngine(), new IntegerStorageEngine()));
+    Map<Integer, Integer> map = new OffHeapHashMap<>(new UnlimitedPageSource(new HeapBufferSource()), new SplitStorageEngine<>(new IntegerStorageEngine(), new IntegerStorageEngine()));
 
     Random rndm = new Random();
 
@@ -62,27 +62,27 @@ public class IntegerStorageEngineIT {
       Assert.assertNull(map.put(k, v));
       Assert.assertTrue(map.containsKey(k));
       Assert.assertEquals(v.intValue(), map.get(k).intValue());
-      Assert.assertTrue(map.containsValue(v.intValue()));
+      Assert.assertTrue(map.containsValue(v));
       Assert.assertTrue(map.keySet().contains(k));
-      Assert.assertTrue(map.values().contains(v.intValue()));
+      Assert.assertTrue(map.values().contains(v));
     }
 
     Assert.assertEquals(TEST_CASES.length, map.size());
 
     for (Integer k : TEST_CASES) {
-      Assert.assertNotNull(map.remove(k).intValue());
+      Assert.assertNotNull(map.remove(k));
     }
   }
 
   @Test
   public void testKeysAreReadable() {
-    Map<Integer, Integer> map = new OffHeapHashMap<Integer, Integer>(new UnlimitedPageSource(new HeapBufferSource()), new SplitStorageEngine<Integer, Integer>(new IntegerStorageEngine(), new IntegerStorageEngine()));
+    Map<Integer, Integer> map = new OffHeapHashMap<>(new UnlimitedPageSource(new HeapBufferSource()), new SplitStorageEngine<>(new IntegerStorageEngine(), new IntegerStorageEngine()));
 
     for (Integer k : TEST_CASES) {
       Assert.assertNull(map.put(k, k));
     }
 
-    Collection<Integer> copy = new ArrayList<Integer>(Arrays.asList(TEST_CASES));
+    Collection<Integer> copy = new ArrayList<>(Arrays.asList(TEST_CASES));
 
     for (Integer k : map.keySet()) {
       Assert.assertTrue(copy.remove(k));

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,14 +15,14 @@
  */
 package org.terracotta.offheapstore;
 
-import org.terracotta.offheapstore.OffHeapHashMap;
 import java.util.Map;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.junit.Test;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+
+import org.slf4j.LoggerFactory;
 import org.terracotta.offheapstore.buffersource.OffHeapBufferSource;
 import org.terracotta.offheapstore.paging.UpfrontAllocatingPageSource;
 import org.terracotta.offheapstore.storage.IntegerStorageEngine;
@@ -39,20 +39,17 @@ public class OffHeapHashMapTableResizeIT {
 
   @Test
   public void testLargeTableResizes() {
-    Logger logger = Logger.getLogger("com.terracottatech.offheapstore.OffHeapHashMap");
+    Logger logger = (Logger)LoggerFactory.getLogger(OffHeapHashMap.class);
+    Level oldLevel = logger.getLevel();
     logger.setLevel(Level.ALL);
-    ConsoleHandler handler = new ConsoleHandler();
-    handler.setLevel(Level.ALL);
-    logger.addHandler(handler);
     try {
-      Map<Integer, Integer> map = new OffHeapHashMap<Integer, Integer>(new UpfrontAllocatingPageSource(new OffHeapBufferSource(), 32 * 1024 * 1024, 32 * 1024 * 1024), new SplitStorageEngine<Integer, Integer>(new IntegerStorageEngine(), new IntegerStorageEngine()), 1);
+      Map<Integer, Integer> map = new OffHeapHashMap<>(new UpfrontAllocatingPageSource(new OffHeapBufferSource(), 32 * 1024 * 1024, 32 * 1024 * 1024), new SplitStorageEngine<>(new IntegerStorageEngine(), new IntegerStorageEngine()), 1);
 
       for (int i = 0; i < 500000; i++) {
         map.put(i, i);
       }
     } finally {
-      logger.setLevel(Level.INFO);
-      logger.removeHandler(handler);
+      logger.setLevel(oldLevel);
     }
   }
 

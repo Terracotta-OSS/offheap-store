@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,29 +28,23 @@ import org.junit.Test;
  * @author Chris Dennis
  */
 public class PersistentSerializablePortabilityTest {
-  
+
   @Test
   public void testAddingMappingsToRecoveredPortability() throws IOException {
     PersistentSerializablePortability portability = new PersistentSerializablePortability();
-    portability.encode(Integer.valueOf(0));
+    portability.encode(0);
     ByteArrayOutputStream bout = new ByteArrayOutputStream();
-    ObjectOutputStream oout = new ObjectOutputStream(bout);
-    try {
+    try (ObjectOutputStream oout = new ObjectOutputStream(bout)) {
       portability.persist(oout);
-    } finally {
-      oout.close();
     }
     byte[] persisted = bout.toByteArray();
-    
+
     PersistentSerializablePortability recovered = new PersistentSerializablePortability();
     ByteArrayInputStream bin = new ByteArrayInputStream(persisted);
-    ObjectInputStream oin = new ObjectInputStream(bin);
-    try {
+    try (ObjectInputStream oin = new ObjectInputStream(bin)) {
       recovered.bootstrap(oin);
-    } finally {
-      oin.close();
     }
-    
-    recovered.encode(Long.valueOf(0));
+
+    recovered.encode(0L);
   }
 }

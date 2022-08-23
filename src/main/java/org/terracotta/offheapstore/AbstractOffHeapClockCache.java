@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,10 +42,10 @@ import java.nio.IntBuffer;
  * @author Chris Dennis
  * @author Manoj Govindassamy
  */
-public abstract class AbstractOffHeapClockCache<K, V> extends AbstractLockedOffHeapHashMap<K, V> implements PinnableCache<K, V>,PinnableSegment<K, V> {
+public abstract class AbstractOffHeapClockCache<K, V> extends AbstractLockedOffHeapHashMap<K, V> implements PinnableCache<K, V>, PinnableSegment<K, V> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(AbstractOffHeapClockCache.class);
-  
+
   private static final int PRESENT_CLOCK = 1 << (Integer.SIZE - 1);
 
   private final Random rndm = new Random();
@@ -67,11 +67,11 @@ public abstract class AbstractOffHeapClockCache<K, V> extends AbstractLockedOffH
   public AbstractOffHeapClockCache(PageSource source, StorageEngine<? super K, ? super V> storageEngine, int tableSize) {
     super(source, storageEngine, tableSize);
   }
-  
+
   public AbstractOffHeapClockCache(PageSource source, boolean tableAllocationsSteal, StorageEngine<? super K, ? super V> storageEngine, int tableSize) {
     super(source, tableAllocationsSteal, storageEngine, tableSize);
   }
-  
+
   public AbstractOffHeapClockCache(PageSource source, StorageEngine<? super K, ? super V> storageEngine, int tableSize, boolean bootstrap) {
     super(source, storageEngine, tableSize, bootstrap);
   }
@@ -79,15 +79,11 @@ public abstract class AbstractOffHeapClockCache<K, V> extends AbstractLockedOffH
   @Override
   protected void storageEngineFailure(Object failure) {
     if (isEmpty()) {
-      StringBuilder sb = new StringBuilder("Storage Engine and Eviction Failed.\n");
-      sb.append("Storage Engine : ").append(storageEngine);
-      throw new OversizeMappingException(sb.toString());
+      throw new OversizeMappingException("Storage Engine and Eviction Failed - Empty Map\nStorage Engine : " + storageEngine);
     } else {
       int evictionIndex = getEvictionIndex();
       if (evictionIndex < 0) {
-        StringBuilder sb = new StringBuilder("Storage Engine and Eviction Failed.\n");
-        sb.append("Storage Engine : ").append(storageEngine);
-        throw new OversizeMappingException(sb.toString());
+        throw new OversizeMappingException("Storage Engine and Eviction Failed - Everything Pinned (" + getSize() + " mappings) \n" + "Storage Engine : " + storageEngine);
       } else {
         evict(evictionIndex, false);
       }
@@ -101,12 +97,11 @@ public abstract class AbstractOffHeapClockCache<K, V> extends AbstractLockedOffH
       if (tryIncreaseReprobe()) {
         LOGGER.debug("Increased reprobe to {} slots for a {} slot table in a last ditch attempt to avoid storage failure.", getReprobeLength(), getTableCapacity());
       } else {
-        StringBuilder sb = new StringBuilder("Table Expansion and Eviction Failed.\n");
-        sb.append("Current Table Size (slots) : ").append(getTableCapacity()).append('\n');
-        sb.append("Current Reprobe Length     : ").append(getReprobeLength()).append('\n');
-        sb.append("Resize Will Require        : ").append(DebuggingUtils.toBase2SuffixedString(getTableCapacity() * ENTRY_SIZE * (Integer.SIZE / Byte.SIZE) * 2)).append("B\n");
-        sb.append("Table Page Source          : ").append(tableSource);
-        throw new OversizeMappingException(sb.toString());
+        String msg = "Table Expansion and Eviction Failed.\n" + "Current Table Size (slots) : " + getTableCapacity() + '\n' +
+                    "Current Reprobe Length     : " + getReprobeLength() + '\n' +
+                    "Resize Will Require        : " + DebuggingUtils.toBase2SuffixedString(getTableCapacity() * ENTRY_SIZE * (Integer.SIZE / Byte.SIZE) * 2) + "B\n" +
+                    "Table Page Source          : " + tableSource;
+        throw new OversizeMappingException(msg);
       }
     } else {
       evict(evictionIndex, false);
@@ -134,7 +129,7 @@ public abstract class AbstractOffHeapClockCache<K, V> extends AbstractLockedOffH
     if (clockHand >= hashtable.capacity()) {
       clockHand = 0;
     }
-    
+
     int initialHand = clockHand;
     int loops = 0;
     while (true) {
@@ -210,7 +205,7 @@ public abstract class AbstractOffHeapClockCache<K, V> extends AbstractLockedOffH
           return clock;
         }
       }
-      
+
       int lastEvictable = -1;
       for (int i = 0, clock = start; i < rndm.nextInt(length) || (lastEvictable < 0 && i < length); i++) {
         if ((clock += ENTRY_SIZE) >= tableLength) {
@@ -249,32 +244,26 @@ public abstract class AbstractOffHeapClockCache<K, V> extends AbstractLockedOffH
 
   @Override
   public boolean isPinned(Object key) {
-    Lock l = readLock();
-    l.lock();
-    try {
-      return (getMetadata(key) & Metadata.PINNED) == Metadata.PINNED;
-    } finally {
-      l.unlock();
-    }
+    Integer metadata = getMetadata(key, Metadata.PINNED);
+    return metadata != null && metadata != 0;
   }
 
   @Override
   public void setPinning(K key, boolean pinned) {
-    Lock l = writeLock();
-    l.lock();
-    try {
-      if (pinned) {
-        setMetadata(key, Metadata.PINNED, Metadata.PINNED);
-      } else {
-        setMetadata(key, Metadata.PINNED, 0);
-      }
-    } finally {
-      l.unlock();
+    if (pinned) {
+      getAndSetMetadata(key, Metadata.PINNED, Metadata.PINNED);
+    } else {
+      getAndSetMetadata(key, Metadata.PINNED, 0);
     }
   }
 
   @Override
-  public V putPinned(final K key, final V value) {
+  public V putPinned(K key, V value) {
     return put(key, value, Metadata.PINNED);
+  }
+
+  @Override
+  public V getAndPin(K key) {
+    return getValueAndSetMetadata(key, Metadata.PINNED, Metadata.PINNED);
   }
 }

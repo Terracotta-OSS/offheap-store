@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,15 +30,15 @@ import org.terracotta.offheapstore.storage.StorageEngine;
 public class OffHeapHashSet<E> extends AbstractSet<E> {
 
   private final OffHeapHashMap<E, Boolean> map;
-  
+
   public OffHeapHashSet(PageSource source, boolean tableSteals, StorageEngine<? super E, Boolean> engine, int capacity) {
-    this(new OffHeapHashMap<E, Boolean>(source, tableSteals, engine, capacity));
+    this(new OffHeapHashMap<>(source, tableSteals, engine, capacity));
   }
 
   public OffHeapHashSet(OffHeapHashMap<E, Boolean> map) {
     this.map = map;
   }
-  
+
   @Override
   public int size() {
     return map.size();
@@ -88,7 +88,7 @@ public class OffHeapHashSet<E> extends AbstractSet<E> {
   public void clear() {
     map.clear();
   }
-  
+
   public StorageEngine<? super E, ?> getStorageEngine() {
     return map.getStorageEngine();
   }

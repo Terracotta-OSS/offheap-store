@@ -36,7 +36,7 @@ public abstract class AbstractPersistentConcurrentOffHeapMap<K, V> extends Abstr
    *
    * @param segmentFactory factory used to create the map segments
    */
-  public AbstractPersistentConcurrentOffHeapMap(Factory<? extends Segment<K, V>> segmentFactory, boolean latencyMonitoring) {
+  public AbstractPersistentConcurrentOffHeapMap(Factory<? extends Segment<K, V>> segmentFactory) {
     super(segmentFactory);
   }
 
@@ -48,7 +48,7 @@ public abstract class AbstractPersistentConcurrentOffHeapMap<K, V> extends Abstr
    * @throws IllegalArgumentException if the supplied number of segments is
    * negative
    */
-  public AbstractPersistentConcurrentOffHeapMap(Factory<? extends Segment<K, V>> segmentFactory, int concurrency, boolean latencyMonitoring) {
+  public AbstractPersistentConcurrentOffHeapMap(Factory<? extends Segment<K, V>> segmentFactory, int concurrency) {
     super(segmentFactory, concurrency);
   }
 

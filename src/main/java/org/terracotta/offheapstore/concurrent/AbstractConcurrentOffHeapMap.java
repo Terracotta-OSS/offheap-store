@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,10 +27,14 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
+import org.terracotta.offheapstore.HashingMap;
 import org.terracotta.offheapstore.OffHeapHashMap;
 import org.terracotta.offheapstore.Segment;
 import org.terracotta.offheapstore.MapInternals;
+import org.terracotta.offheapstore.MetadataTuple;
 import org.terracotta.offheapstore.exceptions.OversizeMappingException;
 import org.terracotta.offheapstore.util.Factory;
 
@@ -38,7 +42,7 @@ import org.terracotta.offheapstore.util.Factory;
  * An abstract concurrent (striped) off-heap map.
  * <p>
  * This is an n-way hashcode striped map implementation.  Subclasses must
- * provide a {@link SegmentFactory} instance at construction time from which
+ * provide a {@link Factory} instance at construction time from which
  * the required number of segments are created.
  *
  * @param <K> the type of keys maintained by this map
@@ -46,7 +50,7 @@ import org.terracotta.offheapstore.util.Factory;
  *
  * @author Chris Dennis
  */
-public abstract class AbstractConcurrentOffHeapMap<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V>, ConcurrentMapInternals {
+public abstract class AbstractConcurrentOffHeapMap<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V>, ConcurrentMapInternals, HashingMap<K, V> {
 
   private static final int MAX_SEGMENTS = 1 << 16; // slightly conservative
   private static final int DEFAULT_CONCURRENCY = 16;
@@ -118,11 +122,11 @@ public abstract class AbstractConcurrentOffHeapMap<K, V> extends AbstractMap<K, 
   protected Segment<K, V> segmentFor(int hash) {
     return segments[getIndexFor(hash)];
   }
-  
+
   public int getIndexFor(int hash) {
     return (spread(hash) >>> segmentShift) & segmentMask;
   }
-  
+
   public List<Segment<K, V>> getSegments() {
     return Collections.unmodifiableList(Arrays.asList(segments));
   }
@@ -198,7 +202,7 @@ public abstract class AbstractConcurrentOffHeapMap<K, V> extends AbstractMap<K, 
           //ignore
         }
       }
-      
+
       writeLockAll();
       try {
         do {
@@ -226,7 +230,7 @@ public abstract class AbstractConcurrentOffHeapMap<K, V> extends AbstractMap<K, 
           //ignore
         }
       }
-      
+
       writeLockAll();
       try {
         do {
@@ -245,7 +249,7 @@ public abstract class AbstractConcurrentOffHeapMap<K, V> extends AbstractMap<K, 
 
   /**
    * See {@link OffHeapHashMap#fill(Object, Object)} for a detailed description.
-   * 
+   *
    * @param key key with which the specified value is to be associated
    * @param value value to be associated with the specified key
    * @return the previous value associated with <tt>key</tt>, or
@@ -259,7 +263,7 @@ public abstract class AbstractConcurrentOffHeapMap<K, V> extends AbstractMap<K, 
   public V fill(K key, V value, int metadata) {
     return segmentFor(key).fill(key, value, metadata);
   }
-  
+
   @Override
   public V remove(Object key) {
     return segmentFor(key).remove(key);
@@ -269,10 +273,18 @@ public abstract class AbstractConcurrentOffHeapMap<K, V> extends AbstractMap<K, 
     return segmentFor(key).removeNoReturn(key);
   }
 
-  public boolean updateMetadata(K key, int mask, int metadata) {
-    return segmentFor(key).setMetadata(key, mask, metadata);
+  public Integer getMetadata(K key, int mask) throws IllegalArgumentException {
+    return segmentFor(key).getMetadata(key, mask);
   }
-  
+
+  public Integer getAndSetMetadata(K key, int mask, int values) throws IllegalArgumentException {
+    return segmentFor(key).getAndSetMetadata(key, mask, values);
+  }
+
+  public V getValueAndSetMetadata(K key, int mask, int values) {
+    return segmentFor(key).getValueAndSetMetadata(key, mask, values);
+  }
+
   @Override
   public void clear() {
     writeLockAll();
@@ -308,7 +320,7 @@ public abstract class AbstractConcurrentOffHeapMap<K, V> extends AbstractMap<K, 
           e = ex;
         }
       }
-      
+
       writeLockAll();
       try {
         do {
@@ -342,7 +354,7 @@ public abstract class AbstractConcurrentOffHeapMap<K, V> extends AbstractMap<K, 
           e = ex;
         }
       }
-      
+
       writeLockAll();
       try {
         do {
@@ -371,7 +383,7 @@ public abstract class AbstractConcurrentOffHeapMap<K, V> extends AbstractMap<K, 
           e = ex;
         }
       }
-      
+
       writeLockAll();
       try {
         do {
@@ -457,11 +469,7 @@ public abstract class AbstractConcurrentOffHeapMap<K, V> extends AbstractMap<K, 
       if (!(o instanceof Entry<?, ?>)) { return false; }
       final Map.Entry<?, ?> e = (Map.Entry<?, ?>) o;
       final V value = AbstractConcurrentOffHeapMap.this.get(e.getKey());
-      if (value != null && value.equals(e.getValue())) {
-        return AbstractConcurrentOffHeapMap.this.remove(e.getKey()) != null;
-      } else {
-        return false;
-      }
+      return value != null && value.equals(e.getValue()) && AbstractConcurrentOffHeapMap.this.remove(e.getKey()) != null;
     }
 
   }
@@ -518,8 +526,8 @@ public abstract class AbstractConcurrentOffHeapMap<K, V> extends AbstractMap<K, 
 
     @Override
     public boolean hasNext() {
-      if (currentIterator == null) { 
-        return false; 
+      if (currentIterator == null) {
+        return false;
       }
 
       if (currentIterator.hasNext()) {
@@ -659,7 +667,7 @@ public abstract class AbstractConcurrentOffHeapMap<K, V> extends AbstractMap<K, 
     }
     return sum;
   }
-  
+
   @Override
   public long getDataAllocatedMemory() {
     long sum = 0;
@@ -707,5 +715,97 @@ public abstract class AbstractConcurrentOffHeapMap<K, V> extends AbstractMap<K, 
     }
 
     return evicted;
+  }
+
+  /*
+   * JDK-8-alike metadata methods
+   */
+  public MetadataTuple<V> computeWithMetadata(K key, BiFunction<? super K, ? super MetadataTuple<V>, ? extends MetadataTuple<V>> remappingFunction) {
+    try {
+      return segmentFor(key).computeWithMetadata(key, remappingFunction);
+    } catch (OversizeMappingException e) {
+      if (handleOversizeMappingException(key.hashCode())) {
+        try {
+          return segmentFor(key).computeWithMetadata(key, remappingFunction);
+        } catch (OversizeMappingException ex) {
+          //ignore
+        }
+      }
+
+      writeLockAll();
+      try {
+        do {
+          try {
+            return segmentFor(key).computeWithMetadata(key, remappingFunction);
+          } catch (OversizeMappingException ex) {
+            e = ex;
+          }
+        } while (handleOversizeMappingException(key.hashCode()));
+        throw e;
+      } finally {
+        writeUnlockAll();
+      }
+    }
+  }
+
+  public MetadataTuple<V> computeIfAbsentWithMetadata(K key, Function<? super K,? extends MetadataTuple<V>> mappingFunction) {
+    try {
+      return segmentFor(key).computeIfAbsentWithMetadata(key, mappingFunction);
+    } catch (OversizeMappingException e) {
+      if (handleOversizeMappingException(key.hashCode())) {
+        try {
+          return segmentFor(key).computeIfAbsentWithMetadata(key, mappingFunction);
+        } catch (OversizeMappingException ex) {
+          e = ex;
+        }
+      }
+
+      writeLockAll();
+      try {
+        do {
+          try {
+            return segmentFor(key).computeIfAbsentWithMetadata(key, mappingFunction);
+          } catch (OversizeMappingException ex) {
+            e = ex;
+          }
+        } while (handleOversizeMappingException(key.hashCode()));
+        throw e;
+      } finally {
+        writeUnlockAll();
+      }
+    }
+  }
+
+  public MetadataTuple<V> computeIfPresentWithMetadata(K key, BiFunction<? super K,? super MetadataTuple<V>,? extends MetadataTuple<V>> remappingFunction) {
+    try {
+      return segmentFor(key).computeIfPresentWithMetadata(key, remappingFunction);
+    } catch (OversizeMappingException e) {
+      if (handleOversizeMappingException(key.hashCode())) {
+        try {
+          return segmentFor(key).computeIfPresentWithMetadata(key, remappingFunction);
+        } catch (OversizeMappingException ex) {
+          e = ex;
+        }
+      }
+
+      writeLockAll();
+      try {
+        do {
+          try {
+            return segmentFor(key).computeIfPresentWithMetadata(key, remappingFunction);
+          } catch (OversizeMappingException ex) {
+            e = ex;
+          }
+        } while (handleOversizeMappingException(key.hashCode()));
+        throw e;
+      } finally {
+        writeUnlockAll();
+      }
+    }
+  }
+
+  @Override
+  public Map<K, V> removeAllWithHash(int keyHash) {
+    return segmentFor(keyHash).removeAllWithHash(keyHash);
   }
 }

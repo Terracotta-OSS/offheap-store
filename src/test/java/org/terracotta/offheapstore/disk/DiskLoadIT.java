@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -33,6 +32,7 @@ import org.terracotta.offheapstore.disk.storage.portability.PersistentByteArrayP
 import org.terracotta.offheapstore.disk.storage.portability.PersistentSerializablePortability;
 import org.terracotta.offheapstore.storage.StorageEngine;
 import org.terracotta.offheapstore.util.Factory;
+import org.terracotta.offheapstore.util.MemoryUnit;
 
 /**
  *
@@ -46,60 +46,50 @@ public class DiskLoadIT {
   private static final int PAYLOAD = 750;
   private static final int SIZE = 1000000;
   private static final int SEGMENTS = 1;
-  
+
   @Test
   public void testConcurrentMapLoading() throws IOException, InterruptedException, ExecutionException {
     File dataFile = new File("loadtest.data");
     dataFile.deleteOnExit();
     final MappedPageSource source = new MappedPageSource(dataFile);
-    final ConcurrentOffHeapHashMap<Integer, byte[]> map = new ConcurrentOffHeapHashMap<Integer, byte[]>(source, new Factory<StorageEngine<Integer, byte[]>>() {
-      @Override
-      public StorageEngine<Integer, byte[]> newInstance() {
-        ThreadPoolExecutor e = new ThreadPoolExecutor(1, 1, 0, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(1000), new RejectedExecutionHandler() {
-
-          @Override
-          public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-            boolean interrupted = false;
+    final ConcurrentOffHeapHashMap<Integer, byte[]> map = new ConcurrentOffHeapHashMap<>(source, (Factory<StorageEngine<Integer, byte[]>>) () -> {
+      ThreadPoolExecutor e = new ThreadPoolExecutor(1, 1, 0, TimeUnit.SECONDS, new LinkedBlockingQueue<>(1000), (r, executor) -> {
+        boolean interrupted = false;
+        try {
+          while (true) {
             try {
-              while (true) {
-                try {
-                  executor.getQueue().put(r);
-                  return;
-                } catch (InterruptedException e) {
-                  interrupted = true;
-                }
-              }
-            } finally {
-              if (interrupted) {
-                Thread.currentThread().interrupt();
-              }
+              executor.getQueue().put(r);
+              return;
+            } catch (InterruptedException e1) {
+              interrupted = true;
             }
           }
-        });
-        return new FileBackedStorageEngine<Integer, byte[]>(source, new PersistentSerializablePortability(), PersistentByteArrayPortability.INSTANCE, 1, e);
-      }
+        } finally {
+          if (interrupted) {
+            Thread.currentThread().interrupt();
+          }
+        }
+      });
+      return new FileBackedStorageEngine<>(source, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), PersistentByteArrayPortability.INSTANCE, e);
     }, 1, SEGMENTS);
     try {
       final Thread[] threads = new Thread[THREADS];
 
       for (int i = 0; i < threads.length; i++) {
         final int current = i;
-        threads[current] = new Thread() {
-          @Override
-          public void run() {
-            int start = (SIZE / threads.length) * current;
-            int end = (SIZE / threads.length) * (current + 1);
+        threads[current] = new Thread(() -> {
+          int start = (SIZE / threads.length) * current;
+          int end = (SIZE / threads.length) * (current + 1);
 
-            for (int i = start; i < end; ) {
-              long startTime = System.nanoTime();
-              for (int c = 0; c < BATCH; c++, i++) {
-                map.put(i, new byte[PAYLOAD]);
-              }
-              long endTime = System.nanoTime();
-              System.err.println(map.size() +"," + (endTime - startTime));
+          for (int i1 = start; i1 < end; ) {
+            long startTime = System.nanoTime();
+            for (int c = 0; c < BATCH; c++, i1++) {
+              map.put(i1, new byte[PAYLOAD]);
             }
+            long endTime = System.nanoTime();
+            System.err.println(map.size() +"," + (endTime - startTime));
           }
-        };
+        });
       }
 
       for (Thread t : threads) {

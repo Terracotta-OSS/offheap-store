@@ -25,4 +25,5 @@ public interface PinnableCache<K, V> extends ConcurrentMap<K, V> {
 
   V putPinned(final K key, final V value);
 
+  V getAndPin(final K key);
 }

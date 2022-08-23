@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,19 +16,19 @@
 package org.terracotta.offheapstore.storage;
 
 public enum PointerSize {
-  
+
   INT(Integer.SIZE), LONG(Long.SIZE);
 
   private final int size;
-  
-  private PointerSize(int size) {
+
+  PointerSize(int size) {
     this.size = size;
   }
-  
+
   public int bitSize() {
     return size;
   }
-  
+
   public int byteSize() {
     return size / Byte.SIZE;
   }

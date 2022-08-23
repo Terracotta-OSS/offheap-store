@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,6 @@ import static org.hamcrest.core.Is.is;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Assert;
@@ -47,7 +46,8 @@ public class CrossSegmentEvictionIT {
   @Test
   public void testSingleLargeCacheEntry() {
     PageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), 16 * 1024 * 1024, 16 * 1024 * 1024);
-    ConcurrentOffHeapClockCache<Integer, byte[]> test = new ConcurrentOffHeapClockCache<Integer, byte[]>(source, SplitStorageEngine.createFactory(IntegerStorageEngine.createFactory(), OffHeapBufferHalfStorageEngine.createFactory(source, 4096, ByteArrayPortability.INSTANCE)));
+    ConcurrentOffHeapClockCache<Integer, byte[]> test = new ConcurrentOffHeapClockCache<>(source, SplitStorageEngine.createFactory(IntegerStorageEngine
+      .createFactory(), OffHeapBufferHalfStorageEngine.createFactory(source, 4096, ByteArrayPortability.INSTANCE)));
 
     //put a very large mapping that fills the cache on its own
     Assert.assertNull(test.put(-1, new byte[15 * 1024 * 1024]));
@@ -92,7 +92,8 @@ public class CrossSegmentEvictionIT {
   @Test
   public void testReallyOversize() {
     PageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), 16 * 1024 * 1024, 16 * 1024 * 1024);
-    ConcurrentOffHeapClockCache<Integer, byte[]> test = new ConcurrentOffHeapClockCache<Integer, byte[]>(source, SplitStorageEngine.createFactory(IntegerStorageEngine.createFactory(), OffHeapBufferHalfStorageEngine.createFactory(source, 4096, ByteArrayPortability.INSTANCE)));
+    ConcurrentOffHeapClockCache<Integer, byte[]> test = new ConcurrentOffHeapClockCache<>(source, SplitStorageEngine.createFactory(IntegerStorageEngine
+      .createFactory(), OffHeapBufferHalfStorageEngine.createFactory(source, 4096, ByteArrayPortability.INSTANCE)));
 
     try {
       test.put(-1, new byte[16 * 1024 * 1024]);
@@ -106,14 +107,12 @@ public class CrossSegmentEvictionIT {
   @Test
   public void testMultiThreadedOversize() throws InterruptedException {
     PageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), 4 * 1024 * 1024, 4 * 1024 * 1024);
-    final ConcurrentOffHeapClockCache<Integer, byte[]> test = new ConcurrentOffHeapClockCache<Integer, byte[]>(source, SplitStorageEngine.createFactory(IntegerStorageEngine.createFactory(), OffHeapBufferHalfStorageEngine.createFactory(source, 4096, ByteArrayPortability.INSTANCE)));
+    final ConcurrentOffHeapClockCache<Integer, byte[]> test = new ConcurrentOffHeapClockCache<>(source, SplitStorageEngine
+      .createFactory(IntegerStorageEngine.createFactory(), OffHeapBufferHalfStorageEngine.createFactory(source, 4096, ByteArrayPortability.INSTANCE)));
 
-    Runnable oversize = new Runnable() {
-      @Override
-      public void run() {
-        for (int i = 0; i < 100; i++) {
-          test.put(i, new byte[1 * 1024 * 1024]);
-        }
+    Runnable oversize = () -> {
+      for (int i = 0; i < 100; i++) {
+        test.put(i, new byte[1 * 1024 * 1024]);
       }
     };
 
@@ -126,12 +125,7 @@ public class CrossSegmentEvictionIT {
     t2.start();
 
     try {
-      assertBy(30, TimeUnit.SECONDS, new Callable<Boolean>() {
-        @Override
-        public Boolean call() throws Exception {
-          return t1.isAlive() || t2.isAlive();
-        }
-      }, is(false));
+      assertBy(30, TimeUnit.SECONDS, () -> t1.isAlive() || t2.isAlive(), is(false));
     } catch (AssertionError e) {
       ThreadInfo[] ti = ManagementFactory.getThreadMXBean().getThreadInfo(new long[] {t1.getId(), t2.getId()}, Integer.MAX_VALUE);
       StringBuilder sb = new StringBuilder();

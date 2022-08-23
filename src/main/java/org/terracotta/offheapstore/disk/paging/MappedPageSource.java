@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +26,6 @@ import java.nio.channels.FileChannel.MapMode;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -45,13 +44,10 @@ import org.terracotta.offheapstore.util.Retryer;
 public class MappedPageSource implements PageSource {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(MappedPageSource.class);
-  private static final Retryer ASYNC_FLUSH_EXECUTOR = new Retryer(10, 600, TimeUnit.SECONDS, new ThreadFactory() {
-    @Override
-    public Thread newThread(Runnable r) {
-      Thread t = new Thread(r, "MappedByteBufferSource Async Flush Thread");
-      t.setDaemon(true);
-      return t;
-    }
+  private static final Retryer ASYNC_FLUSH_EXECUTOR = new Retryer(10, 600, TimeUnit.SECONDS, r -> {
+    Thread t = new Thread(r, "MappedByteBufferSource Async Flush Thread");
+    t.setDaemon(true);
+    return t;
   });
 
   private final File file;
@@ -59,8 +55,8 @@ public class MappedPageSource implements PageSource {
   private final FileChannel channel;
   private final PowerOfTwoFileAllocator allocator;
 
-  private final IdentityHashMap<MappedPage, Long> pages = new IdentityHashMap<MappedPage, Long>();
-  private final Map<Long, AllocatedRegion> allocated = new HashMap<Long, AllocatedRegion>();
+  private final IdentityHashMap<MappedPage, Long> pages = new IdentityHashMap<>();
+  private final Map<Long, AllocatedRegion> allocated = new HashMap<>();
 
   public MappedPageSource(File file) throws IOException {
     this(file, true);
@@ -69,7 +65,7 @@ public class MappedPageSource implements PageSource {
   public MappedPageSource(File file, long size) throws IOException {
     this(file, true, size);
   }
-  
+
   public MappedPageSource(File file, boolean truncate) throws IOException {
     this(file, truncate, Long.MAX_VALUE);
   }
@@ -92,7 +88,7 @@ public class MappedPageSource implements PageSource {
     }
     this.allocator = new PowerOfTwoFileAllocator(size);
   }
-  
+
   public synchronized Long allocateRegion(long size) {
     Long address = allocator.allocate(size);
     if (address == null) {
@@ -124,7 +120,7 @@ public class MappedPageSource implements PageSource {
       throw new AssertionError();
     } else {
       if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("Freeing a {}B region from {} &{}", new Object[] {DebuggingUtils.toBase2SuffixedString(r.size), file.getName(), r.address});
+        LOGGER.debug("Freeing a {}B region from {} &{}", DebuggingUtils.toBase2SuffixedString(r.size), file.getName(), r.address);
       }
       allocator.free(r.address, r.size);
     }
@@ -162,7 +158,7 @@ public class MappedPageSource implements PageSource {
     if (address == null) {
       return null;
     }
-    
+
     try {
       MappedByteBuffer buffer = channel.map(MapMode.READ_WRITE, address, size);
       MappedPage page = new MappedPage(buffer);
@@ -178,7 +174,7 @@ public class MappedPageSource implements PageSource {
   @Override
   public synchronized void free(final Page page) {
     final Long a = pages.remove(page);
-    
+
     if (a == null) {
       throw new AssertionError();
     } else {

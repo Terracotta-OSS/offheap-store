@@ -21,7 +21,6 @@ import java.nio.ByteBuffer;
  * A source of NIO buffers of some type.
  * 
  * @author Chris Dennis
- * @param <> the buffer type this source manages
  */
 public interface BufferSource {
 

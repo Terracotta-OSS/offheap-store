@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,8 +20,11 @@ import java.util.AbstractCollection;
 import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import org.terracotta.offheapstore.paging.PageSource;
 import org.terracotta.offheapstore.storage.StorageEngine;
@@ -111,7 +114,7 @@ public abstract class AbstractLockedOffHeapHashMap<K, V> extends OffHeapHashMap<
       l.unlock();
     }
   }
-  
+
   @Override
   public long installMappingForHashAndEncoding(int pojoHash, ByteBuffer offheapBinaryKey, ByteBuffer offheapBinaryValue, int metadata) {
     Lock l = writeLock();
@@ -122,7 +125,7 @@ public abstract class AbstractLockedOffHeapHashMap<K, V> extends OffHeapHashMap<
       l.unlock();
     }
   }
-  
+
   @Override
   public V put(K key, V value) {
     Lock l = writeLock();
@@ -155,7 +158,7 @@ public abstract class AbstractLockedOffHeapHashMap<K, V> extends OffHeapHashMap<
       l.unlock();
     }
   }
-  
+
   @Override
   public V fill(K key, V value, int metadata) {
     Lock l = writeLock();
@@ -166,7 +169,7 @@ public abstract class AbstractLockedOffHeapHashMap<K, V> extends OffHeapHashMap<
       l.unlock();
     }
   }
-  
+
   @Override
   public V remove(Object key) {
     Lock l = writeLock();
@@ -188,7 +191,7 @@ public abstract class AbstractLockedOffHeapHashMap<K, V> extends OffHeapHashMap<
       l.unlock();
     }
   }
-  
+
   @Override
   public void clear() {
     Lock l = writeLock();
@@ -277,29 +280,33 @@ public abstract class AbstractLockedOffHeapHashMap<K, V> extends OffHeapHashMap<
   }
 
   @Override
-  public boolean setMetadata(K key, int writeMask, int metadata) {
-    Lock l = writeLock();
+  public Integer getMetadata(Object key, int mask) {
+    Lock l = readLock();
     l.lock();
     try {
-      return super.updateMetadata(key, writeMask, metadata);
+      return super.getMetadata(key, mask);
     } finally {
       l.unlock();
     }
   }
 
   @Override
-  // TODO Make this a real compound op (avoiding multiple lookups) in super class
-  public V getAndSetMetadata(final K key, final int mask, final int metadata) {
+  public Integer getAndSetMetadata(Object key, int mask, int values) {
     Lock l = writeLock();
     l.lock();
     try {
-      final V v = get(key);
-      if(v != null) {
-        if(!updateMetadata(key, mask, metadata)) {
-          return null;
-        }
-      }
-      return v;
+      return super.getAndSetMetadata(key, mask, values);
+    } finally {
+      l.unlock();
+    }
+  }
+
+  @Override
+  public V getValueAndSetMetadata(Object key, int mask, int values) {
+    Lock l = writeLock();
+    l.lock();
+    try {
+      return super.getValueAndSetMetadata(key, mask, values);
     } finally {
       l.unlock();
     }
@@ -483,7 +490,7 @@ public abstract class AbstractLockedOffHeapHashMap<K, V> extends OffHeapHashMap<
       //no-op
     }
   }
-  
+
   @Override
   public Collection<V> values() {
     if (values == null) {
@@ -560,7 +567,54 @@ public abstract class AbstractLockedOffHeapHashMap<K, V> extends OffHeapHashMap<
 
   @Override
   public abstract Lock readLock();
-  
+
   @Override
   public abstract Lock writeLock();
+
+  /*
+   * JDK-8-alike metadata methods
+   */
+  @Override
+  public MetadataTuple<V> computeWithMetadata(K key, BiFunction<? super K, ? super MetadataTuple<V>, ? extends MetadataTuple<V>> remappingFunction) {
+    Lock l = writeLock();
+    l.lock();
+    try {
+      return super.computeWithMetadata(key, remappingFunction);
+    } finally {
+      l.unlock();
+    }
+  }
+
+  @Override
+  public MetadataTuple<V> computeIfAbsentWithMetadata(K key, Function<? super K,? extends MetadataTuple<V>> mappingFunction) {
+    Lock l = writeLock();
+    l.lock();
+    try {
+      return super.computeIfAbsentWithMetadata(key, mappingFunction);
+    } finally {
+      l.unlock();
+    }
+  }
+
+  @Override
+  public MetadataTuple<V> computeIfPresentWithMetadata(K key, BiFunction<? super K,? super MetadataTuple<V>,? extends MetadataTuple<V>> remappingFunction) {
+    Lock l = writeLock();
+    l.lock();
+    try {
+      return super.computeIfPresentWithMetadata(key, remappingFunction);
+    } finally {
+      l.unlock();
+    }
+  }
+
+  @Override
+  public Map<K, V> removeAllWithHash(int hash) {
+    Lock l = writeLock();
+    l.lock();
+    try {
+      return super.removeAllWithHash(hash);
+    } finally {
+      l.unlock();
+    }
+  }
 }

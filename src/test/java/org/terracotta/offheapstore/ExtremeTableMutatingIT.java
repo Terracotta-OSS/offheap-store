@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,18 +38,19 @@ public class ExtremeTableMutatingIT {
   @Test
   public void testExtremeTableMutations() {
     PageSource source = new UpfrontAllocatingPageSource(new HeapBufferSource(), MemoryUnit.MEGABYTES.toBytes(1), MemoryUnit.MEGABYTES.toBytes(1));
-    StorageEngine<Integer, byte[]> storage = new SplitStorageEngine<Integer, byte[]>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<byte[]>(source, MemoryUnit.KILOBYTES.toBytes(4), ByteArrayPortability.INSTANCE));
-    Map<Integer, byte[]> cache = new EvilOffHeapClockCache<Integer, byte[]>(new UnlimitedPageSource(new HeapBufferSource()), storage);
+    StorageEngine<Integer, byte[]> storage = new SplitStorageEngine<>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<>(source, MemoryUnit.KILOBYTES
+      .toBytes(4), ByteArrayPortability.INSTANCE));
+    Map<Integer, byte[]> cache = new EvilOffHeapClockCache<>(new UnlimitedPageSource(new HeapBufferSource()), storage);
 
     int i;
     for (i = 0; i == cache.size(); i++) {
       cache.put(i, new byte[i % 1024]);
     }
-    
+
     for (int c = 0; c < i * 10; c++) {
       cache.put(i + c, new byte[(i + c) % 1024]);
     }
-    
+
     for (int n = 0; n < i * 11; n++) {
       byte[] array = cache.get(n);
       if (array != null) {
@@ -57,11 +58,11 @@ public class ExtremeTableMutatingIT {
       }
     }
   }
-  
+
   static class EvilOffHeapClockCache<K, V> extends WriteLockedOffHeapClockCache<K, V> {
 
     private final Random rndm = new Random();
-    
+
     public EvilOffHeapClockCache(PageSource source, StorageEngine<? super K, ? super V> storageEngine) {
       super(source, storageEngine);
     }
@@ -74,6 +75,6 @@ public class ExtremeTableMutatingIT {
         super.storageEngineFailure(failure);
       }
     }
-    
+
   }
 }

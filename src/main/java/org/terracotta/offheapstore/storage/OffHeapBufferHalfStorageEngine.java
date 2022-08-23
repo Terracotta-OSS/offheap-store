@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,25 +45,13 @@ public class OffHeapBufferHalfStorageEngine<T> extends PortabilityBasedHalfStora
   }
 
   public static <T> Factory<OffHeapBufferHalfStorageEngine<T>> createFactory(final PageSource source, final int initialPageSize, final int maximalPageSize, final Portability<? super T> portability, final boolean thief, final boolean victim) {
-    return new Factory<OffHeapBufferHalfStorageEngine<T>>() {
-      @Override
-      public OffHeapBufferHalfStorageEngine<T> newInstance() {
-        return new OffHeapBufferHalfStorageEngine<T>(source, initialPageSize, maximalPageSize, portability, thief, victim);
-      }
-    };
+    return () -> new OffHeapBufferHalfStorageEngine<>(source, initialPageSize, maximalPageSize, portability, thief, victim);
   }
 
   private volatile Owner owner;
   private volatile long mask;
   private final OffHeapStorageArea storageArea;
 
-  /**
-   * Creates a storage engine using the given allocator, and portabilities.
-   *
-   * @param allocator allocator used for storage allocation
-   * @param keyPortability key type portability
-   * @param valuePortability value type portability
-   */
   public OffHeapBufferHalfStorageEngine(PageSource source, int pageSize, Portability<? super T> portability) {
     this(source, pageSize, portability, false, false);
   }
@@ -131,11 +119,9 @@ public class OffHeapBufferHalfStorageEngine<T> extends PortabilityBasedHalfStora
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("OffHeapBufferStorageEngine ");
-    sb.append("allocated=").append(DebuggingUtils.toBase2SuffixedString(getAllocatedMemory())).append("B ");
-    sb.append("occupied=").append(DebuggingUtils.toBase2SuffixedString(getOccupiedMemory())).append("B\n");
-    sb.append("Allocator: ").append(storageArea);
-    return sb.toString();
+    return "OffHeapBufferStorageEngine " + "allocated=" + DebuggingUtils.toBase2SuffixedString(getAllocatedMemory()) + "B " +
+                "occupied=" + DebuggingUtils.toBase2SuffixedString(getOccupiedMemory()) + "B\n" +
+                "Allocator: " + storageArea;
   }
 
   @Override

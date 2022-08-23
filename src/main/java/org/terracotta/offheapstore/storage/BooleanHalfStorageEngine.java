@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,11 +24,11 @@ import org.terracotta.offheapstore.storage.StorageEngine.Owner;
 public final class BooleanHalfStorageEngine implements HalfStorageEngine<Boolean> {
 
   public static final BooleanHalfStorageEngine INSTANCE = new BooleanHalfStorageEngine();
-  
+
   private BooleanHalfStorageEngine() {
     //singleton
   }
-  
+
   @Override
   public Integer write(Boolean object, int hash) {
     return object ? 1 : 0;
@@ -46,11 +46,7 @@ public final class BooleanHalfStorageEngine implements HalfStorageEngine<Boolean
 
   @Override
   public boolean equals(Object object, int encoding) {
-    if (object instanceof Boolean) {
-      return write((Boolean) object, 0) == encoding;
-    } else {
-      return false;
-    }
+    return object instanceof Boolean && write((Boolean) object, 0) == encoding;
   }
 
   @Override
@@ -97,5 +93,5 @@ public final class BooleanHalfStorageEngine implements HalfStorageEngine<Boolean
   public boolean shrink() {
     return false;
   }
-  
+
 }

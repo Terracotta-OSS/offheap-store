@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,15 +42,11 @@ public class ConcurrentOffHeapHashMap<K, V> extends AbstractConcurrentOffHeapMap
    * @param storageEngineFactory factory for the segment storage engines
    */
   public ConcurrentOffHeapHashMap(PageSource tableSource, Factory<? extends StorageEngine<? super K, ? super V>> storageEngineFactory) {
-    super(new ReadWriteLockedOffHeapHashMapFactory<K, V>(tableSource, storageEngineFactory));
+    super(new ReadWriteLockedOffHeapHashMapFactory<>(tableSource, storageEngineFactory));
   }
 
   public ConcurrentOffHeapHashMap(PageSource tableSource, boolean tableAllocationsSteal, Factory<? extends StorageEngine<? super K, ? super V>> storageEngineFactory) {
-    super(new ReadWriteLockedOffHeapHashMapFactory<K, V>(tableSource, tableAllocationsSteal, storageEngineFactory));
-  }
-
-  public ConcurrentOffHeapHashMap(PageSource tableSource, Factory<? extends StorageEngine<? super K, ? super V>> storageEngineFactory, boolean latencyMonitoring) {
-    super(new ReadWriteLockedOffHeapHashMapFactory<K, V>(tableSource, storageEngineFactory));
+    super(new ReadWriteLockedOffHeapHashMapFactory<>(tableSource, tableAllocationsSteal, storageEngineFactory));
   }
 
   /**
@@ -64,11 +60,11 @@ public class ConcurrentOffHeapHashMap<K, V> extends AbstractConcurrentOffHeapMap
    */
   public ConcurrentOffHeapHashMap(PageSource tableSource, Factory<? extends StorageEngine<? super K, ? super V>> storageEngineFactory, long tableSize,
       int concurrency) {
-    super(new ReadWriteLockedOffHeapHashMapFactory<K, V>(tableSource, storageEngineFactory, (int) (tableSize / concurrency)), concurrency);
+    super(new ReadWriteLockedOffHeapHashMapFactory<>(tableSource, storageEngineFactory, (int) (tableSize / concurrency)), concurrency);
   }
 
   public ConcurrentOffHeapHashMap(PageSource tableSource, boolean tableAllocationsSteal, Factory<? extends StorageEngine<? super K, ? super V>> storageEngineFactory, long tableSize,
       int concurrency) {
-    super(new ReadWriteLockedOffHeapHashMapFactory<K, V>(tableSource, tableAllocationsSteal, storageEngineFactory, (int) (tableSize / concurrency)), concurrency);
+    super(new ReadWriteLockedOffHeapHashMapFactory<>(tableSource, tableAllocationsSteal, storageEngineFactory, (int) (tableSize / concurrency)), concurrency);
   }
 }

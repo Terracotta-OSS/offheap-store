@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,21 +25,21 @@ import org.terracotta.offheapstore.util.Factory;
  *
  * @author Chris Dennis
  */
-public class PersistentConcurrentOffHeapClockCache<K, V> extends AbstractPersistentConcurrentOffHeapMap<K, V> {
+public class PersistentConcurrentOffHeapClockCache<K, V> extends AbstractPersistentConcurrentOffHeapCache<K, V> {
 
   public PersistentConcurrentOffHeapClockCache(MappedPageSource tableSource, Factory<? extends PersistentStorageEngine<? super K, ? super V>> storageEngineFactory) {
-    super(new PersistentReadWriteLockedOffHeapClockCacheFactory<K, V>(tableSource, storageEngineFactory), false);
+    super(new PersistentReadWriteLockedOffHeapClockCacheFactory<>(tableSource, storageEngineFactory));
   }
 
   public PersistentConcurrentOffHeapClockCache(ObjectInput input, MappedPageSource tableSource, Factory<? extends PersistentStorageEngine<? super K, ? super V>> storageEngineFactory) throws IOException {
-    super(new PersistentReadWriteLockedOffHeapClockCacheFactory<K, V>(tableSource, storageEngineFactory, false), readSegmentCount(input), false);
+    super(new PersistentReadWriteLockedOffHeapClockCacheFactory<>(tableSource, storageEngineFactory, false), readSegmentCount(input));
   }
 
   public PersistentConcurrentOffHeapClockCache(MappedPageSource tableSource, Factory<? extends PersistentStorageEngine<? super K, ? super V>> storageEngineFactory, long tableSize, int concurrency) {
-    super(new PersistentReadWriteLockedOffHeapClockCacheFactory<K, V>(tableSource, storageEngineFactory, (int) (tableSize / concurrency)), concurrency, false);
+    super(new PersistentReadWriteLockedOffHeapClockCacheFactory<>(tableSource, storageEngineFactory, (int) (tableSize / concurrency)), concurrency);
   }
-  
+
   public PersistentConcurrentOffHeapClockCache(ObjectInput input, MappedPageSource tableSource, Factory<? extends PersistentStorageEngine<? super K, ? super V>> storageEngineFactory, long tableSize, int concurrency) throws IOException {
-    super(new PersistentReadWriteLockedOffHeapClockCacheFactory<K, V>(tableSource, storageEngineFactory, (int) (tableSize / concurrency), false), readSegmentCount(input), false);
+    super(new PersistentReadWriteLockedOffHeapClockCacheFactory<>(tableSource, storageEngineFactory, (int) (tableSize / concurrency), false), readSegmentCount(input));
   }
 }

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,13 +32,7 @@ import org.terracotta.offheapstore.util.Factory;
 public class PersistentSplitStorageEngine<K, V> extends SplitStorageEngine<K, V> implements PersistentStorageEngine<K, V> {
 
   public static <K, V> Factory<PersistentSplitStorageEngine<K, V>> createPersistentFactory(final Factory<? extends PersistentHalfStorageEngine<K>> keyFactory, final Factory<? extends PersistentHalfStorageEngine<V>> valueFactory) {
-    return new Factory<PersistentSplitStorageEngine<K, V>>() {
-
-      @Override
-      public PersistentSplitStorageEngine<K, V> newInstance() {
-        return new PersistentSplitStorageEngine<K, V>(keyFactory.newInstance(), valueFactory.newInstance());
-      }
-    };
+    return () -> new PersistentSplitStorageEngine<>(keyFactory.newInstance(), valueFactory.newInstance());
   }
 
   public PersistentSplitStorageEngine(PersistentHalfStorageEngine<K> keyStorageEngine, PersistentHalfStorageEngine<V> valueStorageEngine) {

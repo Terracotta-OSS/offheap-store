@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,8 +31,7 @@ import static org.terracotta.offheapstore.util.ByteBufferUtils.totalLength;
  * <p>
  * This storage engine implementation uses {@link Portability} instances to
  * convert key/value instances in to ByteBuffers.  The content of these
- * ByteBuffers are then stored in slices of a single large data area, whose
- * space allocation is governed by an external {@link Allocator}.
+ * ByteBuffers are then stored in slices of a single large data area.
  *
  * @param <K> key type handled by this engine
  * @param <V> value type handled by this engine
@@ -56,53 +55,31 @@ public class OffHeapBufferStorageEngine<K, V> extends PortabilityBasedStorageEng
    */
 
   public static <K, V> Factory<OffHeapBufferStorageEngine<K, V>> createFactory(final PointerSize width, final PageSource source, final int pageSize, final Portability<? super K> keyPortability, final Portability<? super V> valuePortability, final boolean thief, final boolean victim) {
-    return new Factory<OffHeapBufferStorageEngine<K, V>>() {
-
-      @Override
-      public OffHeapBufferStorageEngine<K, V> newInstance() {
-        return new OffHeapBufferStorageEngine<K, V>(width, source, pageSize, keyPortability, valuePortability, thief, victim);
-      }
-    };
+    return () -> new OffHeapBufferStorageEngine<>(width, source, pageSize, keyPortability, valuePortability, thief, victim);
   }
 
   public static <K, V> Factory<OffHeapBufferStorageEngine<K, V>> createFactory(final PointerSize width, final PageSource source, final int pageSize, final Portability<? super K> keyPortability, final Portability<? super V> valuePortability, final boolean thief, final boolean victim, final float compressThreshold) {
-    return new Factory<OffHeapBufferStorageEngine<K, V>>() {
-
-      @Override
-      public OffHeapBufferStorageEngine<K, V> newInstance() {
-        return new OffHeapBufferStorageEngine<K, V>(width, source, pageSize, keyPortability, valuePortability, thief, victim, compressThreshold);
-      }
-    };
+    return () -> new OffHeapBufferStorageEngine<>(width, source, pageSize, keyPortability, valuePortability, thief, victim, compressThreshold);
   }
 
   public static <K, V> Factory<OffHeapBufferStorageEngine<K, V>> createFactory(final PointerSize width, final PageSource source, final int initialPageSize, final int maximalPageSize, final Portability<? super K> keyPortability, final Portability<? super V> valuePortability, final boolean thief, final boolean victim) {
-    return new Factory<OffHeapBufferStorageEngine<K, V>>() {
-
-      @Override
-      public OffHeapBufferStorageEngine<K, V> newInstance() {
-        return new OffHeapBufferStorageEngine<K, V>(width, source, initialPageSize, maximalPageSize, keyPortability, valuePortability, thief, victim);
-      }
-    };
+    return () -> new OffHeapBufferStorageEngine<>(width, source, initialPageSize, maximalPageSize, keyPortability, valuePortability, thief, victim);
   }
-  
-  public static <K, V> Factory<OffHeapBufferStorageEngine<K, V>> createFactory(final PointerSize width, final PageSource source, final int initialPageSize, final int maximalPageSize, final Portability<? super K> keyPortability, final Portability<? super V> valuePortability, final boolean thief, final boolean victim, final float compressThreshold) {
-    return new Factory<OffHeapBufferStorageEngine<K, V>>() {
 
-      @Override
-      public OffHeapBufferStorageEngine<K, V> newInstance() {
-        return new OffHeapBufferStorageEngine<K, V>(width, source, initialPageSize, maximalPageSize, keyPortability, valuePortability, thief, victim, compressThreshold);
-      }
-    };
+  public static <K, V> Factory<OffHeapBufferStorageEngine<K, V>> createFactory(final PointerSize width, final PageSource source, final int initialPageSize, final int maximalPageSize, final Portability<? super K> keyPortability, final Portability<? super V> valuePortability, final boolean thief, final boolean victim, final float compressThreshold) {
+    return () -> new OffHeapBufferStorageEngine<>(width, source, initialPageSize, maximalPageSize, keyPortability, valuePortability, thief, victim, compressThreshold);
   }
 
   protected final OffHeapStorageArea storageArea;
-  
+
   protected volatile Owner owner;
 
   /**
-   * Creates a storage engine using the given allocator, and portabilities.
-   * 
-   * @param allocator allocator used for storage allocation
+   * Creates a storage engine using the given page source, and portabilities.
+   *
+   * @param width {@code int} or {@code long} based engine
+   * @param source allocator used for storage allocation
+   * @param pageSize internal (constant) page size
    * @param keyPortability key type portability
    * @param valuePortability value type portability
    */
@@ -113,11 +90,11 @@ public class OffHeapBufferStorageEngine<K, V> extends PortabilityBasedStorageEng
   public OffHeapBufferStorageEngine(PointerSize width, PageSource source, int pageSize, Portability<? super K> keyPortability, Portability<? super V> valuePortability, float compressThreshold) {
     this(width, source, pageSize, pageSize, keyPortability, valuePortability, compressThreshold);
   }
-  
+
   public OffHeapBufferStorageEngine(PointerSize width, PageSource source, int initialPageSize, int maximalPageSize, Portability<? super K> keyPortability, Portability<? super V> valuePortability) {
     this(width, source, initialPageSize, maximalPageSize, keyPortability, valuePortability, false, false);
   }
-  
+
   public OffHeapBufferStorageEngine(PointerSize width, PageSource source, int initialPageSize, int maximalPageSize, Portability<? super K> keyPortability, Portability<? super V> valuePortability, float compressThreshold) {
     this(width, source, initialPageSize, maximalPageSize, keyPortability, valuePortability, false, false, compressThreshold);
   }
@@ -125,11 +102,11 @@ public class OffHeapBufferStorageEngine<K, V> extends PortabilityBasedStorageEng
   public OffHeapBufferStorageEngine(PointerSize width, PageSource source, int pageSize, Portability<? super K> keyPortability, Portability<? super V> valuePortability, boolean thief, boolean victim) {
     this(width, source, pageSize, pageSize, keyPortability, valuePortability, thief, victim);
   }
-  
+
   public OffHeapBufferStorageEngine(PointerSize width, PageSource source, int pageSize, Portability<? super K> keyPortability, Portability<? super V> valuePortability, boolean thief, boolean victim, float compressThreshold) {
     this(width, source, pageSize, pageSize, keyPortability, valuePortability, thief, victim, compressThreshold);
   }
-  
+
   public OffHeapBufferStorageEngine(PointerSize width, PageSource source, int initialPageSize, int maximalPageSize, Portability<? super K> keyPortability, Portability<? super V> valuePortability, boolean thief, boolean victim) {
     super(keyPortability, valuePortability);
     this.storageArea = new OffHeapStorageArea(width, this, source, initialPageSize, maximalPageSize, thief, victim);
@@ -139,7 +116,7 @@ public class OffHeapBufferStorageEngine<K, V> extends PortabilityBasedStorageEng
     super(keyPortability, valuePortability);
     this.storageArea = new OffHeapStorageArea(width, this, source, initialPageSize, maximalPageSize, thief, victim, compressThreshold);
   }
-  
+
   @Override
   protected void clearInternal() {
     storageArea.clear();
@@ -161,7 +138,7 @@ public class OffHeapBufferStorageEngine<K, V> extends PortabilityBasedStorageEng
     int keyLength = storageArea.readInt(address + KEY_LENGTH_OFFSET);
     return getWriteContext(address + DATA_OFFSET, keyLength);
   }
-  
+
   @Override
   public ByteBuffer readValueBuffer(long address) {
     int keyLength = storageArea.readInt(address + KEY_LENGTH_OFFSET);
@@ -175,10 +152,10 @@ public class OffHeapBufferStorageEngine<K, V> extends PortabilityBasedStorageEng
     int valueLength = storageArea.readInt(address + VALUE_LENGTH_OFFSET);
     return getWriteContext(address + DATA_OFFSET + keyLength, valueLength);
   }
-  
+
   private WriteContext getWriteContext(final long address, final int max) {
     return new WriteContext() {
-      
+
       @Override
       public void setLong(int offset, long value) {
         if (offset < 0 || offset > max) {
@@ -187,7 +164,7 @@ public class OffHeapBufferStorageEngine<K, V> extends PortabilityBasedStorageEng
           storageArea.writeLong(address + offset, value);
         }
       }
-      
+
       @Override
       public void flush() {
         //no-op
@@ -211,7 +188,7 @@ public class OffHeapBufferStorageEngine<K, V> extends PortabilityBasedStorageEng
       return null;
     }
   }
-  
+
   @Override
   protected Long writeMappingBuffersGathering(ByteBuffer[] keyBuffers, ByteBuffer[] valueBuffers, int hash) {
     int keyLength = totalLength(keyBuffers);
@@ -229,7 +206,7 @@ public class OffHeapBufferStorageEngine<K, V> extends PortabilityBasedStorageEng
       return null;
     }
   }
-  
+
   @Override
   public long getAllocatedMemory() {
     return storageArea.getAllocatedMemory();
@@ -253,11 +230,9 @@ public class OffHeapBufferStorageEngine<K, V> extends PortabilityBasedStorageEng
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("OffHeapBufferStorageEngine ");
-    sb.append("allocated=").append(DebuggingUtils.toBase2SuffixedString(getAllocatedMemory())).append("B ");
-    sb.append("occupied=").append(DebuggingUtils.toBase2SuffixedString(getOccupiedMemory())).append("B\n");
-    sb.append("Storage Area: ").append(storageArea);
-    return sb.toString();
+    return "OffHeapBufferStorageEngine allocated=" + DebuggingUtils.toBase2SuffixedString(getAllocatedMemory()) + "B "
+           + "occupied=" + DebuggingUtils.toBase2SuffixedString(getOccupiedMemory()) + "B\n"
+           + "Storage Area: " + storageArea;
   }
 
   @Override
@@ -286,7 +261,7 @@ public class OffHeapBufferStorageEngine<K, V> extends PortabilityBasedStorageEng
   public int readKeyHash(long encoding) {
     return storageArea.readInt(encoding + KEY_HASH_OFFSET);
   }
-  
+
   @Override
   public boolean moved(long from, long to) {
     return owner.updateEncoding(readKeyHash(to), from, to, ~0);

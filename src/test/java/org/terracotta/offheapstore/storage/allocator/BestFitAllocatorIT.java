@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,7 +40,7 @@ public class BestFitAllocatorIT extends PointerSizeParameterizedTest {
     OffHeapStorageArea test = new OffHeapStorageArea(getPointerSize(), null, new UnlimitedPageSource(new HeapBufferSource()), 2048, false, false);
 
     int width = getPointerSize().byteSize();
-    
+
     for (int i = 0; i < 100; i++) {
       Assert.assertEquals(2 * width + (i * 4 * width), test.allocate(1));
     }
@@ -52,7 +52,7 @@ public class BestFitAllocatorIT extends PointerSizeParameterizedTest {
   public void testUniformSizedFrees() {
     OffHeapStorageArea test = new OffHeapStorageArea(getPointerSize(), null, new UnlimitedPageSource(new HeapBufferSource()), 2048, false, false);
 
-    List<Long> allocated = new ArrayList<Long>();
+    List<Long> allocated = new ArrayList<>();
 
     for (int i = 0; i < 100; i++) {
       allocated.add(test.allocate(1));
@@ -72,7 +72,7 @@ public class BestFitAllocatorIT extends PointerSizeParameterizedTest {
     for (int i = 1; i < 100; i++) {
       int count = (int) Math.floor(100d / i);
       for (int j = 1; j <= count; j++) {
-        List<Long> pointers = new ArrayList<Long>();
+        List<Long> pointers = new ArrayList<>();
         for (int k = 0; k < j; k++) {
           long p = test.allocate(i);
           pointers.add(p);
@@ -90,7 +90,7 @@ public class BestFitAllocatorIT extends PointerSizeParameterizedTest {
     for (int n = 0; n < 1000; n++) {
       OffHeapStorageArea test = new OffHeapStorageArea(getPointerSize(), null, new UnlimitedPageSource(new HeapBufferSource()), 100 * 1024, false, false);
 
-      List<Long> allocated = new ArrayList<Long>();
+      List<Long> allocated = new ArrayList<>();
       Random rndm = new Random();
 
       for (int i = 0; i < 100; i++) {
@@ -117,7 +117,7 @@ public class BestFitAllocatorIT extends PointerSizeParameterizedTest {
     for (int n = 0; n < 1000; n++) {
       OffHeapStorageArea test = new OffHeapStorageArea(getPointerSize(), null, new UnlimitedPageSource(new HeapBufferSource()), 100 * 1024, false, false);
 
-      List<Long> allocated = new ArrayList<Long>();
+      List<Long> allocated = new ArrayList<>();
       long seed = System.nanoTime();
       Random rndm = new Random(seed);
 
@@ -140,18 +140,18 @@ public class BestFitAllocatorIT extends PointerSizeParameterizedTest {
           } break;
         }
       }
-      
+
       for (Long p : allocated) {
         test.free(p);
       }
-      
+
       Assert.assertThat(test.getOccupiedMemory(), Is.is(0L));
     }
   }
 
   @Test
   public void repeatedPutTest() {
-    Map<String, byte[]> map = new OffHeapHashMap<String, byte[]>(new UnlimitedPageSource(new OffHeapBufferSource()), new SerializableStorageEngine(getPointerSize(), new UnlimitedPageSource(new OffHeapBufferSource()), 1024));
+    Map<String, byte[]> map = new OffHeapHashMap<>(new UnlimitedPageSource(new OffHeapBufferSource()), new SerializableStorageEngine(getPointerSize(), new UnlimitedPageSource(new OffHeapBufferSource()), 1024));
 
     Random rndm = new Random();
     for (int i = 0; i < 100; i++) {

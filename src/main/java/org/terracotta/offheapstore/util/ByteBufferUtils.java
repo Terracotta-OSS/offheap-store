@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,11 +22,11 @@ import java.nio.ByteBuffer;
  * @author cdennis
  */
 public final class ByteBufferUtils {
-  
+
   private ByteBufferUtils() {
     //no instances
   }
-  
+
   public static int totalLength(ByteBuffer[] buffers) {
     int total = 0;
     for (ByteBuffer buffer : buffers) {
@@ -35,7 +35,7 @@ public final class ByteBufferUtils {
     return total;
   }
 
-  public static final ByteBuffer aggregate(ByteBuffer[] buffers) {
+  public static ByteBuffer aggregate(ByteBuffer[] buffers) {
     if (buffers.length == 1) {
       return buffers[0];
     } else {

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,7 +43,7 @@ public class LongStorageEngineIT {
 
   @Test
   public void testDirectUsage() {
-    StorageEngine<Long, Integer> engine = new LongStorageEngine<Integer>(new IntegerStorageEngine());
+    StorageEngine<Long, Integer> engine = new LongStorageEngine<>(new IntegerStorageEngine());
 
     for (Long l : TEST_CASES) {
       int hashCode = l.hashCode();
@@ -57,7 +57,7 @@ public class LongStorageEngineIT {
 
   @Test
   public void testMapUsage() {
-    Map<Long, Integer> map = new OffHeapHashMap<Long, Integer>(new UnlimitedPageSource(new OffHeapBufferSource()), new LongStorageEngine<Integer>(new IntegerStorageEngine()));
+    Map<Long, Integer> map = new OffHeapHashMap<>(new UnlimitedPageSource(new OffHeapBufferSource()), new LongStorageEngine<>(new IntegerStorageEngine()));
 
     for (Long l : TEST_CASES) {
       Assert.assertNull(map.put(l, l.intValue()));
@@ -77,13 +77,13 @@ public class LongStorageEngineIT {
 
   @Test
   public void testKeysAreReadable() {
-    Map<Long, Integer> map = new OffHeapHashMap<Long, Integer>(new UnlimitedPageSource(new OffHeapBufferSource()), new LongStorageEngine<Integer>(new IntegerStorageEngine()));
+    Map<Long, Integer> map = new OffHeapHashMap<>(new UnlimitedPageSource(new OffHeapBufferSource()), new LongStorageEngine<>(new IntegerStorageEngine()));
 
     for (Long l : TEST_CASES) {
       Assert.assertNull(map.put(l, l.intValue()));
     }
 
-    Collection<Long> copy = new ArrayList<Long>(Arrays.asList(TEST_CASES));
+    Collection<Long> copy = new ArrayList<>(Arrays.asList(TEST_CASES));
 
     for (Long l : map.keySet()) {
       Assert.assertTrue(copy.remove(l));

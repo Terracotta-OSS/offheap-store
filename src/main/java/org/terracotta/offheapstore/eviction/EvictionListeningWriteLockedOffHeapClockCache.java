@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 package org.terracotta.offheapstore.eviction;
-
-import java.util.concurrent.Callable;
 
 import org.terracotta.offheapstore.WriteLockedOffHeapClockCache;
 import org.terracotta.offheapstore.paging.PageSource;
@@ -43,12 +41,7 @@ public class EvictionListeningWriteLockedOffHeapClockCache<K, V> extends WriteLo
   public boolean evict(final int index, boolean shrink) {
     boolean evicted;
     try {
-      listener.evicting(new Callable<Entry<K, V>>() {
-        @Override
-        public Entry<K, V> call() throws Exception {
-          return getEntryAtTableOffset(index);
-        }
-      });
+      listener.evicting(() -> getEntryAtTableOffset(index));
     } finally {
       evicted = super.evict(index, shrink);
     }

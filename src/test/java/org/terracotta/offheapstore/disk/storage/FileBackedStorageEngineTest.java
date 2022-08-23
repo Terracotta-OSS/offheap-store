@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,6 @@
  */
 package org.terracotta.offheapstore.disk.storage;
 
-import org.terracotta.offheapstore.disk.storage.FileBackedStorageEngine;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -37,6 +36,7 @@ import org.terracotta.offheapstore.disk.paging.MappedPageSource;
 import org.terracotta.offheapstore.disk.storage.portability.PersistentByteArrayPortability;
 import org.terracotta.offheapstore.disk.storage.portability.PersistentSerializablePortability;
 import org.terracotta.offheapstore.util.DebuggingUtils;
+import org.terracotta.offheapstore.util.MemoryUnit;
 
 /**
  *
@@ -49,7 +49,7 @@ public class FileBackedStorageEngineTest extends AbstractDiskTest {
   @Test
   public void testEmptyPayload() throws IOException {
     MappedPageSource source = new MappedPageSource(dataFile);
-    FileBackedStorageEngine<byte[], byte[]> engine = new FileBackedStorageEngine<byte[], byte[]>(source, PersistentByteArrayPortability.INSTANCE, PersistentByteArrayPortability.INSTANCE, 1024);
+    FileBackedStorageEngine<byte[], byte[]> engine = new FileBackedStorageEngine<>(source, Long.MAX_VALUE, MemoryUnit.BYTES, PersistentByteArrayPortability.INSTANCE, PersistentByteArrayPortability.INSTANCE);
     try {
       long p = engine.writeMapping(new byte[0], new byte[0], 0, 0);
       Assert.assertTrue(p >= 0);
@@ -72,7 +72,7 @@ public class FileBackedStorageEngineTest extends AbstractDiskTest {
   @Test
   public void testSmallPayloads() throws IOException {
     MappedPageSource source = new MappedPageSource(dataFile);
-    FileBackedStorageEngine<byte[], byte[]> engine = new FileBackedStorageEngine<byte[], byte[]>(source, PersistentByteArrayPortability.INSTANCE, PersistentByteArrayPortability.INSTANCE, 1);
+    FileBackedStorageEngine<byte[], byte[]> engine = new FileBackedStorageEngine<>(source, Long.MAX_VALUE, MemoryUnit.BYTES, PersistentByteArrayPortability.INSTANCE, PersistentByteArrayPortability.INSTANCE);
     try {
       Random rndm = new Random();
 
@@ -105,7 +105,7 @@ public class FileBackedStorageEngineTest extends AbstractDiskTest {
   @Test
   public void testInterruptingReadThreads() throws IOException {
     MappedPageSource source = new MappedPageSource(dataFile);
-    FileBackedStorageEngine<byte[], byte[]> engine = new FileBackedStorageEngine<byte[], byte[]>(source, PersistentByteArrayPortability.INSTANCE, PersistentByteArrayPortability.INSTANCE, 1024);
+    FileBackedStorageEngine<byte[], byte[]> engine = new FileBackedStorageEngine<>(source, Long.MAX_VALUE, MemoryUnit.BYTES, PersistentByteArrayPortability.INSTANCE, PersistentByteArrayPortability.INSTANCE);
     try {
       long p = engine.writeMapping(new byte[0], new byte[32], 0, 0);
       Assert.assertTrue(p >= 0);
@@ -128,22 +128,20 @@ public class FileBackedStorageEngineTest extends AbstractDiskTest {
   public void testHugeMap() throws IOException, InterruptedException, ExecutionException {
     System.err.println("Using file: " + dataFile.getAbsolutePath());
     MappedPageSource source = new MappedPageSource(dataFile);
-    final ConcurrentOffHeapHashMap<Integer, byte[]> map = new ConcurrentOffHeapHashMap<Integer, byte[]>(source, FileBackedStorageEngine.createFactory(source, 8 * 1024 * 1024, new PersistentSerializablePortability(), PersistentByteArrayPortability.INSTANCE), 4 * 1024 * 1024, 1);
+    final ConcurrentOffHeapHashMap<Integer, byte[]> map = new ConcurrentOffHeapHashMap<>(source, FileBackedStorageEngine
+      .createFactory(source, Long.MAX_VALUE, MemoryUnit.BYTES, new PersistentSerializablePortability(), PersistentByteArrayPortability.INSTANCE), 4 * 1024 * 1024, 1);
     try {
       ExecutorService executor = Executors.newFixedThreadPool(1);
 
       int i = 0;
       long size = 0;
       while (true) {
-        Collection<Callable<Void>> tasks = new ArrayList<Callable<Void>>(1024);
+        Collection<Callable<Void>> tasks = new ArrayList<>(1024);
         for (int c = 0; c < 1024; c++, i++) {
           final int key = i;
-          tasks.add(new Callable<Void>() {
-            @Override
-            public Void call() {
-              map.put(key, new byte[1024]);
-              return null;
-            }
+          tasks.add(() -> {
+            map.put(key, new byte[1024]);
+            return null;
           });
         }
         long start = System.nanoTime();

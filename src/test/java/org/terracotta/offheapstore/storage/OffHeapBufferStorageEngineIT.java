@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,11 +15,13 @@
  */
 package org.terracotta.offheapstore.storage;
 
-import org.terracotta.offheapstore.storage.StorageEngine;
+import java.util.Arrays;
 import java.util.Random;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import org.terracotta.offheapstore.OffHeapHashMap;
 import org.terracotta.offheapstore.WriteLockedOffHeapClockCache;
@@ -28,49 +30,67 @@ import org.terracotta.offheapstore.paging.UnlimitedPageSource;
 import org.terracotta.offheapstore.paging.UpfrontAllocatingPageSource;
 import org.terracotta.offheapstore.storage.portability.ByteArrayPortability;
 import org.terracotta.offheapstore.storage.portability.SerializablePortability;
-import org.terracotta.offheapstore.util.PointerSizeEngineTypeParameterizedTest;
+import org.terracotta.offheapstore.util.MemoryUnit;
+import org.terracotta.offheapstore.util.OffHeapAndDiskStorageEngineDependentTest.OffHeapTestMode;
+import org.terracotta.offheapstore.util.ParallelParameterized;
+import org.terracotta.offheapstore.util.StorageEngineDependentTest;
 
-public class OffHeapBufferStorageEngineIT extends PointerSizeEngineTypeParameterizedTest {
+@RunWith(Parameterized.class)
+public class OffHeapBufferStorageEngineIT extends StorageEngineDependentTest {
+
+  @ParallelParameterized.Parameters
+  public static Iterable<Object[]> data() {
+    return Arrays.asList(
+            new Object[] {OffHeapTestMode.REGULAR_INT},
+            new Object[] {OffHeapTestMode.REGULAR_LONG},
+            new Object[] {OffHeapTestMode.COMPRESSING_INT},
+            new Object[] {OffHeapTestMode.COMPRESSING_LONG}
+    );
+  }
+
+  public OffHeapBufferStorageEngineIT(TestMode mode) {
+    super(mode);
+  }
 
   @Test
   public void testEmptyPayload() {
-    StorageEngine<byte[], byte[]> engine = create(new UnlimitedPageSource(new OffHeapBufferSource()), 1024, ByteArrayPortability.INSTANCE, ByteArrayPortability.INSTANCE);
-    
+    StorageEngine<byte[], byte[]> engine = create(createPageSource(1, MemoryUnit.MEGABYTES), ByteArrayPortability.INSTANCE, ByteArrayPortability.INSTANCE);
+
     long p = engine.writeMapping(new byte[0], new byte[0], 0, 0);
     Assert.assertTrue(p >= 0);
-    
+
     byte[] b = engine.readKey(p, 0);
-    
+
     Assert.assertNotNull(b);
     Assert.assertEquals(0, b.length);
   }
-  
+
   @Test
   public void testSmallPayloads() {
-    StorageEngine<byte[], byte[]> engine = create(new UnlimitedPageSource(new OffHeapBufferSource()), 1024, ByteArrayPortability.INSTANCE, ByteArrayPortability.INSTANCE);
-    
+    StorageEngine<byte[], byte[]> engine = create(new UnlimitedPageSource(new OffHeapBufferSource()), ByteArrayPortability.INSTANCE, ByteArrayPortability.INSTANCE);
+
     Random rndm = new Random();
-    
+
     for (int i = 0; i < 64; i++) {
       byte[] b = new byte[i];
-      
+
       rndm.nextBytes(b);
-      
+
       long p = engine.writeMapping(b, b, 0, 0);
       Assert.assertTrue(p >= 0);
-      
+
       byte[] b2 = engine.readKey(p, 0);
-      
+
       Assert.assertNotNull(b2);
       Assert.assertArrayEquals(b, b2);
-      
+
       engine.freeMapping(p, 0, true);
     }
   }
 
   @Test
   public void testPortabilityCacheInvalidation() {
-    OffHeapHashMap<Integer, int[]> map = new WriteLockedOffHeapClockCache<Integer, int[]>(new UnlimitedPageSource(new OffHeapBufferSource()), create(new UpfrontAllocatingPageSource(new OffHeapBufferSource(), 1024, 1024), 1024, new SerializablePortability(), new SerializablePortability()));
+    OffHeapHashMap<Integer, int[]> map = new WriteLockedOffHeapClockCache<>(new UnlimitedPageSource(new OffHeapBufferSource()), create(new UpfrontAllocatingPageSource(new OffHeapBufferSource(), 1024, 1024), new SerializablePortability(), new SerializablePortability()));
 
     int[] mutable = new int[1];
     for (int i = 0; i < 100; i++) {

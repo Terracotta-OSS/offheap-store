@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -89,12 +89,12 @@ public class GetFieldTest {
         throw new Error();
       } catch (IllegalArgumentException ex) {
       }
-      if ((fields.get("z", false) != true)
+      if ((!fields.get("z", false))
               || (fields.get("b", (byte) 0) != 5)
               || (fields.get("c", '0') != '5')
               || (fields.get("s", (short) 0) != 5)
               || (fields.get("i", 0) != 5)
-              || (fields.get("j", 0l) != 5)
+              || (fields.get("j", 0L) != 5)
               || (fields.get("f", 0.0f) != 5.0f)
               || (fields.get("d", 0.0) != 5.0)
               || (!fields.get("str", null).equals("5"))) {
@@ -120,12 +120,12 @@ public class GetFieldTest {
     private void readObject(ObjectInputStream in)
             throws IOException, ClassNotFoundException {
       ObjectInputStream.GetField fields = in.readFields();
-      if ((fields.get("z", false) != true)
+      if ((!fields.get("z", false))
               || (fields.get("b", (byte) 0) != 5)
               || (fields.get("c", '0') != '5')
               || (fields.get("s", (short) 0) != 5)
               || (fields.get("i", 0) != 5)
-              || (fields.get("j", 0l) != 5)
+              || (fields.get("j", 0L) != 5)
               || (fields.get("f", 0.0f) != 5.0f)
               || (fields.get("d", 0.0) != 5.0)
               || (!fields.get("str", null).equals("5"))) {

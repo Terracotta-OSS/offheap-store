@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -345,7 +345,6 @@ public abstract class AbstractPinningIT extends PointerSizeParameterizedTest {
       try {
         cache.put(i, new byte[] {(byte) i});
       } catch (OversizeMappingException e) {
-        continue;
       }
     }
 
@@ -368,7 +367,7 @@ public abstract class AbstractPinningIT extends PointerSizeParameterizedTest {
       }
     }
 
-    Collection<Callable<Void>> readers = new ArrayList<Callable<Void>>();
+    Collection<Callable<Void>> readers = new ArrayList<>();
     readers.add(new CacheAccessor(cache, lastPut + 1, lastPut * 10));
     readers.add(new CacheAccessor(cache, (lastPut * 10) + 1, lastPut * 20));
 

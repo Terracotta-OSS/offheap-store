@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +25,8 @@ public interface HalfStorageEngine<T> {
   /**
    * Converts the supplied value object into it's encoded form.
    *
-   * @param value a value object
+   * @param object a value object
+   * @param hash the keys hash
    * @return encoded value
    */
   Integer write(T object, int hash);
@@ -57,7 +58,7 @@ public interface HalfStorageEngine<T> {
    * This method is provided to allow implementations to optimize this
    * comparison if possible.
    *
-   * @param value a value object
+   * @param object a value object
    * @param encoding encoded value
    * @return {@code true} if the value and the encoding are equal
    */
@@ -87,14 +88,14 @@ public interface HalfStorageEngine<T> {
    *
    * @return vital memory allocated for this engine in bytes
    */
-  public long getVitalMemory();
+  long getVitalMemory();
 
   /**
    * Returns a measure of the total size of the keys and values stored in this storage engine.
    *
    * @return size of the stored keys and values in bytes
    */
-  public long getDataSize();
+  long getDataSize();
 
   /**
    * Invalidate any local key/value caches.
@@ -103,11 +104,11 @@ public interface HalfStorageEngine<T> {
    * is permitted within a write operation (i.e. to cache around allocation
    * failures during eviction processes).
    */
-  public void invalidateCache();
+  void invalidateCache();
 
-  public void bind(Owner owner, long mask);
+  void bind(Owner owner, long mask);
 
-  public void destroy();
+  void destroy();
 
-  public boolean shrink();
+  boolean shrink();
 }

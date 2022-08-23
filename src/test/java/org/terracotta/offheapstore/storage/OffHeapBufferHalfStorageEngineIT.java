@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,7 +40,7 @@ public class OffHeapBufferHalfStorageEngineIT {
 
   @Test
   public void testEmptyPayload() {
-    HalfStorageEngine<byte[]> engine = new OffHeapBufferHalfStorageEngine<byte[]>(new UnlimitedPageSource(new OffHeapBufferSource()), 1024, ByteArrayPortability.INSTANCE);
+    HalfStorageEngine<byte[]> engine = new OffHeapBufferHalfStorageEngine<>(new UnlimitedPageSource(new OffHeapBufferSource()), 1024, ByteArrayPortability.INSTANCE);
 
     int p = engine.write(new byte[0], 0);
     Assert.assertTrue(p >= 0);
@@ -53,7 +53,7 @@ public class OffHeapBufferHalfStorageEngineIT {
 
   @Test
   public void testSmallPayloads() {
-    HalfStorageEngine<byte[]> engine = new OffHeapBufferHalfStorageEngine<byte[]>(new UnlimitedPageSource(new OffHeapBufferSource()), 1024, ByteArrayPortability.INSTANCE);
+    HalfStorageEngine<byte[]> engine = new OffHeapBufferHalfStorageEngine<>(new UnlimitedPageSource(new OffHeapBufferSource()), 1024, ByteArrayPortability.INSTANCE);
 
     Random rndm = new Random();
 
@@ -76,7 +76,7 @@ public class OffHeapBufferHalfStorageEngineIT {
 
   @Test
   public void testPortabilityCacheInvalidation() {
-    OffHeapHashMap<Integer, int[]> map = new WriteLockedOffHeapClockCache<Integer, int[]>(new UnlimitedPageSource(new OffHeapBufferSource()), new SplitStorageEngine<Integer, int[]>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<int[]>(new UpfrontAllocatingPageSource(new OffHeapBufferSource(), 1024, 1024), 1024, new SerializablePortability())));
+    OffHeapHashMap<Integer, int[]> map = new WriteLockedOffHeapClockCache<>(new UnlimitedPageSource(new OffHeapBufferSource()), new SplitStorageEngine<>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<>(new UpfrontAllocatingPageSource(new OffHeapBufferSource(), 1024, 1024), 1024, new SerializablePortability())));
 
     int[] mutable = new int[1];
     for (int i = 0; i < 100; i++) {

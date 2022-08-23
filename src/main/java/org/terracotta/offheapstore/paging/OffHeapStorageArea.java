@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -52,6 +52,7 @@ public class OffHeapStorageArea {
   private static final Logger LOGGER = LoggerFactory.getLogger(OffHeapStorageArea.class);
   private static final boolean VALIDATING = shouldValidate(OffHeapStorageArea.class);
   private static final long LARGEST_POWER_OF_TWO = Integer.highestOneBit(Integer.MAX_VALUE);
+  private static final ByteBuffer[] EMPTY_BUFFER_ARRAY = new ByteBuffer[0];
 
   private final int initialPageSize;
   private final int maximalPageSize;
@@ -62,8 +63,8 @@ public class OffHeapStorageArea {
   private final PageSource pageSource;
   private final Allocator allocator;
   private final Random random = new Random();
-  
-  private Deque<Collection<Page>> released = new LinkedList<Collection<Page>>();
+
+  private Deque<Collection<Page>> released = new LinkedList<>();
 
   /*
    * This map is only accessed by one thread on write due to write exclusion at
@@ -71,11 +72,11 @@ public class OffHeapStorageArea {
    * sufficient. Switching to a Hashtable/Collections.synchronizedMap(...) would
    * be bad however as we need concurrent read access still.
    */
-  private final Map<Integer, Page> pages = new ConcurrentHashMap<Integer, Page>(1, 0.75f, 1);
+  private final Map<Integer, Page> pages = new ConcurrentHashMap<>(1, 0.75f, 1);
 
   private final boolean thief;
   private final boolean victim;
-  
+
   public OffHeapStorageArea(PointerSize width, Owner owner, PageSource pageSource, int pageSize, boolean thief, boolean victim) {
     this(width, owner, pageSource, pageSize, pageSize, thief, victim);
   }
@@ -92,10 +93,10 @@ public class OffHeapStorageArea {
     if (victim && maximalPageSize != initialPageSize) {
       throw new IllegalArgumentException("Variable page-size offheap storage areas cannot be victims as they do not support stealing.");
     }
-    
+
     this.owner = owner;
     this.pageSource = pageSource;
-    
+
     switch (width) {
       case INT:
         this.allocator = new IntegerBestFitAllocator(this);
@@ -142,7 +143,7 @@ public class OffHeapStorageArea {
 
     return pages.get(pageIndex).asByteBuffer().get(pageAddress);
   }
-  
+
   public short readShort(long address) {
     int pageIndex = pageIndexFor(address);
     int pageAddress = pageAddressFor(address);
@@ -162,7 +163,7 @@ public class OffHeapStorageArea {
       return value;
     }
   }
-  
+
   public int readInt(long address) {
     int pageIndex = pageIndexFor(address);
     int pageAddress = pageAddressFor(address);
@@ -203,28 +204,62 @@ public class OffHeapStorageArea {
     }
   }
 
+  /**
+   * Read the given range and return the data as a single read-only {@code ByteBuffer}.
+   *
+   * @param address address to read from
+   * @param length number of bytes to read
+   * @return a read-only buffer
+   */
   public ByteBuffer readBuffer(long address, int length) {
+    ByteBuffer[] buffers = readBuffers(address, length);
+    if (buffers.length == 1) {
+      return buffers[0];
+    } else {
+      ByteBuffer copy = ByteBuffer.allocate(length);
+      for (ByteBuffer b : buffers) {
+        copy.put(b);
+      }
+      return ((ByteBuffer) copy.flip()).asReadOnlyBuffer();
+    }
+  }
+
+  /**
+   * Read the given range and return the data as an array of read-only {@code ByteBuffer}s.
+   *
+   * @param address address to read from
+   * @param length number of bytes to read
+   * @return an array of read-only buffers
+   */
+  public ByteBuffer[] readBuffers(long address, int length) {
     int pageIndex = pageIndexFor(address);
     int pageAddress = pageAddressFor(address);
     int pageSize = pageSizeFor(pageIndex);
 
     if (pageAddress + length <= pageSize) {
-      ByteBuffer buffer = pages.get(pageIndex).asByteBuffer();
-      return ((ByteBuffer) buffer.duplicate().limit(pageAddress + length).position(pageAddress)).slice().asReadOnlyBuffer();
+      ByteBuffer pageBuffer = pages.get(pageIndex).asByteBuffer().duplicate();
+      ByteBuffer buffer = ((ByteBuffer) pageBuffer
+              .limit(pageAddress + length)
+              .position(pageAddress))
+              .slice().asReadOnlyBuffer();
+      return new ByteBuffer[] { buffer };
     } else {
-      ByteBuffer data = ByteBuffer.allocate(length);
-      while (data.hasRemaining()) {
-        ByteBuffer buffer = pages.get(pageIndex).asByteBuffer().duplicate();
-        buffer.position(pageAddress);
-        if (buffer.remaining() > data.remaining()) {
-          buffer.limit(buffer.position() + data.remaining());
+      List<ByteBuffer> buffers = new ArrayList<>(length / pageSize);
+      int remaining = length;
+      while (remaining > 0) {
+        ByteBuffer pageBuffer = pages.get(pageIndex).asByteBuffer().duplicate();
+        pageBuffer.position(pageAddress);
+        if (pageBuffer.remaining() > remaining) {
+          pageBuffer.limit(pageBuffer.position() + remaining);
         }
+        ByteBuffer buffer = pageBuffer.slice().asReadOnlyBuffer();
         address += buffer.remaining();
-        data.put(buffer);
+        remaining -= buffer.remaining();
+        buffers.add(buffer);
         pageIndex = pageIndexFor(address);
         pageAddress = pageAddressFor(address);
       }
-      return ((ByteBuffer) data.flip()).asReadOnlyBuffer();
+      return buffers.toArray(EMPTY_BUFFER_ARRAY);
     }
   }
 
@@ -234,7 +269,7 @@ public class OffHeapStorageArea {
 
     pages.get(pageIndex).asByteBuffer().put(pageAddress, value);
   }
-  
+
   public void writeShort(long address, short value) {
     int pageIndex = pageIndexFor(address);
     int pageAddress = pageAddressFor(address);
@@ -253,7 +288,7 @@ public class OffHeapStorageArea {
       }
     }
   }
-  
+
   public void writeInt(long address, int value) {
     int pageIndex = pageIndexFor(address);
     int pageAddress = pageAddressFor(address);
@@ -291,7 +326,7 @@ public class OffHeapStorageArea {
       }
     }
   }
-  
+
   public void writeBuffer(long address, ByteBuffer data) {
     int pageIndex = pageIndexFor(address);
     int pageAddress = pageAddressFor(address);
@@ -331,7 +366,7 @@ public class OffHeapStorageArea {
       address += length;
     }
   }
-  
+
   public void free(long address) {
     allocator.free(address);
     if (compressThreshold > 0) {
@@ -341,15 +376,15 @@ public class OffHeapStorageArea {
       }
     }
   }
-  
+
   private boolean compress() {
     long lastAddress = allocator.getLastUsedPointer();
     int sizeOfArea = owner.sizeOf(lastAddress);
-    
+
     long compressed = allocator.allocate(sizeOfArea);
     if (compressed >= 0) {
       if (compressed < lastAddress) {
-        writeBuffer(compressed, readBuffer(lastAddress, sizeOfArea));
+        writeBuffers(compressed, readBuffers(lastAddress, sizeOfArea));
         if (owner.moved(lastAddress, compressed)) {
           allocator.free(lastAddress);
           return true;
@@ -401,8 +436,8 @@ public class OffHeapStorageArea {
         long before = getAllocatedMemory();
         long after = before + newPageSize;
         LOGGER.debug("Data area expanded from {}B to {}B [occupation={}]",
-            new Object[] {toBase2SuffixedString(before), toBase2SuffixedString(after),
-            ((float) allocator.occupied()) / after});
+            toBase2SuffixedString(before), toBase2SuffixedString(after),
+            ((float) allocator.occupied()) / after);
       }
       return true;
     } else {
@@ -517,9 +552,9 @@ public class OffHeapStorageArea {
       ownerLock.lock();
     }
     try {
-      Collection<Page> recovered = new LinkedList<Page>();
-      Collection<Page> freed = new LinkedList<Page>();
-      /**
+      Collection<Page> recovered = new LinkedList<>();
+      Collection<Page> freed = new LinkedList<>();
+      /*
        * iterate backwards from top, and free until top is beneath tail page.
        */
       while (freed.size() < targets.size()) {
@@ -538,7 +573,7 @@ public class OffHeapStorageArea {
           validatePages();
           break;
         } else {
-          Collection<Page> releasedPages = new ArrayList<Page>();
+          Collection<Page> releasedPages = new ArrayList<>();
           released.push(releasedPages);
           try {
             if (owner.evictAtAddress(remove, true) || moveAddressDown(remove)) {
@@ -588,12 +623,12 @@ public class OffHeapStorageArea {
   private boolean moveAddressDown(long target) {
     //we must move this address to a new location
     int sizeOfArea = owner.sizeOf(target);
-    
+
     long ceiling = addressForPage(Math.max(0, pageIndexFor(target) - 2)) + 1;
     long startAt = random.nextLong() % ceiling; //check for negative results??
-    
+
     Iterator<Long> pointers = allocator.iterator();
-    
+
     while (pointers.hasNext() && pointers.next() < startAt);
 
     while (pointers.hasNext()) {
@@ -602,7 +637,7 @@ public class OffHeapStorageArea {
         long relocated = allocator.allocate(sizeOfArea);
         if (relocated >= 0) {
           if (relocated < target) {
-            writeBuffer(relocated, readBuffer(target, sizeOfArea));
+            writeBuffers(relocated, readBuffers(target, sizeOfArea));
             if (!owner.moved(target, relocated)) {
               throw new AssertionError("Failure to move mapping during release");
             }
@@ -614,9 +649,9 @@ public class OffHeapStorageArea {
         }
       }
     }
-    
+
     LOGGER.debug("Random Eviction Failure Migration Failed - Using Biased Approach");
-    
+
     for (long address : allocator) {
       if (address < target && owner.evictAtAddress(address, false)) {
         long relocated = allocator.allocate(sizeOfArea);
@@ -643,7 +678,7 @@ public class OffHeapStorageArea {
         return false;
       } else {
         int initialSize = pages.size();
-        for (Page p : release(new LinkedList<Page>(Collections.singletonList(pages.get(pages.size() - 1))))) {
+        for (Page p : release(new LinkedList<>(Collections.singletonList(pages.get(pages.size() - 1))))) {
           freePage(p);
         }
         return pages.size() < initialSize;
@@ -663,23 +698,23 @@ public class OffHeapStorageArea {
     return -1;
   }
 
-  public static interface Owner {
+  public interface Owner {
     boolean evictAtAddress(long address, boolean shrink);
 
     Lock writeLock();
-    
+
     boolean isThief();
 
-    public boolean moved(long shift, long pointer);
+    boolean moved(long shift, long pointer);
 
-    public int sizeOf(long shift);
+    int sizeOf(long shift);
   }
 
   private void validatePages() {
     if (VALIDATING) {
       for (int i = 0; i < pages.size(); i++) {
         if (pages.get(i) == null) {
-          List<Integer> pageIndices = new ArrayList<Integer>(pages.keySet());
+          List<Integer> pageIndices = new ArrayList<>(pages.keySet());
           Collections.sort(pageIndices);
           throw new AssertionError("Page Indices " + pageIndices);
         }

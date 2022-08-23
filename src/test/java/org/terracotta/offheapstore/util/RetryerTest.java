@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,27 +41,27 @@ import static org.mockito.Mockito.verify;
  * @author cdennis
  */
 public class RetryerTest {
-  
+
   @Test(expected = IllegalArgumentException.class)
   public void testIaeOnNullTimeUnit() {
     new Retryer(1, 2, null, defaultThreadFactory());
   }
-  
+
   @Test(expected = IllegalArgumentException.class)
   public void testIaeOnNullThreadFactory() {
     new Retryer(1, 2, MILLISECONDS, null);
   }
-  
+
   @Test(expected = IllegalArgumentException.class)
   public void testIaeOnIllegalMinDelay() {
     new Retryer(0, 2, MILLISECONDS, defaultThreadFactory());
   }
-  
+
   @Test(expected = IllegalArgumentException.class)
   public void testIaeOnIllegalMaxDelay() {
     new Retryer(2, 1, MILLISECONDS, defaultThreadFactory());
   }
-  
+
   @Test
   public void testSuccessfullTaskIsNotRetried() {
     Retryer retryer = new Retryer(1, 1, TimeUnit.MILLISECONDS, defaultThreadFactory());
@@ -88,18 +88,18 @@ public class RetryerTest {
       retryer.shutdownNow();
     }
   }
-  
+
   @Test
   public void testRetriesBackOffCorrectly() {
     Retryer retryer = new Retryer(100, 1000, TimeUnit.MILLISECONDS, defaultThreadFactory());
     try {
-      final Map<Integer, Long> executionTimes = new ConcurrentHashMap<Integer, Long>();
-      
+      final Map<Integer, Long> executionTimes = new ConcurrentHashMap<>();
+
       Runnable task = mock(Runnable.class);
       doAnswer(new Answer() {
 
         private volatile int executions;
-        
+
         @Override
         public Object answer(InvocationOnMock invocation) throws Throwable {
           executionTimes.put(executions, System.currentTimeMillis());
@@ -116,26 +116,23 @@ public class RetryerTest {
       retryer.completeAsynchronously(task);
 
       verify(task, timeout(500).times(3)).run();
-      
+
       long deltaOne = executionTimes.get(1) - executionTimes.get(0);
       long deltaTwo = executionTimes.get(2) - executionTimes.get(1);
-      
+
       assertThat(deltaTwo, greaterThan(deltaOne));
     } finally {
       retryer.shutdownNow();
     }
   }
-  
+
   @Test
   public void testShutdownRetryerRefuses() {
     Retryer retryer = new Retryer(1, 1, TimeUnit.MILLISECONDS, defaultThreadFactory());
     retryer.shutdownNow();
-    
+
     try {
-      retryer.completeAsynchronously(new Runnable() {
-        @Override
-        public void run() {
-        }
+      retryer.completeAsynchronously(() -> {
       });
       fail("Expected RejectedExecutionException");
     } catch (RejectedExecutionException e) {

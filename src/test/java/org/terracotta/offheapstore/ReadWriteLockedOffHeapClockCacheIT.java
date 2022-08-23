@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -58,14 +58,15 @@ public class ReadWriteLockedOffHeapClockCacheIT extends AbstractConcurrentOffHea
   public void testCacheEviction() {
     assumeThat(generator, is(GOOD_GENERATOR));
     CapacityLimitedIntegerStorageEngineFactory factory = new CapacityLimitedIntegerStorageEngineFactory();
-    CacheTestRoutines.testCacheEviction(new ReadWriteLockedOffHeapClockCache<Integer, Integer>(new UnlimitedPageSource(new OffHeapBufferSource()), factory.newInstance(), 1), factory);
+    CacheTestRoutines.testCacheEviction(new ReadWriteLockedOffHeapClockCache<>(new UnlimitedPageSource(new OffHeapBufferSource()), factory
+      .newInstance(), 1), factory);
   }
 
   @Test
   public void testCacheEvictionDueToTableResizeFailure() {
     assumeThat(generator, is(GOOD_GENERATOR));
     for (int i = 1; i < 100; i++) {
-      CacheTestRoutines.testCacheEvictionMinimal(new ReadWriteLockedOffHeapClockCache<Integer, Integer>(new PhantomReferenceLimitedPageSource(16 * i), new SplitStorageEngine<Integer, Integer>(new IntegerStorageEngine(), new IntegerStorageEngine()), 1));
+      CacheTestRoutines.testCacheEvictionMinimal(new ReadWriteLockedOffHeapClockCache<>(new PhantomReferenceLimitedPageSource(16 * i), new SplitStorageEngine<>(new IntegerStorageEngine(), new IntegerStorageEngine()), 1));
     }
   }
 
@@ -73,7 +74,12 @@ public class ReadWriteLockedOffHeapClockCacheIT extends AbstractConcurrentOffHea
   public void testCacheFillBehavior() {
     CacheTestRoutines.testFillBehavior(createOffHeapBufferMap(new UpfrontAllocatingPageSource(new HeapBufferSource(), MemoryUnit.KILOBYTES.toBytes(8), MemoryUnit.KILOBYTES.toBytes(8))));
   }
-  
+
+  @Test
+  public void testCacheComputeEvictionBehavior() {
+    CacheTestRoutines.testComputeEvictionBehavior(createOffHeapBufferMap(new UpfrontAllocatingPageSource(new HeapBufferSource(), MemoryUnit.KILOBYTES.toBytes(8), MemoryUnit.KILOBYTES.toBytes(8))));
+  }
+
   @Test
   public void testCacheEvictionThreshold() {
     CacheTestRoutines.testCacheEvictionThreshold(createOffHeapBufferMap(new PhantomReferenceLimitedPageSource(4 * 1024)));
@@ -81,12 +87,12 @@ public class ReadWriteLockedOffHeapClockCacheIT extends AbstractConcurrentOffHea
 
   @Override
   protected ConcurrentMap<SpecialInteger, SpecialInteger> createMap(Generator generator) {
-    return new ReadWriteLockedOffHeapClockCache<SpecialInteger, SpecialInteger>(new UnlimitedPageSource(new OffHeapBufferSource()), generator.engine(), 1);
+    return new ReadWriteLockedOffHeapClockCache<>(new UnlimitedPageSource(new OffHeapBufferSource()), generator.engine(), 1);
   }
 
   @Override
   protected ConcurrentMap<Integer, byte[]> createOffHeapBufferMap(PageSource source) {
     assumeThat(generator, is(GOOD_GENERATOR));
-    return new ReadWriteLockedOffHeapClockCache<Integer, byte[]>(source, new SplitStorageEngine<Integer, byte[]>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<byte[]>(source, 1024, ByteArrayPortability.INSTANCE)));
+    return new ReadWriteLockedOffHeapClockCache<>(source, new SplitStorageEngine<>(new IntegerStorageEngine(), new OffHeapBufferHalfStorageEngine<>(source, 1024, ByteArrayPortability.INSTANCE)));
   }
 }

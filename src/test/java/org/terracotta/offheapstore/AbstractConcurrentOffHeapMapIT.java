@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +15,8 @@
  */
 package org.terracotta.offheapstore;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentMap;
@@ -24,6 +26,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import org.terracotta.offheapstore.buffersource.HeapBufferSource;
+import org.terracotta.offheapstore.concurrent.AbstractConcurrentOffHeapCache;
 import org.terracotta.offheapstore.paging.UnlimitedPageSource;
 import org.terracotta.offheapstore.util.Generator;
 import org.terracotta.offheapstore.util.Generator.SpecialInteger;
@@ -31,13 +34,17 @@ import java.util.Iterator;
 
 import java.util.concurrent.atomic.AtomicReference;
 import static org.hamcrest.core.AnyOf.anyOf;
+import static org.hamcrest.core.CombinableMatcher.either;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
+import static org.hamcrest.core.IsInstanceOf.instanceOf;
+import static org.hamcrest.core.IsNot.not;
 import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeThat;
 
 /**
  *
@@ -80,18 +87,18 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
       //expected
     }
   }
-  
+
   @Test
   public final void testConcurrentMap() {
     long randomSeed = System.nanoTime();
     System.err.println(this.getClass() + ".testConcurrentMap random seed = " + randomSeed);
     Random rndm = new Random(randomSeed);
-    
+
     ConcurrentMap<SpecialInteger, SpecialInteger> m = createMap(generator);
-    
+
     SpecialInteger keyOne = generator.generate(rndm.nextInt());
     SpecialInteger valueOne = generator.generate(rndm.nextInt());
-    
+
     assertThat(m.putIfAbsent(keyOne, valueOne), nullValue());
     assertTrue(m.containsKey(keyOne));
     assertThat(m.putIfAbsent(keyOne, generator.generate(rndm.nextInt())), is(valueOne));
@@ -101,12 +108,12 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
     assertTrue(m.containsKey(keyOne));
     assertTrue(m.containsKey(keyOne));
     assertThat(m.get(keyOne), is(valueOne));
-    
+
     SpecialInteger valueTwo = generator.generate(5555);
     assertTrue(m.replace(keyOne, valueOne, valueTwo));
     assertTrue(m.replace(keyOne, valueTwo, valueOne));
     assertThat(m.get(keyOne), is(valueOne));
-    
+
     SpecialInteger keyTwo;
     do {
       keyTwo = generator.generate(rndm.nextInt());
@@ -123,7 +130,7 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
     do {
       valueThree = generator.generate(rndm.nextInt());
     } while (valueOne.equals(valueThree));
-    
+
     assertFalse(m.remove(keyOne, valueThree));
     assertThat(m.get(keyOne), is(valueOne));
     assertTrue(m.containsKey(keyOne));
@@ -133,7 +140,7 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
     assertThat(m.get(keyOne), nullValue());
     assertFalse(m.containsKey(keyOne));
     assertTrue(m.isEmpty());
-    
+
     SpecialInteger keyThree = generator.generate(rndm.nextInt());
     SpecialInteger valueFour = generator.generate(rndm.nextInt());
     m.putIfAbsent(keyThree, valueFour);
@@ -151,14 +158,11 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
     final Throwable[] failure = new Throwable[1];
     final int maximumSize = 1000;
 
-    Thread loader = new Thread() {
-      @Override
-      public void run() {
-        for (int i = 0; i < maximumSize; i++) {
-          m.put(generator.generate(i), generator.generate(i));
-        }
+    Thread loader = new Thread(() -> {
+      for (int i = 0; i < maximumSize; i++) {
+        m.put(generator.generate(i), generator.generate(i));
       }
-    };
+    });
 
     Thread tester = new Thread(new SubCollectionTester(m, maximumSize, failure));
 
@@ -179,14 +183,11 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
     final Throwable[] failure = new Throwable[1];
     final int maximumSize = 1000;
 
-    Thread loader = new Thread() {
-      @Override
-      public void run() {
-        for (int i = 0; i < maximumSize; i++) {
-          m.put(generator.generate(i), generator.generate(i));
-        }
+    Thread loader = new Thread(() -> {
+      for (int i = 0; i < maximumSize; i++) {
+        m.put(generator.generate(i), generator.generate(i));
       }
-    };
+    });
 
     Thread tester1 = new Thread(new SubCollectionTester(m, maximumSize, failure));
     Thread tester2 = new Thread(new SubCollectionTester(m, maximumSize, failure));
@@ -230,35 +231,31 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
 
     Assert.assertThat(e.getValue(), anyOf(equalTo(generator.generate(2)), equalTo(generator.generate(3))));
   }
-  
+
   @Test
   public final void testConcurrentIterationAndMutation() {
     final ConcurrentMap<SpecialInteger, SpecialInteger> m = createMap(generator);
     final AtomicBoolean stopped = new AtomicBoolean(false);
-    Thread mutator = new Thread() {
-
-      @Override
-      public void run() {
-        int counter = 0;
-        Random rndm = new Random();
-        while (!stopped.get()) {
-          if (++counter == 25) {
-            counter = 0;
-            // Fixing reader starvation on some JVMs / Hardware combinations
-            Thread.yield();
-          }
-          int v = rndm.nextInt(8192);
-          if (rndm.nextBoolean()) {
-            m.remove(generator.generate(v));
-          } else {
-            m.put(generator.generate(v), generator.generate(v));
-          }
+    Thread mutator = new Thread(() -> {
+      int counter = 0;
+      Random rndm = new Random();
+      while (!stopped.get()) {
+        if (++counter == 25) {
+          counter = 0;
+          // Fixing reader starvation on some JVMs / Hardware combinations
+          Thread.yield();
+        }
+        int v = rndm.nextInt(8192);
+        if (rndm.nextBoolean()) {
+          m.remove(generator.generate(v));
+        } else {
+          m.put(generator.generate(v), generator.generate(v));
         }
       }
-    };
-    
+    });
+
     mutator.start();
-    
+
     boolean interrupted = false;
     try {
       for (int i = 0; i < 10; i++) {
@@ -297,34 +294,30 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
   public final void testConcurrentIterationAndMutationWithHalfOffHeapStorageEngine() {
     final Map<Integer, byte[]> m = createOffHeapBufferMap(new UnlimitedPageSource(new HeapBufferSource()));
 
-    final AtomicReference<Throwable> mutatorExceptionRef = new AtomicReference<Throwable>();
+    final AtomicReference<Throwable> mutatorExceptionRef = new AtomicReference<>();
     final AtomicBoolean stopped = new AtomicBoolean(false);
-    Thread mutator = new Thread() {
-
-      @Override
-      public void run() {
-        try {
-          Random rndm = new Random();
-          while (!stopped.get()) {
-            Integer v = rndm.nextInt(8192);
-            if (rndm.nextBoolean()) {
-              m.remove(v);
-            } else {
-              byte[] value = new byte[v >>> 3];
-              for (int i = 0; i < value.length; i++) {
-                value[i] = (byte) (i % 10);
-              }
-              m.put(v, value);
+    Thread mutator = new Thread(() -> {
+      try {
+        Random rndm = new Random();
+        while (!stopped.get()) {
+          Integer v = rndm.nextInt(8192);
+          if (rndm.nextBoolean()) {
+            m.remove(v);
+          } else {
+            byte[] value = new byte[v >>> 3];
+            for (int i = 0; i < value.length; i++) {
+              value[i] = (byte) (i % 10);
             }
+            m.put(v, value);
           }
-        } catch (Throwable t) {
-          mutatorExceptionRef.set(t);
         }
+      } catch (Throwable t) {
+        mutatorExceptionRef.set(t);
       }
-    };
-    
+    });
+
     mutator.start();
-    
+
     boolean interrupted = false;
     try {
       for (int i = 0; i < 10; i++) {
@@ -332,7 +325,7 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
         for (Map.Entry<Integer, byte[]> e : m.entrySet()) {
           Integer key = e.getKey();
           byte[] value = e.getValue();
-          Assert.assertEquals(key.intValue() >>> 3, value.length);
+          Assert.assertEquals(key >>> 3, value.length);
           for (int j = 0; j < value.length; j++) {
             Assert.assertEquals(j % 10, value[j]);
           }
@@ -361,7 +354,7 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
         Thread.currentThread().interrupt();
       }
     }
-    
+
     Throwable mutatorException = mutatorExceptionRef.get();
     if (mutatorException != null) {
       throw new AssertionError(mutatorException);
@@ -372,36 +365,32 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
   public final void testConcurrentIterationMutationAndClearingWithHalfOffHeapStorageEngine() {
     final Map<Integer, byte[]> m = createOffHeapBufferMap(new UnlimitedPageSource(new HeapBufferSource()));
 
-    final AtomicReference<Throwable> mutatorExceptionRef = new AtomicReference<Throwable>();
+    final AtomicReference<Throwable> mutatorExceptionRef = new AtomicReference<>();
     final AtomicBoolean stopped = new AtomicBoolean(false);
-    Thread mutator = new Thread() {
-
-      @Override
-      public void run() {
-        try {
-          Random rndm = new Random();
-          while (!stopped.get()) {
-            Integer v = rndm.nextInt(8192);
-            if (rndm.nextInt(100) == 0) {
-              m.clear();
-            } else if (rndm.nextBoolean()) {
-              m.remove(v);
-            } else {
-              byte[] value = new byte[v >>> 3];
-              for (int i = 0; i < value.length; i++) {
-                value[i] = (byte) (i % 10);
-              }
-              m.put(v, value);
+    Thread mutator = new Thread(() -> {
+      try {
+        Random rndm = new Random();
+        while (!stopped.get()) {
+          Integer v = rndm.nextInt(8192);
+          if (rndm.nextInt(100) == 0) {
+            m.clear();
+          } else if (rndm.nextBoolean()) {
+            m.remove(v);
+          } else {
+            byte[] value = new byte[v >>> 3];
+            for (int i = 0; i < value.length; i++) {
+              value[i] = (byte) (i % 10);
             }
+            m.put(v, value);
           }
-        } catch (Throwable t) {
-          mutatorExceptionRef.set(t);
         }
+      } catch (Throwable t) {
+        mutatorExceptionRef.set(t);
       }
-    };
-    
+    });
+
     mutator.start();
-    
+
     boolean interrupted = false;
     try {
       for (int i = 0; i < 10; i++) {
@@ -409,7 +398,7 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
         for (Map.Entry<Integer, byte[]> e : m.entrySet()) {
           Integer key = e.getKey();
           byte[] value = e.getValue();
-          Assert.assertEquals(key.intValue() >>> 3, value.length);
+          Assert.assertEquals(key >>> 3, value.length);
           for (int j = 0; j < value.length; j++) {
             Assert.assertEquals(j % 10, value[j]);
           }
@@ -438,19 +427,47 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
         Thread.currentThread().interrupt();
       }
     }
-    
+
     Throwable mutatorException = mutatorExceptionRef.get();
     if (mutatorException != null) {
       throw new AssertionError(mutatorException);
     }
   }
-  
+
+  @Test
+  public void testConcurrentUpdateOfKeyWhileIterating() {
+    final Map<SpecialInteger, SpecialInteger> m = createMap(generator);
+
+    assumeThat(m, not(either(instanceOf(AbstractConcurrentOffHeapCache.class))
+                    .or(instanceOf(AbstractOffHeapClockCache.class))));
+
+    m.put(generator.generate(1024), generator.generate(1024));
+    m.put(generator.generate(1), generator.generate(1));
+
+    List<Iterator<SpecialInteger>> iterators = new ArrayList<>(1024);
+    for (int i = 0; i < 1024; i++) {
+      iterators.add(m.keySet().iterator());
+      m.put(generator.generate(i), generator.generate(i));
+      m.put(generator.generate(1024), generator.generate(i));
+    }
+
+    for (Iterator<SpecialInteger> it : iterators) {
+      boolean foundMagicKey = false;
+      while (it.hasNext()) {
+        if (it.next().equals(generator.generate(1024))) {
+          foundMagicKey = true;
+        }
+      }
+      assertTrue(foundMagicKey);
+    }
+  }
+
   static class SubCollectionTester implements Runnable {
 
     private final Throwable[] failure;
     private final Map<?, ?> map;
     private final int maximumSize;
-    
+
     private int previousSize = 0;
 
     SubCollectionTester(Map<?, ?> map, int max, Throwable[] failure) {
@@ -458,7 +475,7 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
       this.map = map;
       this.maximumSize = max;
     }
-    
+
     private boolean check(int size) {
       if (size < previousSize) throw new AssertionError("Map has shrunk?");
       if (size > maximumSize) throw new AssertionError("Max bigger than possible?");
@@ -482,6 +499,6 @@ public abstract class AbstractConcurrentOffHeapMapIT extends AbstractOffHeapMapI
         failure[0] = t;
       }
     }
-    
+
   }
 }

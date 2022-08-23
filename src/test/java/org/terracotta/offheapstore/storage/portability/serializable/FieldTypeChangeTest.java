@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2015 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,14 +33,14 @@ import static org.junit.Assert.fail;
  * @author cdennis
  */
 public class FieldTypeChangeTest {
-  
+
   @Test
   public void fieldTypeChangeWithOkayObject() throws Exception {
     Portability<Serializable> p = new SerializablePortability();
-    
+
     ClassLoader loaderW = createClassNameRewritingLoader(Foo_W.class);
     Serializable a = (Serializable) loaderW.loadClass(newClassName(Foo_W.class)).getConstructor(Object.class).newInstance("foo");
-    
+
     pushTccl(createClassNameRewritingLoader(Foo_R.class));
     try {
       p.decode(p.encode(a));
@@ -48,15 +48,15 @@ public class FieldTypeChangeTest {
       popTccl();
     }
   }
-  
+
   @Test
   public void fieldTypeChangeWithIncompatibleObject() throws Exception {
     Portability<Serializable> p = new SerializablePortability();
-    
+
     ClassLoader loaderW = createClassNameRewritingLoader(Foo_W.class);
-    
-    Serializable a = (Serializable) loaderW.loadClass(newClassName(Foo_W.class)).getConstructor(Object.class).newInstance(Integer.valueOf(42));
-    
+
+    Serializable a = (Serializable) loaderW.loadClass(newClassName(Foo_W.class)).getConstructor(Object.class).newInstance(42);
+
     pushTccl(createClassNameRewritingLoader(Foo_R.class));
     try {
       p.decode(p.encode(a));
@@ -67,7 +67,7 @@ public class FieldTypeChangeTest {
       popTccl();
     }
   }
-  
+
   public static class Foo_W implements Serializable {
     private static final long serialVersionUID = 0L;
     Object obj;
@@ -76,7 +76,7 @@ public class FieldTypeChangeTest {
         this.obj = obj;
     }
   }
-  
+
   public static class Foo_R implements Serializable {
     private static final long serialVersionUID = 0L;
     String obj;
