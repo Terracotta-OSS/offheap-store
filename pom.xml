@@ -42,8 +42,8 @@ limitations under the License.
     <slf4j.range.version>[${slf4j.base.version},1.7.9999)</slf4j.range.version>
     <logback.base.version>1.2.11</logback.base.version>
     <logback.range.version>[${logback.base.version},1.2.9999)</logback.range.version>
-    <terracotta-os-snapshots-url>http://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-snapshots</terracotta-os-snapshots-url>
-    <terracotta-os-releases-url>http://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-releases</terracotta-os-releases-url>
+    <terracotta-os-snapshots-url>https://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-snapshots</terracotta-os-snapshots-url>
+    <terracotta-os-releases-url>https://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-releases</terracotta-os-releases-url>
     <skipJavadoc>false</skipJavadoc>
     <jacocoArgs></jacocoArgs>
   </properties>
@@ -357,7 +357,7 @@ limitations under the License.
       <distributionManagement>
         <repository>
           <id>sonatype-nexus-staging</id>
-          <url>http://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+          <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
         </repository>
       </distributionManagement>
     </profile>
