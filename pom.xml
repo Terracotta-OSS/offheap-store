@@ -20,7 +20,7 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>offheap-store</artifactId>
-      <version>2.5.3</version>
+      <version>2.5.4</version>
     </dependency>
     <dependency>
       <groupId>com.terracottatech</groupId>
@@ -128,6 +128,19 @@
       <url>${terracotta-ee-snapshots-url}</url>
     </snapshotRepository>
   </distributionManagement>
+
+  <repositories>
+    <repository>
+      <id>terracotta-ee-releases</id>
+      <name>Terracotta EE Releases</name>
+      <url>https://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-ee-releases</url>
+    </repository>
+    <repository>
+      <id>terracotta</id>
+      <name>Terracotta</name>
+      <url>https://repo.terracotta.org/maven2</url>
+    </repository>
+  </repositories>
 
   <scm>
     <connection>scm:git:git@github.softwareag.com:Terracotta-Legacy/offheap-restartable-store.git</connection>
