@@ -329,20 +329,32 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
 
   @Override
   public long getAllocatedMemory() {
-    long sum = 0;
-    for (FileChunk c : chunks.values()) {
-      sum += c.capacity();
+    Lock ownerLock = owner.readLock();
+    ownerLock.lock();
+    try {
+      long sum = 0;
+      for (FileChunk c : chunks.values()) {
+        sum += c.capacity();
+      }
+      return sum;
+    } finally {
+      ownerLock.unlock();
     }
-    return sum;
   }
 
   @Override
   public long getOccupiedMemory() {
-    long sum = 0;
-    for (FileChunk c : chunks.values()) {
-      sum += c.occupied();
+    Lock ownerLock = owner.readLock();
+    ownerLock.lock();
+    try {
+      long sum = 0;
+      for (FileChunk c : chunks.values()) {
+        sum += c.occupied();
+      }
+      return sum;
+    } finally {
+      ownerLock.unlock();
     }
-    return sum;
   }
 
   @Override
@@ -352,11 +364,17 @@ public class FileBackedStorageEngine<K, V> extends PortabilityBasedStorageEngine
 
   @Override
   public long getDataSize() {
-    long sum = 0;
-    for (FileChunk c : chunks.values()) {
-      sum += c.occupied();
+    Lock ownerLock = owner.readLock();
+    ownerLock.lock();
+    try {
+      long sum = 0;
+      for (FileChunk c : chunks.values()) {
+        sum += c.occupied();
+      }
+      return sum;
+    } finally {
+      ownerLock.unlock();
     }
-    return sum;
   }
 
   private FileChunk findChunk(long address) {
