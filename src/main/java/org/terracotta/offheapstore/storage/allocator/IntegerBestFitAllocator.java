@@ -1,5 +1,5 @@
-/* 
- * Copyright 2015 Terracotta, Inc., a Software AG company.
+/*
+ * Copyright 2015-2023 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 /*
  * This file contains a Java port of Doug Lea's malloc implementation
  * (ftp://g.oswego.edu/pub/misc/malloc.c), which has been released to the public
@@ -31,7 +30,7 @@ import static org.terracotta.offheapstore.util.Validation.validate;
 
 /**
  * An aggressively best-fit allocator.
- * 
+ *
  * @author Chris Dennis
  */
 public final class IntegerBestFitAllocator implements Allocator {
@@ -44,10 +43,10 @@ public final class IntegerBestFitAllocator implements Allocator {
   private static final int SIZE_T_BITSIZE    = Integer.SIZE;
 
   private static final int MALLOC_ALIGNMENT = 2 * SIZE_T_SIZE;
-  
+
   /* The bit mask value corresponding to MALLOC_ALIGNMENT */
   private static final int CHUNK_ALIGN_MASK  = MALLOC_ALIGNMENT - 1;
-  
+
   /* ------------------- Chunks sizes and alignments ----------------------- */
   private static final int MCHUNK_SIZE       = 4 * SIZE_T_SIZE;
 
@@ -61,11 +60,11 @@ public final class IntegerBestFitAllocator implements Allocator {
   private static final int MIN_REQUEST       = MIN_CHUNK_SIZE - CHUNK_OVERHEAD - 1;
 
   private static final int TOP_FOOT_SIZE     = alignOffset(chunkToMem(0)) + padRequest(MIN_CHUNK_SIZE);
-  
+
   private static final int MINIMAL_SIZE       = Integer.highestOneBit(TOP_FOOT_SIZE) << 1;
-  
+
   private static final int TOP_FOOT_OFFSET    = memToChunk(0) + TOP_FOOT_SIZE;
-  
+
   /* ------------------ Operations on head and foot fields ----------------- */
 
   /*
@@ -95,18 +94,18 @@ public final class IntegerBestFitAllocator implements Allocator {
 
   private int smallMap;
   private int treeMap;
-  
+
   private final int[] smallBins = new int[NSMALLBINS];
   private final int[] treeBins = new int[NTREEBINS];
-  
+
   private int designatedVictimSize = 0;
   private int designatedVictim = -1;
-  
+
   private int topSize = 0;
   private int top = 0;
-  
+
   private int occupied;
-  
+
   /**
    * Create a best fit allocator backed by the given OffHeapStorageArea.
    *
@@ -204,20 +203,20 @@ public final class IntegerBestFitAllocator implements Allocator {
      *   3. If it is big enough, use the top chunk.
      *   4. If request size >= mmap threshold, try to directly mmap this chunk.
      *   5. If available, get memory from system and use it
-     * 
+     *
      */
-    
+
     int nb = (bytes < MIN_REQUEST) ? MIN_CHUNK_SIZE : padRequest(bytes); //internal request size;
-    
-    if (bytes <= MAX_SMALL_REQUEST) {      
+
+    if (bytes <= MAX_SMALL_REQUEST) {
       int index = smallBinIndex(nb);
-      
+
       //bit map of all occupied bins big enough for this request
       int smallBits = smallMap >>> index;
-    
+
       if ((smallBits & 0x3) != 0) {
         //remainderless fit to a small bin is possible
-        index += ~smallBits & 1; //use next bin if ours is empty        
+        index += ~smallBits & 1; //use next bin if ours is empty
 
         return allocateFromSmallBin(index, nb);
       } else if (nb > designatedVictimSize) {
@@ -235,23 +234,23 @@ public final class IntegerBestFitAllocator implements Allocator {
         return mem;
       }
     }
-    
+
     if (nb <= designatedVictimSize) {
       return splitFromDesignatedVictim(nb);
     } else if (nb < topSize) {
       return splitFromTop(nb);
     }
-    
+
     return -1;
   }
 
   private int allocateFromSmallBin(int index, int nb) {
     int h = smallBins[index];
     validate(!VALIDATING || chunkSize(h) == smallBinIndexToSize(index));
-    
+
     int f = forward(h);
     int b = backward(h);
-    
+
     if (f == h) {
       validate(!VALIDATING || b == h);
       clearSmallMap(index);
@@ -270,10 +269,10 @@ public final class IntegerBestFitAllocator implements Allocator {
   private int splitFromSmallBin(int index, int nb) {
     int h = smallBins[index];
     validate(!VALIDATING || chunkSize(h) == smallBinIndexToSize(index));
-    
+
     int f = forward(h);
     int b = backward(h);
-    
+
     if (f == h) {
       validate(!VALIDATING || b == h);
       clearSmallMap(index);
@@ -283,9 +282,9 @@ public final class IntegerBestFitAllocator implements Allocator {
       backward(f, b);
       forward(b, f);
     }
-    
+
     int rsize = smallBinIndexToSize(index) - nb;
-    
+
     /* Fit here cannot be remainderless if 4byte sizes */
     if (rsize < MIN_CHUNK_SIZE) {
       setInUseAndPreviousInUse(h, smallBinIndexToSize(index));
@@ -295,12 +294,12 @@ public final class IntegerBestFitAllocator implements Allocator {
       setSizeAndPreviousInUseOfFreeChunk(r, rsize);
       replaceDesignatedVictim(r, rsize);
     }
-    
+
     int mem = chunkToMem(h);
     checkMallocedChunk(mem, nb);
     return mem;
   }
-  
+
   private void replaceDesignatedVictim(int p, int s) {
     int dvs = designatedVictimSize;
     if (dvs != 0) {
@@ -314,7 +313,7 @@ public final class IntegerBestFitAllocator implements Allocator {
 
   private int splitSmallFromTree(int nb) {
     int index = Integer.numberOfTrailingZeros(treeMap);
-    
+
     int t;
     int v = t = treeBins[index];
     int rsize = chunkSize(t) - nb;
@@ -354,9 +353,9 @@ public final class IntegerBestFitAllocator implements Allocator {
     int v = -1;
     int rsize = Integer.MAX_VALUE & (-nb); /* Unsigned negation */
     int t;
-    
+
     int index = treeBinIndex(nb);
-    
+
     if ((t = treeBins[index]) != -1) {
       /* Traverse tree for this bin looking for node with size == nb */
       int sizebits = nb << leftShiftForTreeIndex(index);
@@ -423,7 +422,7 @@ public final class IntegerBestFitAllocator implements Allocator {
   private int splitFromDesignatedVictim(int nb) {
     int rsize = designatedVictimSize - nb;
     int p = designatedVictim;
-    
+
     if (rsize >= MIN_CHUNK_SIZE) { /* split dv */
       int r = designatedVictim = p + nb;
       designatedVictimSize = rsize;
@@ -462,13 +461,13 @@ public final class IntegerBestFitAllocator implements Allocator {
 
     if (okAddress(p) && isInUse(p)) {
       checkInUseChunk(p);
-      int psize = chunkSize(p); 
+      int psize = chunkSize(p);
       occupied -= psize;
       int next = p + psize;
-      
+
       if (!previousInUse(p)) {
         int previousSize = prevFoot(p);
-        
+
         int previous = p - previousSize;
         psize += previousSize;
         p = previous;
@@ -484,7 +483,7 @@ public final class IntegerBestFitAllocator implements Allocator {
           throw new AssertionError();
         }
       }
-      
+
       if (okNext(p, next) && previousInUse(next)) {
         if (!chunkInUse(next)) { // consolidate forward
           if (next == top) {
@@ -517,7 +516,7 @@ public final class IntegerBestFitAllocator implements Allocator {
         } else {
           setFreeWithPreviousInUse(p, psize, next);
         }
-        
+
         if (isSmall(psize)) {
           insertSmallChunk(p, psize);
         } else {
@@ -538,7 +537,7 @@ public final class IntegerBestFitAllocator implements Allocator {
       insertLargeChunk(p, s);
     }
   }
-  
+
   private void insertSmallChunk(int p, int s) {
     int index = smallBinIndex(s);
 
@@ -565,7 +564,7 @@ public final class IntegerBestFitAllocator implements Allocator {
     int index = treeBinIndex(s);
     int h = treeBins[index];
 
-    
+
     index(x, index);
     child(x, 0, -1);
     child(x, 1, -1);
@@ -581,10 +580,10 @@ public final class IntegerBestFitAllocator implements Allocator {
       int k = s << leftShiftForTreeIndex(index);
       for (;;) {
         if (chunkSize(t) != s) {
-          int childIndex = (k >>> (SIZE_T_BITSIZE - 1)) & 1;          
+          int childIndex = (k >>> (SIZE_T_BITSIZE - 1)) & 1;
           int child = child(t, childIndex);
           k <<= 1;
-          if (okAddress(child)) { 
+          if (okAddress(child)) {
             t = child;
           } else {
             child(t, childIndex, x);
@@ -622,11 +621,11 @@ public final class IntegerBestFitAllocator implements Allocator {
   private void unlinkSmallChunk(int p, int s) {
     int f = forward(p);
     int b = backward(p);
-    
+
     int index = smallBinIndex(s);
 
     validate(!VALIDATING || chunkSize(p) == smallBinIndexToSize(index));
-    
+
     if (f == p) {
       validate(!VALIDATING || b == p);
       clearSmallMap(index);
@@ -644,7 +643,7 @@ public final class IntegerBestFitAllocator implements Allocator {
 
   /*
    * Unlink steps:
-   * 
+   *
    * 1. If x is a chained node, unlink it from its same-sized fd/bk links
    *    and choose its bk node as its replacement.
    * 2. If x was the last node of its size, but not a leaf node, it must
@@ -688,7 +687,7 @@ public final class IntegerBestFitAllocator implements Allocator {
             break;
           }
         }
-        
+
         if (okAddress(rp)) {
           child(rp, rpIndex, -1);
         } else {
@@ -696,7 +695,7 @@ public final class IntegerBestFitAllocator implements Allocator {
         }
       }
     }
-    
+
     int index = index(x);
     if (xp != -1 || treeBins[index] == x) {
       int h = treeBins[index];
@@ -715,7 +714,7 @@ public final class IntegerBestFitAllocator implements Allocator {
       } else {
         throw new AssertionError();
       }
-      
+
       if (r != -1) {
         if (okAddress(r)) {
           int c0, c1;
@@ -747,7 +746,7 @@ public final class IntegerBestFitAllocator implements Allocator {
   private boolean chunkInUse(int p) {
     return (head(p) & CINUSE_BIT) != 0;
   }
-  
+
   private boolean previousInUse(int p) {
     return (head(p) & PINUSE_BIT) != 0;
   }
@@ -768,7 +767,7 @@ public final class IntegerBestFitAllocator implements Allocator {
   private int nextChunk(int p) {
     return p + chunkSize(p);
   }
-  
+
   private int prevChunk(int p) {
     return p - prevFoot(p);
   }
@@ -794,28 +793,28 @@ public final class IntegerBestFitAllocator implements Allocator {
     clearPreviousInUse(n);
     setSizeAndPreviousInUseOfFreeChunk(p, s);
   }
-  
+
   /* Set cinuse and pinuse of this chunk and pinuse of next chunk */
   private void setInUseAndPreviousInUse(int p, int s) {
     setSizeAndPreviousInUseOfInUseChunk(p, s);
     head(p + s, head(p + s) | PINUSE_BIT);
   }
-  
+
   /* Set size, cinuse and pinuse bit of this chunk */
   private void setSizeAndPreviousInUseOfInUseChunk(int p, int s) {
     head(p, s | PINUSE_BIT | CINUSE_BIT);
     setFoot(p, s);
     occupied += s;
   }
-  
+
   private int prevFoot(int p) {
     return storage.readInt(p);
   }
-  
+
   private void prevFoot(int p, int value) {
     storage.writeInt(p, value);
   }
-  
+
   private int head(int p) {
     return storage.readInt(p + 4);
   }
@@ -823,43 +822,43 @@ public final class IntegerBestFitAllocator implements Allocator {
   private void head(int p, int value) {
     storage.writeInt(p + 4, value);
   }
-  
+
   private int forward(int p) {
     return storage.readInt(p + 8);
   }
-  
+
   private void forward(int p, int value) {
     storage.writeInt(p + 8, value);
   }
-  
+
   private int backward(int p) {
     return storage.readInt(p + 12);
   }
-  
+
   private void backward(int p, int value) {
     storage.writeInt(p + 12, value);
   }
-  
+
   private int child(int p, int index) {
     return storage.readInt(p + 16 + (4 * index));
   }
-  
+
   private void child(int p, int index, int value) {
     storage.writeInt(p + 16 + (4 * index), value);
   }
-  
+
   private int parent(int p) {
     return storage.readInt(p + 24);
   }
-  
+
   private void parent(int p, int value) {
     storage.writeInt(p + 24, value);
   }
-  
+
   private int index(int p) {
     return storage.readInt(p + 28);
   }
-  
+
   private void index(int p, int value) {
     storage.writeInt(p + 28, value);
   }
@@ -868,7 +867,7 @@ public final class IntegerBestFitAllocator implements Allocator {
     int left = child(x, 0);
     return left != -1 ? left : child(x, 1);
   }
-  
+
   private static int padRequest(int req) {
     return (req + CHUNK_OVERHEAD + CHUNK_ALIGN_MASK) & ~CHUNK_ALIGN_MASK;
   }
@@ -876,37 +875,37 @@ public final class IntegerBestFitAllocator implements Allocator {
   private static int chunkToMem(int p) {
     return p + (SIZE_T_SIZE * 2);
   }
-  
+
   private static int memToChunk(int p) {
     return p - (SIZE_T_SIZE * 2);
   }
-  
+
   private static boolean okAddress(int a) {
     return a >= 0;
   }
-  
+
   private static boolean okNext(int p, int n) {
     return p < n;
   }
-  
+
   private static boolean isAligned(int a) {
     return (a & CHUNK_ALIGN_MASK) == 0;
   }
-  
+
   private static int alignOffset(int a) {
     return (a & CHUNK_ALIGN_MASK) == 0 ? 0 : (MALLOC_ALIGNMENT - (a & CHUNK_ALIGN_MASK)) & CHUNK_ALIGN_MASK;
   }
-  
+
   /* ---------------------------- Indexing Bins ---------------------------- */
 
   private static boolean isSmall(int s) {
     return smallBinIndex(s) < NSMALLBINS;
   }
-  
+
   private static int smallBinIndex(int s) {
     return s >>> SMALLBIN_SHIFT;
   }
-  
+
   private static int smallBinIndexToSize(int i) {
     return i << SMALLBIN_SHIFT;
   }
@@ -923,16 +922,16 @@ public final class IntegerBestFitAllocator implements Allocator {
       return (k << 1) + ((s >>> (k + (TREEBIN_SHIFT-1)) & 1));
     }
   }
-  
+
   /* Mark/Clear bits with given index */
   private void markSmallMap(int i) {
     smallMap |= (1 << i);
   }
-  
+
   private void clearSmallMap(int i) {
     smallMap &= ~(1 << i);
   }
-  
+
   private boolean smallMapIsMarked(int i) {
     return (smallMap & (1 << i)) != 0;
   }
@@ -940,28 +939,28 @@ public final class IntegerBestFitAllocator implements Allocator {
   private void markTreeMap(int i) {
     treeMap |= (1 << i);
   }
-  
+
   private void clearTreeMap(int i) {
     treeMap  &= ~(1 << i);
   }
-  
+
   private boolean treeMapIsMarked(int i) {
     return (treeMap & (1 << i)) != 0;
   }
-  
+
   private static int leftShiftForTreeIndex(int i) {
     return (i == NTREEBINS-1) ? 0 : (SIZE_T_BITSIZE - 1) - ((i >>> 1) + TREEBIN_SHIFT - 2);
   }
-  
+
   /* The size of the smallest chunk held in bin with index i */
   private static int minSizeForTreeIndex(int i) {
      return (1 << ((i >>> 1) + TREEBIN_SHIFT)) | ((i & 1) << ((i >>> 1) + TREEBIN_SHIFT - 1));
   }
-  
+
   private static int leftBits(int i) {
     return (i << 1) | -(i << 1);
   }
-  
+
   /** Debugging Support **/
   @Override
   public void validateAllocator() {
@@ -976,7 +975,7 @@ public final class IntegerBestFitAllocator implements Allocator {
       checkTreeBin(i);
     }
   }
-  
+
   public int validateMallocedPointer(int m) {
     int p = memToChunk(m);
 
@@ -986,7 +985,7 @@ public final class IntegerBestFitAllocator implements Allocator {
     }
     return chunkSize(p);
   }
-  
+
   /* Check properties of any chunk, whether free, inuse, mmapped etc  */
   private void checkAnyChunk(int p) {
     if (VALIDATING) {
@@ -1013,7 +1012,7 @@ public final class IntegerBestFitAllocator implements Allocator {
         throw new AssertionError("Chunk before top chunk is free - why has it not been merged in to the top chunk?");
     }
   }
-  
+
   /* Check properties of inuse chunks */
   private void checkInUseChunk(int p) {
     if (VALIDATING) {
@@ -1039,7 +1038,7 @@ public final class IntegerBestFitAllocator implements Allocator {
       if (nextPreviousInUse(p))
         throw new AssertionError("Next chunk after " + p + " has it marked as in use");
       if (p != designatedVictim && p != top) {
-        if (sz < MIN_CHUNK_SIZE) 
+        if (sz < MIN_CHUNK_SIZE)
           throw new AssertionError("Free chunk " + p + " is too small");
         if ((sz & CHUNK_ALIGN_MASK) != 0)
           throw new AssertionError("Chunk size " + sz + " of " + p + " is not correctly aligned");
@@ -1050,7 +1049,7 @@ public final class IntegerBestFitAllocator implements Allocator {
         if (!previousInUse(p))
           throw new AssertionError("Chunk before free chunk " + p + " is free - should have been merged");
         if (next != top && !isInUse(next))
-          throw new AssertionError("Chunk after free chunk " + p + " is free - should have been merged");        
+          throw new AssertionError("Chunk after free chunk " + p + " is free - should have been merged");
         if (backward(forward(p)) != p)
           throw new AssertionError("Free chunk " + p + " has invalid chain links");
         if (forward(backward(p)) != p)
@@ -1058,14 +1057,14 @@ public final class IntegerBestFitAllocator implements Allocator {
       }
     }
   }
-  
+
   /* Check properties of malloced chunks at the point they are malloced */
   private void checkMallocedChunk(int mem, int s) {
     if (VALIDATING) {
       int p = memToChunk(mem);
       int sz = head(p) & ~INUSE_BITS;
       checkInUseChunk(p);
-      if (sz < MIN_CHUNK_SIZE) 
+      if (sz < MIN_CHUNK_SIZE)
         throw new AssertionError("Allocated chunk " + p + " is too small");
       if ((sz & CHUNK_ALIGN_MASK) != 0)
         throw new AssertionError("Chunk size " + sz + " of " + p + " is not correctly aligned");
@@ -1076,7 +1075,7 @@ public final class IntegerBestFitAllocator implements Allocator {
       }
     }
   }
-  
+
   /* Check a tree and its subtrees.  */
   private void checkTree(int t) {
     int head = -1;
@@ -1085,7 +1084,7 @@ public final class IntegerBestFitAllocator implements Allocator {
     int tsize = chunkSize(t);
     int index = treeBinIndex(tsize);
 
-    if (tindex != index) 
+    if (tindex != index)
       throw new AssertionError("Tree node " + u + " has incorrect index [" + index(u) + "!=" + tindex + "]");
     if (tsize < MIN_LARGE_SIZE)
       throw new AssertionError("Tree node " + u + " is too small to be in a tree [" + tsize + "<" + MIN_LARGE_SIZE + "]");
@@ -1117,7 +1116,7 @@ public final class IntegerBestFitAllocator implements Allocator {
         if (head != -1)
           throw new AssertionError("Tree node " + u + " is the second node in this chain with a parent [first was " + head + "]");
         head = u;
-        
+
         if (treeBins[index] == u) {
           if (parent(u) != -1)
             throw new AssertionError("Tree node " + u + " is the head of the tree but has a parent " + parent(u));
@@ -1127,7 +1126,7 @@ public final class IntegerBestFitAllocator implements Allocator {
           if (child(parent(u), 0) != u && child(parent(u), 1) != u)
             throw new AssertionError("Tree node " + u + " is not a child of its parent");
         }
-        
+
         if (child(u, 0) != -1) {
           if (parent(child(u, 0)) != u)
             throw new AssertionError("Tree node " + u + " is not the parent of its left child");
@@ -1148,7 +1147,7 @@ public final class IntegerBestFitAllocator implements Allocator {
       }
       u = forward(u);
     } while (u != t);
-    
+
     if (head == -1)
       throw new AssertionError("This tree level has no nodes with a parent");
   }
@@ -1169,7 +1168,7 @@ public final class IntegerBestFitAllocator implements Allocator {
   /*  Check all the chunks in a smallbin.  */
   private void checkSmallBin(int index) {
     int h = smallBins[index];
-    
+
     boolean empty = (smallMap & (1 << index)) == 0;
     if (h == -1 && !empty) {
       throw new AssertionError("Small bin chain " + index + " is marked as occupied but has an invalid head pointer");
@@ -1187,7 +1186,7 @@ public final class IntegerBestFitAllocator implements Allocator {
           throw new AssertionError("Chunk " + p + " is the linked to a chunk of the wrong size");
         /* chunk is followed by an inuse chunk */
         checkInUseChunk(nextChunk(p));
-        
+
         p = backward(p);
       } while (p != h);
     }
@@ -1221,7 +1220,7 @@ public final class IntegerBestFitAllocator implements Allocator {
     }
     return sum;
   }
-  
+
   /* Find x in a bin. Used in other check functions. */
   private boolean findFreeChunk(int x) {
     int size = chunkSize(x);
@@ -1273,7 +1272,7 @@ public final class IntegerBestFitAllocator implements Allocator {
       return top;
     }
   }
-  
+
   @Override
   public int getMinimalSize() {
     return MINIMAL_SIZE;
@@ -1289,7 +1288,7 @@ public final class IntegerBestFitAllocator implements Allocator {
     return new Iterator<Long>() {
 
       private int current = (isInUse(0) || 0 >= top) ? 0 : nextChunk(0);
-      
+
       @Override
       public boolean hasNext() {
         return current < top;
