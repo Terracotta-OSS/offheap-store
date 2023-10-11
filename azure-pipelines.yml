@@ -1,5 +1,5 @@
 #
-# Copyright Terracotta, Inc.
+# Copyright (c) 2023 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,8 +20,52 @@
 resources:
   repositories:
     - repository: templates
-      type: git   
+      type: git
       name: terracotta/terracotta
 
 jobs:
-- template: build-templates/maven-common.yml@templates  
+  - template: build-templates/maven-common.yml@templates
+    parameters:
+      jobName: Linux_Java_8
+      timeoutInMinutes: 180
+      options: -B -Djava.test.version=1.8
+      mavenGoals: 'clean verify'
+      fetchDepth: 0 # need unlimited for license plugin
+  - template: build-templates/maven-common.yml@templates
+    parameters:
+      jobName: Linux_Java_11
+      timeoutInMinutes: 180
+      options: -B -Djava.test.version=1.11
+      mavenGoals: 'clean verify'
+      fetchDepth: 0 # need unlimited for license plugin
+  - template: build-templates/maven-common.yml@templates
+    parameters:
+      jobName: Linux_Java_17
+      timeoutInMinutes: 180
+      options: -B -Djava.test.version=1.17
+      mavenGoals: 'clean verify'
+      fetchDepth: 0 # need unlimited for license plugin
+  - template: build-templates/maven-common.yml@templates
+    parameters:
+      jobName: Windows_Java_8
+      timeoutInMinutes: 180
+      vmImage: 'windows-latest'
+      options: -B -Djava.test.version=1.8
+      mavenGoals: 'clean verify'
+      fetchDepth: 0 # need unlimited for license plugin
+  - template: build-templates/maven-common.yml@templates
+    parameters:
+      jobName: Windows_Java_11
+      timeoutInMinutes: 180
+      vmImage: 'windows-latest'
+      options: -B -Djava.test.version=1.11
+      mavenGoals: 'clean verify'
+      fetchDepth: 0 # need unlimited for license plugin
+  - template: build-templates/maven-common.yml@templates
+    parameters:
+      jobName: Windows_Java_17
+      timeoutInMinutes: 180
+      vmImage: 'windows-latest'
+      options: -B -Djava.test.version=1.17
+      mavenGoals: 'clean verify'
+      fetchDepth: 0 # need unlimited for license plugin
