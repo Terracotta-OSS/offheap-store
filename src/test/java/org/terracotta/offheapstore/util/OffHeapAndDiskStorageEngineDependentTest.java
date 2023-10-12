@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Terracotta, Inc., a Software AG company.
+ * Copyright 2016-2023 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

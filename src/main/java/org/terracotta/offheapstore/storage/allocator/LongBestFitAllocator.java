@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Terracotta, Inc., a Software AG company.
+ * Copyright 2015-2023 Terracotta, Inc., a Software AG company.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 /*
  * This file contains a Java port of Doug Lea's malloc implementation
  * (ftp://g.oswego.edu/pub/misc/malloc.c), which has been released to the public
