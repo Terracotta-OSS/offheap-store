@@ -1,5 +1,13 @@
-/nb-configuration.xml
-/nbactions.xml
-/.classpath
-/.project
-/target
+# Maven exclusions
+target/
+
+# IntelliJ exclusions
+/.idea/
+*.iml
+
+# Eclipse exclusions
+.settings/
+.classpath/
+
+# Netbeans exclusions
+nb-configuration.xml

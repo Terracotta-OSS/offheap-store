@@ -1,33 +1,99 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <parent>
-    <groupId>org.terracotta.forge</groupId>
-    <artifactId>forge-parent-ee</artifactId>
-    <version>4.13</version>
-  </parent>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+
+    Copyright 2015-2023 Terracotta, Inc., a Software AG company.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.terracottatech</groupId>
-  <artifactId>offheap-restartable-store</artifactId>
-  <version>2.8.12-SNAPSHOT</version>
+  <parent>
+    <groupId>org.terracotta</groupId>
+    <artifactId>terracotta-parent</artifactId>
+    <version>5.21</version>
+  </parent>
+
+  <groupId>org.terracotta</groupId>
+  <artifactId>offheap-store</artifactId>
+  <version>2.5-SNAPSHOT</version>
   <packaging>jar</packaging>
 
-  <name>Terracotta Off-Heap Restartable Store</name>
+  <name>Terracotta Off-Heap Store</name>
+  <description>A library that offers data structures allocated off the java heap.</description>
+  <url>https://github.com/Terracotta-OSS/offheap-store/</url>
+  <inceptionYear>2015</inceptionYear>
+
+  <licenses>
+    <license>
+      <name>The Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
 
   <properties>
+    <java.version>1.8</java.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <slf4j.base.version>1.7.32</slf4j.base.version>
+    <slf4j.range.version>[${slf4j.base.version},1.7.9999)</slf4j.range.version>
+    <logback.base.version>1.2.11</logback.base.version>
+    <logback.range.version>[${logback.base.version},1.2.9999)</logback.range.version>
+    <terracotta-os-snapshots-url>https://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-snapshots</terracotta-os-snapshots-url>
+    <terracotta-os-releases-url>https://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-releases</terracotta-os-releases-url>
+    <skipJavadoc>false</skipJavadoc>
+    <jacocoArgs></jacocoArgs>
   </properties>
 
   <dependencies>
     <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>offheap-store</artifactId>
-      <version>2.5.4</version>
-    </dependency>
-    <dependency>
-      <groupId>com.terracottatech</groupId>
-      <artifactId>fast-restartable-store</artifactId>
-      <version>1.6.8</version>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${slf4j.range.version}</version>
     </dependency>
 
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>${logback.range.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.12</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>hamcrest-core</artifactId>
+          <groupId>org.hamcrest</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest</artifactId>
+      <version>2.1</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>3.0.0</version>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.ow2.asm</groupId>
       <artifactId>asm</artifactId>
@@ -40,35 +106,136 @@
       <version>7.0</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>jfree</groupId>
+      <artifactId>jfreechart</artifactId>
+      <version>1.0.13</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <artifactId>maven-clean-plugin</artifactId>
+          <version>3.0.0</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.8.1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>3.0.0-M1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <version>3.0.0-M1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <version>3.0.0-M3</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-gpg-plugin</artifactId>
+          <version>1.6</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-install-plugin</artifactId>
+          <version>3.0.0-M1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>3.1.2</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>3.1.1</version>
+          <configuration>
+            <skip>${skipJavadoc}</skip>
+            <source>8</source>
+          </configuration>
+        </plugin>
+        <plugin>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>3.0.1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-site-plugin</artifactId>
+          <version>3.5.1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-source-plugin</artifactId>
+          <version>3.1.0</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>3.0.0-M3</version>
+        </plugin>
+
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>findbugs-maven-plugin</artifactId>
+          <version>3.0.5</version>
+        </plugin>
+        <plugin>
+          <groupId>org.jacoco</groupId>
+          <artifactId>jacoco-maven-plugin</artifactId>
+          <version>0.8.3</version>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>versions-maven-plugin</artifactId>
+          <version>2.5</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.felix</groupId>
+          <artifactId>maven-bundle-plugin</artifactId>
+          <version>4.2.1</version>
+        </plugin>
+        <plugin>
+          <groupId>org.sonatype.plugins</groupId>
+          <artifactId>nexus-staging-maven-plugin</artifactId>
+          <version>1.6.13</version>
+          <extensions>true</extensions>
+          <configuration>
+            <!-- The Base URL of Nexus instance where we want to stage -->
+            <nexusUrl>https://oss.sonatype.org</nexusUrl>
+            <!-- The server "id" element from settings to use authentication from -->
+            <serverId>sonatype-nexus-staging</serverId>
+            <skipNexusStagingDeployMojo>${maven.deploy.skip}</skipNexusStagingDeployMojo>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-source-plugin</artifactId>
-        <configuration>
-          <attach>false</attach>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-install-plugin</artifactId>
-        <version>3.0.0-M1</version>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <argLine>${jacocoArgs}</argLine>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
           <parallel>methods</parallel>
-          <useUnlimitedThreads>true</useUnlimitedThreads>
+          <threadCount>4</threadCount>
+          <perCoreThreadCount>false</perCoreThreadCount>
         </configuration>
       </plugin>
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.8.3</version>
         <executions>
           <execution>
             <id>prepare-agent</id>
@@ -100,50 +267,194 @@
         </executions>
       </plugin>
       <plugin>
-        <groupId>org.terracotta</groupId>
-        <artifactId>maven-forge-plugin</artifactId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>${java.version}</source>
+          <target>${java.version}</target>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-source-plugin</artifactId>
         <executions>
           <execution>
-            <id>default-test</id>
-            <phase>test</phase>
+            <id>attach-sources</id>
+            <phase>verify</phase>
             <goals>
-              <goal>test</goal>
+              <goal>jar-no-fork</goal>
             </goals>
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>attach-javadocs</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+            <configuration>
+              <skip>${skipJavadoc}</skip>
+              <source>8</source>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>generate-osgi-headers</id>
+            <phase>package</phase>
+            <goals>
+              <goal>bundle</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <configuration>
+          <rules>
+            <requireMavenVersion>
+              <version>[3.0.5,)</version>
+            </requireMavenVersion>
+          </rules>
+        </configuration>
+        <executions>
+          <execution>
+            <id>enforce-maven</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>com.mycila</groupId>
+        <artifactId>license-maven-plugin</artifactId>
+        <version>4.2</version>
+        <configuration>
+          <inlineHeader><![CDATA[
+Copyright ${license.git.copyrightExistenceYears} Terracotta, Inc., a Software AG company.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+                ]]></inlineHeader>
+          <excludes>
+            <exclude>**/src/test/resources/**</exclude>
+            <exclude>**/src/main/resources/**</exclude>
+            <exclude>**/.idea/**</exclude>
+            <exclude>**/nbproject/**</exclude>
+            <exclude>Jenkinsfile*</exclude>
+            <exclude>.m2/**</exclude>
+          </excludes>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>com.mycila</groupId>
+            <artifactId>license-maven-plugin-git</artifactId>
+            <!-- make sure you use the same version as license-maven-plugin -->
+            <version>4.2</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+      <plugin>
+        <groupId>org.sonatype.plugins</groupId>
+        <artifactId>nexus-staging-maven-plugin</artifactId>
+      </plugin>
     </plugins>
   </build>
 
+  <profiles>
+    <profile>
+      <id>deploy-sonatype</id>
+      <distributionManagement>
+        <repository>
+          <id>sonatype-nexus-staging</id>
+          <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+        </repository>
+      </distributionManagement>
+    </profile>
+    <profile>
+      <!-- Profile to sign artifacts with a PGP key (using GPG). -->
+      <id>sign-artifacts</id>
+      <activation>
+        <property>
+          <name>performRelease</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+                <configuration>
+                  <keyname>Terracotta Release Engineer</keyname>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
   <distributionManagement>
     <repository>
-      <id>terracotta-ee-releases</id>
-      <name>Terracotta EE Releases Repository</name>
-      <url>${terracotta-ee-releases-url}</url>
+      <id>terracotta-os-releases</id>
+      <name>Terracotta OS Releases Repository</name>
+      <url>${terracotta-os-releases-url}</url>
     </repository>
     <snapshotRepository>
-      <id>terracotta-ee-snapshots</id>
+      <id>terracotta-os-snapshots</id>
       <uniqueVersion>false</uniqueVersion>
-      <name>Terracotta EE Snapshots Repository</name>
-      <url>${terracotta-ee-snapshots-url}</url>
+      <name>Terracotta OS Snapshots Repository</name>
+      <url>${terracotta-os-snapshots-url}</url>
     </snapshotRepository>
   </distributionManagement>
 
+  <scm>
+    <connection>scm:git:https://github.com/terracotta-oss/offheap-store.git</connection>
+    <developerConnection>scm:git:git@github.com:terracotta-oss/offheap-store.git</developerConnection>
+    <url>https://github.com/terracotta-oss/offheap-store</url>
+  </scm>
+
+  <developers>
+    <developer>
+      <name>Chris Dennis</name>
+      <email>chris.dennis@terracottatech.com</email>
+      <organization>Terracotta Inc., a wholly-owned subsidiary of Software AG USA, Inc.</organization>
+      <organizationUrl>https://terracotta.org</organizationUrl>
+    </developer>
+  </developers>
+
   <repositories>
+    <!-- required to resolve parent pom -->
     <repository>
-      <id>terracotta-ee-releases</id>
-      <name>Terracotta EE Releases</name>
-      <url>https://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-ee-releases</url>
-    </repository>
-    <repository>
-      <id>terracotta</id>
-      <name>Terracotta</name>
+      <id>terracotta-releases</id>
       <url>https://repo.terracotta.org/maven2</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
     </repository>
   </repositories>
 
-  <scm>
-    <connection>scm:git:git@github.softwareag.com:Terracotta-Legacy/offheap-restartable-store.git</connection>
-    <developerConnection>scm:git:https://github.softwareag.com/Terracotta-Legacy/offheap-restartable-store.git</developerConnection>
-  </scm>
 </project>
