@@ -63,6 +63,11 @@
       <artifactId>slf4j-api</artifactId>
       <version>${slf4j.range.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>fast-restartable-store</artifactId>
+      <version>1.6.10</version>
+    </dependency>
 
     <dependency>
       <groupId>ch.qos.logback</groupId>
@@ -122,8 +127,18 @@
           <version>3.0.0</version>
         </plugin>
         <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.8.1</version>
+          <configuration>
+            <source>${java.build.version}</source>
+            <target>${java.build.version}</target>
+            <compilerArgs>
+              <!-- TODO: FIX DEPRECATIONS + RAW TYPES + UNCHECKED -->
+              <arg>-Xlint:-deprecation,-rawtypes,-unchecked</arg>
+              <arg>-Werror</arg>
+            </compilerArgs>
+          </configuration>
         </plugin>
         <plugin>
           <artifactId>maven-deploy-plugin</artifactId>
