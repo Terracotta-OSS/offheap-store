@@ -143,7 +143,6 @@ public class ReopeningInterruptibleChannelTest {
   @Test
   public void testOpenDespiteDelegateClosure() throws IOException {
     SimpleInterruptibleChannel delegate = mock(SimpleInterruptibleChannel.class);
-    when(delegate.operation()).thenThrow(ClosedChannelException.class);
     ReopeningInterruptibleChannel<SimpleInterruptibleChannel> reopeningChannel = ReopeningInterruptibleChannel.create(() -> delegate);
 
     assertThat(reopeningChannel.isOpen(), is(true));
