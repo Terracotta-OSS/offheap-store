@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!--
 
-    Copyright 2015-2023 Terracotta, Inc., a Software AG company.
+    Copyright 2015-2024 Terracotta, Inc., a Software AG company.
+    Copyright Super iPaaS Integration LLC, an IBM Company 2024
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -23,7 +24,7 @@
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>terracotta-parent</artifactId>
-    <version>5.21</version>
+    <version>5.23</version>
   </parent>
 
   <groupId>org.terracotta</groupId>
@@ -349,10 +350,10 @@
       <plugin>
         <groupId>com.mycila</groupId>
         <artifactId>license-maven-plugin</artifactId>
-        <version>4.2</version>
         <configuration>
           <inlineHeader><![CDATA[
 Copyright ${license.git.copyrightExistenceYears} Terracotta, Inc., a Software AG company.
+Copyright Super iPaaS Integration LLC, an IBM Company 2024
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -367,8 +368,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
                 ]]></inlineHeader>
           <excludes>
-            <exclude>**/src/test/resources/**</exclude>
-            <exclude>**/src/main/resources/**</exclude>
             <exclude>**/.idea/**</exclude>
             <exclude>**/nbproject/**</exclude>
             <exclude>Jenkinsfile*</exclude>
@@ -380,7 +379,7 @@ limitations under the License.
             <groupId>com.mycila</groupId>
             <artifactId>license-maven-plugin-git</artifactId>
             <!-- make sure you use the same version as license-maven-plugin -->
-            <version>4.2</version>
+            <version>4.5</version>
           </dependency>
         </dependencies>
       </plugin>
