@@ -351,6 +351,9 @@
         <groupId>com.mycila</groupId>
         <artifactId>license-maven-plugin</artifactId>
         <configuration>
+          <properties>
+            <license.git.commitsToIgnore>9876c8055b4625bfbc74679d70ccf8c905450f17</license.git.commitsToIgnore>
+          </properties>
           <inlineHeader><![CDATA[
 Copyright ${license.git.copyrightExistenceYears} Terracotta, Inc., a Software AG company.
 Copyright Super iPaaS Integration LLC, an IBM Company 2024
@@ -454,8 +457,8 @@ limitations under the License.
   <developers>
     <developer>
       <name>Chris Dennis</name>
-      <email>chris.dennis@terracottatech.com</email>
-      <organization>Terracotta Inc., a wholly-owned subsidiary of Software AG USA, Inc.</organization>
+      <email>chris.w.dennis@ibm.com</email>
+      <organization>Super iPaaS Integration LLC, an IBM Company</organization>
       <organizationUrl>https://terracotta.org</organizationUrl>
     </developer>
   </developers>
