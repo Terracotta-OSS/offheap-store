@@ -1,5 +1,6 @@
 /*
  * Copyright 2014-2023 Terracotta, Inc., a Software AG company.
+ * Copyright Super iPaaS Integration LLC, an IBM Company 2024
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,10 +13,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-/*
- * All content copyright (c) Terracotta, Inc., except as may otherwise be noted in a separate copyright
- * notice. All rights reserved.
  */
 
 package com.terracottatech.offheapstore.storage.restartable.partial;
