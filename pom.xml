@@ -67,7 +67,7 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>fast-restartable-store</artifactId>
-      <version>1.6.10</version>
+      <version>1.6.11</version>
     </dependency>
 
     <dependency>
