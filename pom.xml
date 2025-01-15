@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!--
 
-    Copyright 2015-2024 Terracotta, Inc., a Software AG company.
-    Copyright Super iPaaS Integration LLC, an IBM Company 2024
+    Copyright 2015-2025 Terracotta, Inc., a Software AG company.
+    Copyright IBM Corp. 2024, 2025
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>terracotta-parent</artifactId>
-    <version>5.23</version>
+    <version>5.24</version>
   </parent>
 
   <groupId>org.terracotta</groupId>
@@ -352,11 +352,11 @@
         <artifactId>license-maven-plugin</artifactId>
         <configuration>
           <properties>
-            <license.git.commitsToIgnore>9876c8055b4625bfbc74679d70ccf8c905450f17</license.git.commitsToIgnore>
+            <license.git.commitsToIgnore>9876c8055b4625bfbc74679d70ccf8c905450f17,53c263ccd6921f3b40b556816e85916f2485a050</license.git.commitsToIgnore>
           </properties>
           <inlineHeader><![CDATA[
 Copyright ${license.git.copyrightExistenceYears} Terracotta, Inc., a Software AG company.
-Copyright Super iPaaS Integration LLC, an IBM Company 2024
+Copyright IBM Corp. 2024, 2025
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -458,7 +458,7 @@ limitations under the License.
     <developer>
       <name>Chris Dennis</name>
       <email>chris.w.dennis@ibm.com</email>
-      <organization>Super iPaaS Integration LLC, an IBM Company</organization>
+      <organization>IBM Corp.</organization>
       <organizationUrl>https://terracotta.org</organizationUrl>
     </developer>
   </developers>
