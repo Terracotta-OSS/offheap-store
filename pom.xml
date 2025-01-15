@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!--
 
-    Copyright 2015-2024 Terracotta, Inc., a Software AG company.
+    Copyright 2015-2025 Terracotta, Inc., a Software AG company.
     Copyright IBM Corp. 2024, 2025
 
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -352,7 +352,7 @@
         <artifactId>license-maven-plugin</artifactId>
         <configuration>
           <properties>
-            <license.git.commitsToIgnore>9876c8055b4625bfbc74679d70ccf8c905450f17</license.git.commitsToIgnore>
+            <license.git.commitsToIgnore>9876c8055b4625bfbc74679d70ccf8c905450f17,53c263ccd6921f3b40b556816e85916f2485a050</license.git.commitsToIgnore>
           </properties>
           <inlineHeader><![CDATA[
 Copyright ${license.git.copyrightExistenceYears} Terracotta, Inc., a Software AG company.
