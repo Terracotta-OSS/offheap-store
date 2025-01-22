@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2023 Terracotta, Inc., a Software AG company.
+ * Copyright 2014-2025 Terracotta, Inc., a Software AG company.
  * Copyright IBM Corp. 2024, 2025
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.LongConsumer;
 
 import static com.terracottatech.offheapstore.storage.restartable.partial.RestartableMinimalStorageEngine.detach;
 import static java.util.Collections.emptyList;
@@ -108,6 +109,7 @@ public class RestartablePartialStorageEngine<I, K, V> extends RestartableMinimal
     do {
       Long result = super.writeMapping(key, value, hash, metadata);
       if (result != null) {
+        metadataArea.writeLong(result + getCacheOffset(result), NULL_ENCODING);
         createEntry(result).close();
         return result;
       }
@@ -148,13 +150,13 @@ public class RestartablePartialStorageEngine<I, K, V> extends RestartableMinimal
   public void freeMapping(long encoding, int hash, boolean removal) {
     lock.writeLock().lock();
     try {
-      //XXX this needs to happen half-way through... or in parts
-      long cacheAddress = metadataArea.readLong(encoding + getCacheOffset(encoding));
-      super.freeMapping(encoding, hash, removal);
-      if (cacheAddress >= 0) {
-        unlinkEntry(cacheAddress);
-        storage.free(cacheAddress);
-      }
+      freeMapping(encoding, hash, removal, meta -> {
+        long cacheAddress = metadataArea.readLong(meta + getCacheOffset(meta));
+        if (cacheAddress >= 0) {
+          unlinkEntry(cacheAddress);
+          storage.free(cacheAddress);
+        }
+      });
       validateCache();
     } finally {
       lock.writeLock().unlock();
@@ -472,7 +474,9 @@ public class RestartablePartialStorageEngine<I, K, V> extends RestartableMinimal
       }
 
       if (storage.readInt(hand + CACHE_EVICTION_DATA_OFFSET) == 0) {
-        free(storage.readLong(hand + CACHE_META_OFFSET));
+        long evictionHand = hand;
+        Long freedEntry = free(storage.readLong(evictionHand + CACHE_META_OFFSET));
+        validate(freedEntry != null && freedEntry.equals(evictionHand));
         return true;
       } else {
         storage.writeInt(hand + CACHE_EVICTION_DATA_OFFSET, 0);

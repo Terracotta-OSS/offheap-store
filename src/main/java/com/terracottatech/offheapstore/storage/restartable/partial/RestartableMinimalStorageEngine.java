@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2023 Terracotta, Inc., a Software AG company.
+ * Copyright 2014-2025 Terracotta, Inc., a Software AG company.
  * Copyright IBM Corp. 2024, 2025
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,6 +42,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Lock;
+import java.util.function.LongConsumer;
 
 import static java.util.Collections.singleton;
 import static org.terracotta.offheapstore.util.Validation.shouldValidate;
@@ -188,6 +189,10 @@ public class RestartableMinimalStorageEngine<I, K, V> extends AbstractListenable
   // Called under segment lock
   @Override
   public void freeMapping(long encoding, int hash, boolean removal) {
+    freeMapping(encoding, hash, removal, meta -> {});
+  }
+
+  protected void freeMapping(long encoding, int hash, boolean removal, LongConsumer cleanup) {
     boolean listeners = hasListeners();
     ByteBuffer rawKey = null;
     if (listeners || removal) {
@@ -200,6 +205,7 @@ public class RestartableMinimalStorageEngine<I, K, V> extends AbstractListenable
     }
     
     dataSize -= metadataArea.readInt(encoding + META_ENTRY_SIZE_OFFSET);
+    cleanup.accept(encoding);
     metadataArea.free(encoding);
     holdingArea.remove(encoding);
     validChain();
