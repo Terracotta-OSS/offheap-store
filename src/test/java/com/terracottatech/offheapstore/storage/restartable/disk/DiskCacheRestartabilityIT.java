@@ -12,16 +12,16 @@ import org.junit.runners.BlockJUnit4ClassRunner;
 
 import com.terracottatech.frs.RestartStore;
 import com.terracottatech.frs.object.RegisterableObjectManager;
-import com.terracottatech.offheapstore.ReadWriteLockedOffHeapClockCache;
-import com.terracottatech.offheapstore.disk.paging.MappedPageSource;
-import com.terracottatech.offheapstore.disk.storage.FileBackedStorageEngine;
-import com.terracottatech.offheapstore.storage.portability.Portability;
+import org.terracotta.offheapstore.ReadWriteLockedOffHeapClockCache;
+import org.terracotta.offheapstore.disk.paging.MappedPageSource;
+import org.terracotta.offheapstore.disk.storage.FileBackedStorageEngine;
+import org.terracotta.offheapstore.storage.portability.Portability;
 import com.terracottatech.offheapstore.storage.restartable.AbstractRestartabilityCacheIT;
 import com.terracottatech.offheapstore.storage.restartable.LinkedNode;
 import com.terracottatech.offheapstore.storage.restartable.LinkedNodePortability;
 import com.terracottatech.offheapstore.storage.restartable.OffHeapObjectManagerStripe;
 import com.terracottatech.offheapstore.storage.restartable.RestartableStorageEngine;
-import com.terracottatech.offheapstore.util.MemoryUnit;
+import org.terracotta.offheapstore.util.MemoryUnit;
 
 @RunWith(BlockJUnit4ClassRunner.class)
 public class DiskCacheRestartabilityIT extends AbstractRestartabilityCacheIT {

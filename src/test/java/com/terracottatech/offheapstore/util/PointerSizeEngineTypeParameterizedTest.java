@@ -4,10 +4,11 @@
  */
 package com.terracottatech.offheapstore.util;
 
-import com.terracottatech.offheapstore.paging.PageSource;
-import com.terracottatech.offheapstore.storage.OffHeapBufferStorageEngine;
-import com.terracottatech.offheapstore.storage.PointerSize;
-import com.terracottatech.offheapstore.storage.portability.Portability;
+import org.terracotta.offheapstore.util.Factory;
+import org.terracotta.offheapstore.paging.PageSource;
+import org.terracotta.offheapstore.storage.OffHeapBufferStorageEngine;
+import org.terracotta.offheapstore.storage.PointerSize;
+import org.terracotta.offheapstore.storage.portability.Portability;
 
 import java.util.ArrayList;
 import java.util.Collection;

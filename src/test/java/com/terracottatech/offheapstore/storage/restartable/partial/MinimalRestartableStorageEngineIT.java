@@ -17,15 +17,15 @@ import java.util.TreeMap;
 import org.junit.Test;
 
 import com.terracottatech.frs.object.ObjectManagerEntry;
-import com.terracottatech.offheapstore.buffersource.OffHeapBufferSource;
-import com.terracottatech.offheapstore.paging.PageSource;
-import com.terracottatech.offheapstore.paging.UpfrontAllocatingPageSource;
-import com.terracottatech.offheapstore.storage.StorageEngine;
-import com.terracottatech.offheapstore.storage.portability.StringPortability;
+import org.terracotta.offheapstore.buffersource.OffHeapBufferSource;
+import org.terracotta.offheapstore.paging.PageSource;
+import org.terracotta.offheapstore.paging.UpfrontAllocatingPageSource;
+import org.terracotta.offheapstore.storage.StorageEngine;
+import org.terracotta.offheapstore.storage.portability.StringPortability;
 import com.terracottatech.offheapstore.storage.restartable.NoOpRestartStore;
 import com.terracottatech.offheapstore.storage.restartable.RestartableStorageEngine;
-import com.terracottatech.offheapstore.util.MemoryUnit;
-import com.terracottatech.offheapstore.util.NoOpLock;
+import org.terracotta.offheapstore.util.MemoryUnit;
+import org.terracotta.offheapstore.util.NoOpLock;
 import com.terracottatech.offheapstore.util.PointerSizeParameterizedTest;
 
 import java.util.Collections;

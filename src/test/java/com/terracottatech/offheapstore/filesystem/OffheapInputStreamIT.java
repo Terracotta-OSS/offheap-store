@@ -16,12 +16,12 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.terracottatech.offheapstore.buffersource.HeapBufferSource;
-import com.terracottatech.offheapstore.buffersource.OffHeapBufferSource;
+import org.terracotta.offheapstore.buffersource.HeapBufferSource;
+import org.terracotta.offheapstore.buffersource.OffHeapBufferSource;
 import com.terracottatech.offheapstore.filesystem.impl.OffheapFileSystem;
-import com.terracottatech.offheapstore.paging.UnlimitedPageSource;
-import com.terracottatech.offheapstore.paging.UpfrontAllocatingPageSource;
-import com.terracottatech.offheapstore.util.MemoryUnit;
+import org.terracotta.offheapstore.paging.UnlimitedPageSource;
+import org.terracotta.offheapstore.paging.UpfrontAllocatingPageSource;
+import org.terracotta.offheapstore.util.MemoryUnit;
 
 public class OffheapInputStreamIT {
   

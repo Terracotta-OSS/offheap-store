@@ -12,14 +12,14 @@ import com.terracottatech.frs.Tuple;
 import com.terracottatech.frs.object.ObjectManagerEntry;
 import com.terracottatech.frs.object.ObjectManagerSegment;
 import com.terracottatech.frs.object.SimpleObjectManagerEntry;
-import com.terracottatech.offheapstore.paging.OffHeapStorageArea;
-import com.terracottatech.offheapstore.paging.PageSource;
-import com.terracottatech.offheapstore.storage.BinaryStorageEngine;
-import com.terracottatech.offheapstore.storage.PointerSize;
-import com.terracottatech.offheapstore.storage.StorageEngine;
-import com.terracottatech.offheapstore.storage.listener.AbstractListenableStorageEngine;
-import com.terracottatech.offheapstore.storage.portability.Portability;
-import com.terracottatech.offheapstore.util.Factory;
+import org.terracotta.offheapstore.paging.OffHeapStorageArea;
+import org.terracotta.offheapstore.paging.PageSource;
+import org.terracotta.offheapstore.storage.BinaryStorageEngine;
+import org.terracotta.offheapstore.storage.PointerSize;
+import org.terracotta.offheapstore.storage.StorageEngine;
+import org.terracotta.offheapstore.storage.listener.AbstractListenableStorageEngine;
+import org.terracotta.offheapstore.storage.portability.Portability;
+import org.terracotta.offheapstore.util.Factory;
 
 import java.io.Closeable;
 import java.nio.ByteBuffer;
@@ -30,15 +30,15 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Lock;
 import java.util.function.LongConsumer;
 
-import static com.terracottatech.offheapstore.util.Validation.shouldValidate;
-import static com.terracottatech.offheapstore.util.Validation.validate;
+import static org.terracotta.offheapstore.util.Validation.shouldValidate;
+import static org.terracotta.offheapstore.util.Validation.validate;
 import static com.terracottatech.offheapstore.storage.restartable.RestartableStorageEngine.decodeKey;
 import static com.terracottatech.offheapstore.storage.restartable.RestartableStorageEngine.encodeKey;
 import static com.terracottatech.offheapstore.storage.restartable.RestartableStorageEngine.decodeValue;
 import static com.terracottatech.offheapstore.storage.restartable.RestartableStorageEngine.encodeValue;
 import static com.terracottatech.offheapstore.storage.restartable.RestartableStorageEngine.extractEncoding;
 import static com.terracottatech.offheapstore.storage.restartable.RestartableStorageEngine.extractMetadata;
-import static com.terracottatech.offheapstore.util.ByteBufferUtils.aggregate;
+import static org.terracotta.offheapstore.util.ByteBufferUtils.aggregate;
 
 public class RestartableMinimalStorageEngine<I, K, V> extends AbstractListenableStorageEngine<K, V> implements StorageEngine<K, V>, BinaryStorageEngine, ObjectManagerSegment<I, ByteBuffer, ByteBuffer> {
 

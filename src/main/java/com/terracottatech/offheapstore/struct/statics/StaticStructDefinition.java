@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import com.terracottatech.offheapstore.paging.OffHeapStorageArea;
+import org.terracotta.offheapstore.paging.OffHeapStorageArea;
 import com.terracottatech.offheapstore.struct.Field;
 import com.terracottatech.offheapstore.struct.Layout;
 import com.terracottatech.offheapstore.struct.Pointer;

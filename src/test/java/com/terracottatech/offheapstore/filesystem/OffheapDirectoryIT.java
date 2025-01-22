@@ -11,16 +11,23 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import junit.framework.Assert;
-
 import org.junit.Test;
 
-import com.terracottatech.offheapstore.buffersource.HeapBufferSource;
-import com.terracottatech.offheapstore.buffersource.OffHeapBufferSource;
+import org.terracotta.offheapstore.buffersource.HeapBufferSource;
+import org.terracotta.offheapstore.buffersource.OffHeapBufferSource;
 import com.terracottatech.offheapstore.filesystem.impl.OffheapFileSystem;
-import com.terracottatech.offheapstore.paging.UnlimitedPageSource;
-import com.terracottatech.offheapstore.paging.UpfrontAllocatingPageSource;
-import com.terracottatech.offheapstore.util.MemoryUnit;
+import org.terracotta.offheapstore.paging.UnlimitedPageSource;
+import org.terracotta.offheapstore.paging.UpfrontAllocatingPageSource;
+import org.terracotta.offheapstore.util.MemoryUnit;
+
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.collection.IsEmptyCollection.empty;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.number.OrderingComparison.lessThan;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class OffheapDirectoryIT {
 
@@ -38,11 +45,11 @@ public class OffheapDirectoryIT {
       Directory dir = fs.getOrCreateDirectory("testCreateFile");
       for (int i = 0; i < 10; i++) {
         String fileName = "/\\foo\\/" + Integer.toString(i);
-        dir.getOrCreateFile(fileName);
-        Assert.assertTrue(System.currentTimeMillis() - dir.getOrCreateFile(fileName).lastModifiedTime() < 500);
+        File f = dir.getOrCreateFile(fileName);
+        assertTrue(System.currentTimeMillis() - f.lastModifiedTime() < 500);
       }
       for (int i = 0; i < 10; i++) {
-        Assert.assertTrue(dir.fileExists("/\\foo\\/" + Integer.toString(i)));
+        assertTrue(dir.fileExists("/\\foo\\/" + Integer.toString(i)));
       }
     } finally {
       fs.delete();
@@ -54,12 +61,12 @@ public class OffheapDirectoryIT {
     FileSystem fs = new OffheapFileSystem(new UnlimitedPageSource(new HeapBufferSource()));
     try {
       Directory dir = fs.getOrCreateDirectory("testDeleteAllFiles");
-      Assert.assertEquals(0, dir.listFiles().size());
+      assertThat(dir.listFiles(), empty());
       for (int i = 0; i < 10; i++) {
         dir.getOrCreateFile("foo-" + Integer.toString(i));
       }
       dir.deleteAllFiles();
-      Assert.assertEquals(0, dir.listFiles().size());
+      assertThat(dir.listFiles(), empty());
     } finally {
       fs.delete();
     }
@@ -70,11 +77,11 @@ public class OffheapDirectoryIT {
     FileSystem fs = new OffheapFileSystem(new UnlimitedPageSource(new HeapBufferSource()));
     try {
       Directory dir = fs.getOrCreateDirectory("testDeleteFile");
-      Assert.assertFalse(dir.fileExists("bar"));
+      assertFalse(dir.fileExists("bar"));
       dir.getOrCreateFile("bar");
-      Assert.assertTrue(dir.fileExists("bar"));
+      assertTrue(dir.fileExists("bar"));
       dir.deleteFile("bar");
-      Assert.assertFalse(dir.fileExists("bar"));
+      assertFalse(dir.fileExists("bar"));
     } finally {
       fs.delete();
     }
@@ -91,9 +98,9 @@ public class OffheapDirectoryIT {
       Set<String> names = dir.listFiles();
       List<String> namesList = new ArrayList<String>(names);
       Collections.sort(namesList);
-      Assert.assertEquals(10, names.size());
+      assertThat(names, hasSize(10));
       for (int i = 0; i < 10; i++) {
-        Assert.assertEquals("foo-" + Integer.toString(i), namesList.get(i));
+        assertThat(namesList.get(i), is("foo-" + i));
       }
     } finally {
       fs.delete();
@@ -152,7 +159,7 @@ public class OffheapDirectoryIT {
       }
   
       int k = 0;
-      int totalBytesInDir = 0;
+      long totalBytesInDir = 0;
       for (Map.Entry<File, OutputStream> entry : fileToStreamMap.entrySet()) {
         System.out.println("---- Writing to file number = " + k + "------");
         long numBytesToWrite = randomArray[k++];
@@ -161,14 +168,14 @@ public class OffheapDirectoryIT {
         }
         entry.getValue().flush();
         System.out.println("Wrote  " + numBytesToWrite + "  bytes");
-        int numBytesUsedForThisFile = numBytesToWrite > BLOCK_SIZE ? (int) Math.ceil((double) (numBytesToWrite)
+        long numBytesUsedForThisFile = numBytesToWrite > BLOCK_SIZE ? (int) Math.ceil((double) (numBytesToWrite)
                                                                                      / (double) BLOCK_SIZE)
                                                                      * BLOCK_SIZE : BLOCK_SIZE;
         totalBytesInDir += numBytesUsedForThisFile;
         System.out.println("Total bytes used  = " + numBytesUsedForThisFile);
         System.out.println("Total bytes in directory = " + totalBytesInDir);
-        Assert.assertEquals(numBytesUsedForThisFile, entry.getKey().getSizeInBytes());
-        Assert.assertEquals(totalBytesInDir, dir.getSizeInBytes());
+        assertThat(entry.getKey().getSizeInBytes(), is(numBytesUsedForThisFile));
+        assertThat(dir.getSizeInBytes(), is(totalBytesInDir));
       }
   
       k = 0;
@@ -181,7 +188,7 @@ public class OffheapDirectoryIT {
                                                                             / (double) BLOCK_SIZE)
                                                             * BLOCK_SIZE : BLOCK_SIZE;
         totalBytesInDir -= numBytesFreed;
-        Assert.assertEquals(totalBytesInDir, dir.getSizeInBytes());
+        assertThat(dir.getSizeInBytes(), is(totalBytesInDir));
       }
     } finally {
       fs.delete();

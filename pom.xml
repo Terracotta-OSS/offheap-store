@@ -1,31 +1,47 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
-    <artifactId>forge-parent-ee</artifactId>
     <groupId>org.terracotta.forge</groupId>
-    <version>3.7</version>
+    <artifactId>forge-parent-ee</artifactId>
+    <version>3.18</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.terracottatech</groupId>
-  <artifactId>offheap-store</artifactId>
-  <version>1.2.12-SNAPSHOT</version>
+  <artifactId>offheap-restartable-store</artifactId>
+  <version>2.0.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
-  <name>Terracotta Off-Heap Store</name>
+  <name>Terracotta Off-Heap Restartable Store</name>
 
   <properties>
+    <slf4j.version>1.7.7</slf4j.version>
   </properties>
 
   <dependencies>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-      <version>1.6.6</version>
+      <version>${slf4j.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>offheap-store</artifactId>
+      <version>2.0.0-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>com.terracottatech</groupId>
       <artifactId>fast-restartable-store</artifactId>
       <version>1.1.16</version>
+    </dependency>
+    <dependency>
+      <groupId>asm</groupId>
+      <artifactId>asm</artifactId>
+      <version>3.3.1</version>
+    </dependency>
+    <dependency>
+      <groupId>asm</groupId>
+      <artifactId>asm-commons</artifactId>
+      <version>3.3.1</version>
     </dependency>
     
     <dependency>
@@ -55,23 +71,7 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-jdk14</artifactId>
-      <version>1.6.6</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>asm</groupId>
-      <artifactId>asm</artifactId>
-      <version>3.3.1</version>
-    </dependency>
-    <dependency>
-      <groupId>asm</groupId>
-      <artifactId>asm-commons</artifactId>
-      <version>3.3.1</version>
-    </dependency>
-    <dependency>
-      <groupId>jfree</groupId>
-      <artifactId>jfreechart</artifactId>
-      <version>1.0.13</version>
+      <version>${slf4j.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -115,14 +115,14 @@
         </executions>
         <configuration>
           <parallel>methods</parallel>
-	  <threadCount>4</threadCount>
-	  <perCoreThreadCount>false</perCoreThreadCount>
+          <threadCount>4</threadCount>
+          <perCoreThreadCount>false</perCoreThreadCount>
         </configuration>
       </plugin>
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.6.3.201306030806</version>
+        <version>0.7.2.201409121644</version>
         <executions>
           <execution>
             <id>prepare-agent</id>
@@ -148,7 +148,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>findbugs-maven-plugin</artifactId>
-        <version>2.5.2</version>
+        <version>3.0.0</version>
         <executions>
           <execution>
             <goals>
@@ -167,37 +167,37 @@
       </plugin>
     </plugins>
     <pluginManagement>
-    	<plugins>
-    		<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
-    		<plugin>
-    			<groupId>org.eclipse.m2e</groupId>
-    			<artifactId>lifecycle-mapping</artifactId>
-    			<version>1.0.0</version>
-    			<configuration>
-    				<lifecycleMappingMetadata>
-    					<pluginExecutions>
-    						<pluginExecution>
-    							<pluginExecutionFilter>
-    								<groupId>org.jacoco</groupId>
-    								<artifactId>
-    									jacoco-maven-plugin
-    								</artifactId>
-    								<versionRange>
-    									[0.6.3.201306030806,)
-    								</versionRange>
-    								<goals>
-    									<goal>prepare-agent</goal>
-    								</goals>
-    							</pluginExecutionFilter>
-    							<action>
-    								<ignore/>
-    							</action>
-    						</pluginExecution>
-    					</pluginExecutions>
-    				</lifecycleMappingMetadata>
-    			</configuration>
-    		</plugin>
-    	</plugins>
+      <plugins>
+        <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+        <plugin>
+          <groupId>org.eclipse.m2e</groupId>
+          <artifactId>lifecycle-mapping</artifactId>
+          <version>1.0.0</version>
+          <configuration>
+            <lifecycleMappingMetadata>
+              <pluginExecutions>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>
+                      jacoco-maven-plugin
+                    </artifactId>
+                    <versionRange>
+                      [0.6.3.201306030806,)
+                    </versionRange>
+                    <goals>
+                      <goal>prepare-agent</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <ignore/>
+                  </action>
+                </pluginExecution>
+              </pluginExecutions>
+            </lifecycleMappingMetadata>
+          </configuration>
+        </plugin>
+      </plugins>
     </pluginManagement>
   </build>
   
@@ -209,9 +209,9 @@
     </repository>
     <snapshotRepository>
       <id>terracotta-ee-snapshots</id>
-       <uniqueVersion>false</uniqueVersion>
-       <name>Terracotta EE Snapshots Repository</name>
-       <url>${terracotta-ee-snapshots-url}</url>
+      <uniqueVersion>false</uniqueVersion>
+      <name>Terracotta EE Snapshots Repository</name>
+      <url>${terracotta-ee-snapshots-url}</url>
     </snapshotRepository>
   </distributionManagement>
 

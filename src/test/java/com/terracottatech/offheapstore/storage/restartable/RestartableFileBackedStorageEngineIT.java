@@ -9,9 +9,9 @@ import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.junit.runners.BlockJUnit4ClassRunner;
 
-import com.terracottatech.offheapstore.disk.paging.MappedPageSource;
-import com.terracottatech.offheapstore.disk.storage.FileBackedStorageEngine;
-import com.terracottatech.offheapstore.storage.portability.StringPortability;
+import org.terracotta.offheapstore.disk.paging.MappedPageSource;
+import org.terracotta.offheapstore.disk.storage.FileBackedStorageEngine;
+import org.terracotta.offheapstore.storage.portability.StringPortability;
 
 @RunWith(BlockJUnit4ClassRunner.class)
 public class RestartableFileBackedStorageEngineIT extends RestartableStorageEngineIT {

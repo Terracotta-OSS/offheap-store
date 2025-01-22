@@ -7,7 +7,7 @@ package com.terracottatech.offheapstore.struct;
 
 import java.util.Map;
 
-import com.terracottatech.offheapstore.paging.OffHeapStorageArea;
+import org.terracotta.offheapstore.paging.OffHeapStorageArea;
 
 /**
  *

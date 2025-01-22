@@ -7,8 +7,8 @@ import static com.terracottatech.offheapstore.storage.restartable.LinkedNodePort
 
 import java.nio.ByteBuffer;
 
-import com.terracottatech.offheapstore.storage.portability.Portability;
-import com.terracottatech.offheapstore.storage.portability.WriteContext;
+import org.terracotta.offheapstore.storage.portability.Portability;
+import org.terracotta.offheapstore.storage.portability.WriteContext;
 
 public class AttachedLinkedNode<T> implements LinkedNode<T> {
 

@@ -4,7 +4,7 @@
  */
 package com.terracottatech.offheapstore.util;
 
-import com.terracottatech.offheapstore.storage.PointerSize;
+import org.terracotta.offheapstore.storage.PointerSize;
 
 import java.util.ArrayList;
 import java.util.Collection;

@@ -21,24 +21,23 @@ import com.terracottatech.frs.RestartStoreFactory;
 import com.terracottatech.frs.config.FrsProperty;
 import com.terracottatech.frs.object.ObjectManager;
 import com.terracottatech.frs.object.RegisterableObjectManager;
-import com.terracottatech.offheapstore.ReadWriteLockedOffHeapClockCache;
-import com.terracottatech.offheapstore.ReadWriteLockedOffHeapHashMap;
-import com.terracottatech.offheapstore.buffersource.OffHeapBufferSource;
-import com.terracottatech.offheapstore.exceptions.OversizeMappingException;
-import com.terracottatech.offheapstore.paging.PageSource;
-import com.terracottatech.offheapstore.paging.UpfrontAllocatingPageSource;
-import com.terracottatech.offheapstore.storage.OffHeapBufferStorageEngine;
-import com.terracottatech.offheapstore.storage.portability.ByteArrayPortability;
-import com.terracottatech.offheapstore.storage.portability.Portability;
-import com.terracottatech.offheapstore.storage.portability.StringPortability;
 import com.terracottatech.offheapstore.storage.restartable.LinkedNode;
 import com.terracottatech.offheapstore.storage.restartable.LinkedNodePortability;
 import com.terracottatech.offheapstore.storage.restartable.OffHeapObjectManagerStripe;
 import com.terracottatech.offheapstore.storage.restartable.RestartabilityTestUtilities;
 import com.terracottatech.offheapstore.storage.restartable.RestartableStorageEngine;
-import com.terracottatech.offheapstore.util.MemoryUnit;
 import com.terracottatech.offheapstore.util.PointerSizeParameterizedTest;
 import org.junit.Test;
+import org.terracotta.offheapstore.ReadWriteLockedOffHeapClockCache;
+import org.terracotta.offheapstore.ReadWriteLockedOffHeapHashMap;
+import org.terracotta.offheapstore.buffersource.OffHeapBufferSource;
+import org.terracotta.offheapstore.exceptions.OversizeMappingException;
+import org.terracotta.offheapstore.paging.PageSource;
+import org.terracotta.offheapstore.paging.UpfrontAllocatingPageSource;
+import org.terracotta.offheapstore.storage.OffHeapBufferStorageEngine;
+import org.terracotta.offheapstore.storage.portability.ByteArrayPortability;
+import org.terracotta.offheapstore.storage.portability.Portability;
+import org.terracotta.offheapstore.storage.portability.StringPortability;
 
 import java.io.File;
 import java.io.IOException;
@@ -48,8 +47,8 @@ import java.util.Properties;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
 
-import static com.terracottatech.offheapstore.util.MemoryUnit.KILOBYTES;
-import static com.terracottatech.offheapstore.util.MemoryUnit.MEGABYTES;
+import static org.terracotta.offheapstore.util.MemoryUnit.KILOBYTES;
+import static org.terracotta.offheapstore.util.MemoryUnit.MEGABYTES;
 
 public class PartialThievingIT extends PointerSizeParameterizedTest {
 

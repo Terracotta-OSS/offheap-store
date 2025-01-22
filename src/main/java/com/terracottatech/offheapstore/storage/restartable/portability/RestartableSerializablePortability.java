@@ -17,12 +17,11 @@ import com.terracottatech.frs.object.ObjectManagerStripe;
 import com.terracottatech.frs.object.RestartableObject;
 import com.terracottatech.frs.object.SimpleObjectManagerEntry;
 import com.terracottatech.frs.object.heap.HeapValueSortedMap;
-import com.terracottatech.offheapstore.storage.portability.SerializablePortability;
-import com.terracottatech.offheapstore.util.ByteBufferInputStream;
-import com.terracottatech.offheapstore.util.FindbugsSuppressWarnings;
-
-import static com.terracottatech.offheapstore.util.Validation.shouldValidate;
-import static com.terracottatech.offheapstore.util.Validation.validate;
+import org.terracotta.offheapstore.storage.portability.SerializablePortability;
+import org.terracotta.offheapstore.util.ByteBufferInputStream;
+import org.terracotta.offheapstore.util.FindbugsSuppressWarnings;
+import static org.terracotta.offheapstore.util.Validation.shouldValidate;
+import static org.terracotta.offheapstore.util.Validation.validate;
 
 public class RestartableSerializablePortability<I> extends SerializablePortability implements ObjectManagerStripe<I, ByteBuffer, ByteBuffer>, ObjectManagerSegment<I, ByteBuffer, ByteBuffer>, RestartableObject<I, ByteBuffer, ByteBuffer> {
 

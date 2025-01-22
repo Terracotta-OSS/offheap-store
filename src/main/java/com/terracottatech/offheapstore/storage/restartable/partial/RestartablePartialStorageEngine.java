@@ -6,11 +6,11 @@
 package com.terracottatech.offheapstore.storage.restartable.partial;
 
 import com.terracottatech.frs.RestartStore;
-import com.terracottatech.offheapstore.paging.OffHeapStorageArea;
-import com.terracottatech.offheapstore.paging.PageSource;
-import com.terracottatech.offheapstore.storage.PointerSize;
-import com.terracottatech.offheapstore.storage.portability.Portability;
-import com.terracottatech.offheapstore.util.Factory;
+import org.terracotta.offheapstore.paging.OffHeapStorageArea;
+import org.terracotta.offheapstore.paging.PageSource;
+import org.terracotta.offheapstore.storage.PointerSize;
+import org.terracotta.offheapstore.storage.portability.Portability;
+import org.terracotta.offheapstore.util.Factory;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.locks.Lock;
@@ -19,8 +19,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.LongConsumer;
 
 import static com.terracottatech.offheapstore.storage.restartable.partial.RestartableMinimalStorageEngine.detach;
-import static com.terracottatech.offheapstore.util.Validation.shouldValidate;
-import static com.terracottatech.offheapstore.util.Validation.validate;
+import static org.terracotta.offheapstore.util.Validation.shouldValidate;
+import static org.terracotta.offheapstore.util.Validation.validate;
 
 /**
  *

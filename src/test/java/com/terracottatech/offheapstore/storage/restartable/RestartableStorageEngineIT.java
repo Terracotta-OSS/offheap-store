@@ -22,8 +22,8 @@ import java.util.TreeMap;
 import org.junit.Test;
 
 import com.terracottatech.frs.object.ObjectManagerEntry;
-import com.terracottatech.offheapstore.storage.StorageEngine;
-import com.terracottatech.offheapstore.util.NoOpLock;
+import org.terracotta.offheapstore.storage.StorageEngine;
+import org.terracotta.offheapstore.util.NoOpLock;
 import com.terracottatech.offheapstore.util.PointerSizeEngineTypeParameterizedTest;
 
 import java.util.HashMap;

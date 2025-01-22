@@ -2,9 +2,9 @@ package com.terracottatech.offheapstore.storage.restartable;
 
 import com.terracottatech.frs.RestartStore;
 import com.terracottatech.frs.object.RegisterableObjectManager;
-import com.terracottatech.offheapstore.storage.portability.ByteArrayPortability;
-import com.terracottatech.offheapstore.storage.portability.Portability;
-import com.terracottatech.offheapstore.storage.portability.StringPortability;
+import org.terracotta.offheapstore.storage.portability.ByteArrayPortability;
+import org.terracotta.offheapstore.storage.portability.Portability;
+import org.terracotta.offheapstore.storage.portability.StringPortability;
 import org.hamcrest.collection.IsIn;
 import org.hamcrest.core.IsEqual;
 import org.hamcrest.number.OrderingComparison;
@@ -17,7 +17,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static com.terracottatech.offheapstore.util.MemoryUnit.KILOBYTES;
+import static org.terracotta.offheapstore.util.MemoryUnit.KILOBYTES;
 
 public abstract class AbstractRestartabilityCacheIT extends AbstractRestartabilityIT {
 

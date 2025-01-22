@@ -1,7 +1,7 @@
 package com.terracottatech.offheapstore.storage.restartable;
 
-import static com.terracottatech.offheapstore.util.Validation.shouldValidate;
-import static com.terracottatech.offheapstore.util.Validation.validate;
+import static org.terracotta.offheapstore.util.Validation.shouldValidate;
+import static org.terracotta.offheapstore.util.Validation.validate;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.Callable;
@@ -12,13 +12,13 @@ import com.terracottatech.frs.TransactionException;
 import com.terracottatech.frs.object.ObjectManagerEntry;
 import com.terracottatech.frs.object.ObjectManagerSegment;
 import com.terracottatech.frs.object.SimpleObjectManagerEntry;
-import com.terracottatech.offheapstore.Metadata;
-import com.terracottatech.offheapstore.disk.storage.FileBackedStorageEngine;
-import com.terracottatech.offheapstore.storage.BinaryStorageEngine;
-import com.terracottatech.offheapstore.storage.StorageEngine;
-import com.terracottatech.offheapstore.storage.StorageEngine.Owner;
-import com.terracottatech.offheapstore.storage.listener.AbstractListenableStorageEngine;
-import com.terracottatech.offheapstore.util.Factory;
+import org.terracotta.offheapstore.Metadata;
+import org.terracotta.offheapstore.disk.storage.FileBackedStorageEngine;
+import org.terracotta.offheapstore.storage.BinaryStorageEngine;
+import org.terracotta.offheapstore.storage.StorageEngine;
+import org.terracotta.offheapstore.storage.StorageEngine.Owner;
+import org.terracotta.offheapstore.storage.listener.AbstractListenableStorageEngine;
+import org.terracotta.offheapstore.util.Factory;
 
 public class RestartableStorageEngine<T extends StorageEngine<K, LinkedNode<V>> & BinaryStorageEngine, I, K, V> extends AbstractListenableStorageEngine<K, V> implements StorageEngine<K, V>, BinaryStorageEngine, ObjectManagerSegment<I, ByteBuffer, ByteBuffer>, Owner {
 
