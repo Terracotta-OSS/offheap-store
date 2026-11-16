@@ -86,6 +86,26 @@ public class OffheapFileTruncateTest {
   }
 
   @Test
+  public void testEmptyBlockAfterResetAndSeekIsNotReadable() throws IOException {
+    PageSource pageSource = new UpfrontAllocatingPageSource(new HeapBufferSource(), 10 * 1024 * 1024, 1024 * 1024);
+    FileSystem fs = new OffheapFileSystem(pageSource, 8192, 256 * 1024, 1);
+    Directory dir = fs.getOrCreateDirectory("testDir");
+    File file = dir.getOrCreateFile("testFile");
+
+    try (SeekableOutputStream out = file.getOutputStream()) {
+      out.write(42);
+    }
+    try (SeekableOutputStream out = file.getOutputStream()) {
+      out.reset();
+      out.seek(0);
+    }
+
+    try (SeekableInputStream in = file.getInputStream()) {
+      assertThat(in.read(), is(-1));
+    }
+  }
+
+  @Test
   public void testBulkReadPastEndThrowsEof() throws Exception {
     PageSource pageSource = new UpfrontAllocatingPageSource(new HeapBufferSource(), 10 * 1024 * 1024, 1024 * 1024);
     FileSystem fs = new OffheapFileSystem(pageSource, 8192, 256 * 1024, 1);

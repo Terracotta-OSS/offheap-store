@@ -212,12 +212,9 @@ public class OffheapFile implements File {
                                                   + index);
     ByteBuffer buf = getBlock(index).asReadOnlyBuffer();
     buf.position(0);
-    int bufEnd = (int) (length() % blockSize);
-    if (index == lastIndex && bufEnd != 0) {
-      buf.limit(bufEnd);
-    } else {
-      buf.limit(blockSize);
-    }
+    long bytesFromBlock = length() - ((long) index * blockSize);
+    int readableBytes = (int) Math.max(0, Math.min(blockSize, bytesFromBlock));
+    buf.limit(index == lastIndex ? readableBytes : blockSize);
     return buf;
   }
 
