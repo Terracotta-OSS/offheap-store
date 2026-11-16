@@ -1,6 +1,6 @@
 /*
  * Copyright 2015-2023 Terracotta, Inc., a Software AG company.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -159,10 +159,10 @@ class Region extends AbstractTreeNode<Region> implements Comparable<Comparable<?
       Region r = (Region) other;
       if (this.start < r.start) {
         return -1;
-      } else if (this.end > r.end) {
+      } else if (this.start > r.start) {
         return 1;
       } else {
-        return 0;
+        return Long.compare(this.end, r.end);
       }
     } else if (other instanceof Long) {
       Long l = (Long) other;
@@ -210,6 +210,7 @@ class Region extends AbstractTreeNode<Region> implements Comparable<Comparable<?
       this.end = r.end;
       r.end = temp;
       updateAvailable();
+      r.updateAvailable();
     } else {
       throw new AssertionError();
     }
