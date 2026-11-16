@@ -69,6 +69,23 @@ public class OffheapFileTruncateTest {
   }
 
   @Test
+  public void testTruncateAfterOutputStreamCloseResetsLength() throws IOException {
+    PageSource pageSource = new UpfrontAllocatingPageSource(new HeapBufferSource(), 10 * 1024 * 1024, 1024 * 1024);
+    FileSystem fs = new OffheapFileSystem(pageSource, 8192, 256 * 1024, 1);
+    Directory dir = fs.getOrCreateDirectory("testDir");
+    File file = dir.getOrCreateFile("testFile");
+
+    try (SeekableOutputStream out = file.getOutputStream()) {
+      out.write(42);
+    }
+
+    file.truncate();
+
+    assertThat(file.length(), is(0L));
+    assertThat(((OffheapFile) file).numBlocks(), is(0));
+  }
+
+  @Test
   public void testBulkReadPastEndThrowsEof() throws Exception {
     PageSource pageSource = new UpfrontAllocatingPageSource(new HeapBufferSource(), 10 * 1024 * 1024, 1024 * 1024);
     FileSystem fs = new OffheapFileSystem(pageSource, 8192, 256 * 1024, 1);

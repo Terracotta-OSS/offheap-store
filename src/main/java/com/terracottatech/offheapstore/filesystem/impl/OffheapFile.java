@@ -275,6 +275,7 @@ public class OffheapFile implements File {
     } else {
       blockCount.set(0);
       blockMap.clear();
+      length = 0;
     }
   }
   
