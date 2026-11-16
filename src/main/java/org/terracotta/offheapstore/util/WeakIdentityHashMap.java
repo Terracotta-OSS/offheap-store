@@ -1,6 +1,6 @@
 /*
  * Copyright 2015-2023 Terracotta, Inc., a Software AG company.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,10 @@ public class WeakIdentityHashMap<K, V> {
     return map.remove(new IdentityWeakReference<>(key));
   }
 
+  /**
+   * Returns an iterator over this map's entries. An entry is {@code null} when its key has been
+   * garbage collected. Clients must handle such entries if they use this method.
+   */
   public Iterator<Entry<K, V>> entries() {
     return new Iterator<Entry<K, V>>() {
 
