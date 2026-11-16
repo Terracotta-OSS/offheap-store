@@ -1,6 +1,6 @@
 /*
  * Copyright 2015-2023 Terracotta, Inc., a Software AG company.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,21 @@ public class StringPortability implements PersistentPortability<String> {
 
   @Override
   public boolean equals(Object value, ByteBuffer readBuffer) {
-    return value.equals(decode(readBuffer));
+    if (value instanceof String) {
+      String s = (String) value;
+      int length = readBuffer.remaining() / 2;
+      if (s.length() != length) {
+        return false;
+      }
+      int pos = readBuffer.position();
+      for (int i = 0; i < length; i++) {
+        if (s.charAt(i) != readBuffer.getChar(pos + (i * 2))) {
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
   }
 
   @Override

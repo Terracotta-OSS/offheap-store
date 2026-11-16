@@ -1,6 +1,6 @@
 /*
  * Copyright 2015-2023 Terracotta, Inc., a Software AG company.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import static org.hamcrest.core.IsNull.notNullValue;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Assert;
@@ -72,6 +73,31 @@ public class PhantomReferenceLimitedPageSourceTest {
     Assert.assertNull(source.allocate(1, false, false, null));
 
     Assert.assertEquals(64, bs.size());
+  }
+
+  @Test
+  public void testAllocationFailureRestoresAvailableBytes() {
+    class FailingPageSource extends PhantomReferenceLimitedPageSource {
+      private boolean fail = true;
+
+      FailingPageSource() {
+        super(64);
+      }
+
+      @Override
+      ByteBuffer allocateDirect(int size) {
+        if (fail) {
+          throw new OutOfMemoryError("forced allocation failure");
+        }
+        return super.allocateDirect(size);
+      }
+    }
+
+    FailingPageSource source = new FailingPageSource();
+    Assert.assertNull(source.allocate(64, false, false, null));
+
+    source.fail = false;
+    Assert.assertNotNull(source.allocate(64, false, false, null));
   }
 
   @Test

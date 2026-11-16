@@ -1,6 +1,6 @@
 /*
  * Copyright 2014-2023 Terracotta, Inc., a Software AG company.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -146,7 +146,8 @@ public class OffheapFile implements File {
   synchronized void setLength(long newLength) {
     validateLength(newLength);
     this.length = newLength;
-    for (int i = blockCount.get(); i > (int) (newLength / blockSize); i--) {
+    int newBlockCount = (int) ((newLength + blockSize - 1) / blockSize);
+    for (int i = blockCount.get() - 1; i >= newBlockCount; i--) {
       blockMap.remove(i);
       blockCount.decrementAndGet();
     }
@@ -211,12 +212,9 @@ public class OffheapFile implements File {
                                                   + index);
     ByteBuffer buf = getBlock(index).asReadOnlyBuffer();
     buf.position(0);
-    int bufEnd = (int) (length() % blockSize);
-    if (index == lastIndex && bufEnd != 0) {
-      buf.limit(bufEnd);
-    } else {
-      buf.limit(blockSize);
-    }
+    long bytesFromBlock = length() - ((long) index * blockSize);
+    int readableBytes = (int) Math.max(0, Math.min(blockSize, bytesFromBlock));
+    buf.limit(index == lastIndex ? readableBytes : blockSize);
     return buf;
   }
 
@@ -274,6 +272,7 @@ public class OffheapFile implements File {
     } else {
       blockCount.set(0);
       blockMap.clear();
+      length = 0;
     }
   }
   

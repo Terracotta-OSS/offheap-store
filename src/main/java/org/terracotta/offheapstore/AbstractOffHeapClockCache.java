@@ -1,6 +1,6 @@
 /*
  * Copyright 2015-2023 Terracotta, Inc., a Software AG company.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -184,7 +184,7 @@ public abstract class AbstractOffHeapClockCache<K, V> extends AbstractLockedOffH
       return index;
     }
 
-    int end = (start + probeLength) & (tableLength - 1);
+    int end = (start + ((length - 1) * ENTRY_SIZE)) & (tableLength - 1);
 
     if (index < 0) {
       return index;
@@ -195,29 +195,30 @@ public abstract class AbstractOffHeapClockCache<K, V> extends AbstractLockedOffH
     } else {
       evict(index, false);
 
-      for (int i = 0, clock = start; i < length; i++) {
-        if ((clock += ENTRY_SIZE) >= tableLength) {
-          clock = start;
-        }
-
+      int clock = start;
+      for (int i = 0; i < length; i++) {
         int hand = hashtable.get(clock + STATUS);
 
         if (evictable(hand) && ((hand & PRESENT_CLOCK) == 0)) {
           return clock;
         }
+        clock += ENTRY_SIZE;
+        if (clock >= tableLength) clock = 0;
       }
 
       int lastEvictable = -1;
-      for (int i = 0, clock = start; i < rndm.nextInt(length) || (lastEvictable < 0 && i < length); i++) {
-        if ((clock += ENTRY_SIZE) >= tableLength) {
-          clock = start;
-        }
-
+      int randomProbeCount = rndm.nextInt(length);
+      clock = start;
+      for (int i = 0; i < length; i++) {
         int hand = hashtable.get(clock + STATUS);
-
         if (evictable(hand)) {
           lastEvictable = clock;
         }
+        if (i >= randomProbeCount && lastEvictable >= 0) {
+          break;
+        }
+        clock += ENTRY_SIZE;
+        if (clock >= tableLength) clock = 0;
       }
       return lastEvictable;
     }
