@@ -22,7 +22,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 /**
- * Tests verifying issue fixes in {@link Region}.
+ * Tests verifying defensive consistency fixes in {@link Region}.
  *
  * <h3>Issue 1: {@code Comparable.compareTo} Antisymmetry Contract Violation</h3>
  * <p>
@@ -38,8 +38,9 @@ import static org.hamcrest.Matchers.is;
  *       {@code b.end <= a.end} (30 <= 20 -> false), finally falling through to return {@code 1}.</li>
  * </ul>
  * This results in {@code a.compareTo(b) == 0} while {@code b.compareTo(a) == 1}, violating the
- * {@link Comparable} contract. When stored in search trees (like {@link org.terracotta.offheapstore.util.AATreeSet}),
- * tree balancing (skew/split) can corrupt ordering and cause region search/deallocation lookups to fail or loop.
+ * {@link Comparable} contract. Allocator trees normally hold disjoint regions, so this pair does
+ * not occur during normal allocation. The test verifies the local contract rather than a
+ * reachable allocator corruption.
  *
  * <h3>Issue 2: Stale Partner BitSet on {@code swapPayload}</h3>
  * <p>
@@ -49,8 +50,9 @@ import static org.hamcrest.Matchers.is;
  * available bitmask. However, {@code r.updateAvailable()} is omitted!
  * </p>
  * <p>
- * As a consequence, {@code r} retains the stale bitmask calculated from its prior coordinates,
- * leading to corrupted allocator bitmap tracking and erroneous disk allocation decisions.
+ * The current AA-tree deletion caller removes the partner from the tree, so its stale mask is not
+ * observed there. The test verifies that both detached nodes remain internally consistent if this
+ * operation is reused elsewhere.
  * </p>
  */
 public class RegionCompareTest {
