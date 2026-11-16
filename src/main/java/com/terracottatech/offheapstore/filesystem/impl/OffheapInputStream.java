@@ -1,6 +1,6 @@
 /*
  * Copyright 2014-2023 Terracotta, Inc., a Software AG company.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,9 @@ public class OffheapInputStream extends SeekableInputStream {
   @Override
   public void readBytes(byte[] b, int offset, int len) throws IOException {
     while (len > 0) {
-      ensureCapacity();
+      if (!ensureCapacity()) {
+        throw new EOFException("Attempt to read past end of file");
+      }
       int lenToRead = Math.min(len, currentBlock.remaining());
       currentBlock.get(b, offset, lenToRead);
       len -= lenToRead;
@@ -77,7 +79,7 @@ public class OffheapInputStream extends SeekableInputStream {
       if (currentBlockIndex >= file.numBlocks() - 1) { return false; }
       currentBlock = getNextBlockToRead();
     }
-    return true;
+    return currentBlock.hasRemaining();
   }
 
   private ByteBuffer getNextBlockToRead() throws IOException {
